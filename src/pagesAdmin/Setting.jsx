@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import ProfilePic from "../assets/admin.png";
+import React, { useState, useRef, useEffect } from "react";
+import defaultPhoto from "../assets/home.png"; // ganti sesuai nama file kamu
 
-const Setting = () => {
+export default function Setting() {
+  // 🔸 Inisialisasi state
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     email: "johndoe@gmail.com",
     username: "John Doe",
@@ -11,153 +13,250 @@ const Setting = () => {
     password: "********",
   });
 
+  // 🔹 State untuk foto profil dan input file ref
+  const [photo, setPhoto] = useState(defaultPhoto);
+  const fileInputRef = useRef(null);
+
+  // 🔹 Load foto dari localStorage (jika sudah pernah diganti)
+  useEffect(() => {
+    const savedPhoto = localStorage.getItem("userPhoto");
+    if (savedPhoto) {
+      setPhoto(savedPhoto);
+    }
+  }, []);
+
+  // 🔹 Simpan foto ke localStorage saat berubah
+  useEffect(() => {
+    localStorage.setItem("userPhoto", photo);
+  }, [photo]);
+
+  // 🔹 Fungsi umum untuk input field
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert("✅ Changes saved successfully!");
+  // 🔹 Ganti mode Edit/Save
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      alert("✅ Changes saved successfully!");
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // 🔹 Klik tombol Change Picture → buka file dialog
+  const handleChangePicture = () => {
+    fileInputRef.current.click();
+  };
+
+  // 🔹 Saat user memilih file gambar
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
-    <div className="p-8 w-full min-h-screen bg-[#F7F7F7]">
-      <h1 className="text-3xl font-semibold text-gray-800 mb-8">Settings</h1>  
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 max-w-[1320px] mx-auto">
-        <h2 className="text-lg font-semibold mb-6 text-gray-700">My Account</h2>
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-6xl mx-auto">
+        {/* My Account Section */}
+        <div className="flex items-center gap-4 mb-8">
+          <img
+            src={photo}
+            alt="User"
+            className="w-20 h-20 rounded-full object-cover border-2 border-orange-400"
+          />
+          <div>
+            <h2 className="text-xl font-semibold text-gray-700">My Account</h2>
 
-        <div className="flex items-start gap-8 mb-10">
-          <div className="flex flex-col items-center">
-            <img
-              src={ProfilePic}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover shadow"
-            />
-            <button
-              type="button"
-              className="mt-4 bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-orange-600 transition"
-            >
-              Change Picture
-            </button>
+            {/* Tombol Change Picture hanya muncul saat mode edit */}
+            {isEditing && (
+              <>
+                <button
+                  onClick={handleChangePicture}
+                  className="mt-2 bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600 transition"
+                >
+                  Change Picture
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </>
+            )}
           </div>
+        </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 grid grid-cols-3 gap-6 text-sm"
-          >
-            <div className="flex flex-col">
-              <label htmlFor="email" className="text-gray-600 mb-1 font-medium">
+        {/* Form */}
+        <div className="space-y-6">
+          {/* Row 1: Email - Username - Role */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
                 Email
               </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 value={formData.email}
+                disabled={!isEditing}
                 onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className={`w-full border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               />
             </div>
 
-            <div className="flex flex-col">
+            {/* Username */}
+            <div>
               <label
                 htmlFor="username"
-                className="text-gray-600 mb-1 font-medium"
+                className="block text-sm font-medium text-gray-600 mb-2"
               >
                 Username
               </label>
               <input
+                id="username"
                 type="text"
                 name="username"
                 value={formData.username}
+                disabled={!isEditing}
                 onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className={`w-full border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               />
             </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="role" className="text-gray-600 mb-1 font-medium">
+            {/* Role */}
+            <div>
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
                 Role
               </label>
-              <input
-                type="text"
-                name="role"
-                value={formData.role}
-                disabled
-                className="border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
+              {isEditing ? (
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                >
+                  <option>Admin</option>
+                  <option>User</option>
+                </select>
+              ) : (
+                <p className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 bg-gray-50">
+                  {formData.role}
+                </p>
+              )}
             </div>
+          </div>
 
-            <div className="flex flex-col">
+          {/* Row 2: Status - Language */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Status */}
+            <div>
               <label
                 htmlFor="status"
-                className="text-gray-600 mb-1 font-medium"
+                className="block text-sm font-medium text-gray-600 mb-2"
               >
                 Status
               </label>
-              <select
+              <input
+                id="status"
+                type="text"
                 name="status"
                 value={formData.status}
+                disabled={!isEditing}
                 onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-              >
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
+                className={`w-full border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
+              />
             </div>
 
-            <div className="flex flex-col">
+            {/* Language */}
+            <div>
               <label
                 htmlFor="language"
-                className="text-gray-600 mb-1 font-medium"
+                className="block text-sm font-medium text-gray-600 mb-2"
               >
                 Language
               </label>
               <select
+                id="language"
                 name="language"
                 value={formData.language}
+                disabled={!isEditing}
                 onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className={`w-full border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 bg-white focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               >
                 <option>English</option>
                 <option>Indonesia</option>
               </select>
             </div>
+          </div>
 
-            <div className="flex flex-col">
-              <label
-                htmlFor="password"
-                className="text-gray-600 mb-1 font-medium"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
-            </div>
-          </form>
+          {/* Password */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-600 mb-2"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              value={formData.password}
+              disabled={!isEditing}
+              onChange={handleChange}
+              className={`w-full border ${
+                isEditing ? "border-orange-400" : "border-gray-300"
+              } rounded-lg px-3 py-2 focus:outline-none ${
+                isEditing && "focus:ring-2 focus:ring-orange-400"
+              }`}
+            />
+          </div>
         </div>
 
-        <div className="border-t border-gray-200 my-6"></div>
-
-        <div className="flex justify-end">
+        {/* Tombol Simpan / Edit */}
+        <div className="flex justify-end mt-8">
           <button
-            type="button"
-            onClick={handleSubmit}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-2 rounded-md transition"
+            onClick={handleToggleEdit}
+            className="px-6 py-3 font-semibold rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
           >
-            Save Changes
+            {isEditing ? "Save Changes" : "Edit"}
           </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default Setting;
+}

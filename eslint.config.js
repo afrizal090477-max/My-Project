@@ -21,24 +21,26 @@ export default defineConfig([
       },
     },
     plugins: {
-      react,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      react,
     },
     settings: {
       react: {
-        version: "detect", 
+        version: "detect",
       },
     },
     rules: {
       ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
-      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
-      "react/react-in-jsx-scope": "off", 
+      "react/react-in-jsx-scope": "off",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "sonarjs/prefer-node-path": "off",
       "sonarjs/prefer-node-url": "off",
+      "no-unused-vars": ["warn", { varsIgnorePattern: "^A-Z_" }],
+      "react/prop-types": "off",
+      "no-nested-ternary": "off",
     },
   },
 ]);

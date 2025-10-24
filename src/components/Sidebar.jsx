@@ -22,7 +22,7 @@ const Sidebar = () => {
   const menuItems = [
     { id: "dashboard", name: "Dashboard", path: "/dashboard", icon: <FaThLarge /> },
     { id: "reservation", name: "Reservation Schedule", path: "/reservation", icon: <FaClipboardList /> },
-    { id: "rooms", name: "Rooms", path: "/rooms", icon: <FaBed /> },
+    { id: "room", name: "Room", path: "/room", icon: <FaBed /> },
     { id: "report", name: "Report", path: "/report", icon: <FaFileAlt /> },
     { id: "settings", name: "Settings", path: "/settings", icon: <FaCog /> },
   ];

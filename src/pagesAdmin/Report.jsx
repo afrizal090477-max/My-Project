@@ -1,108 +1,212 @@
 import React, { useState } from "react";
+import { FiEdit2, FiCalendar, FiDownload } from "react-icons/fi";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ModalReportDetail from "@/components/ModalReportDetail";
+import ModalConfirmCancel from "@/components/ModalConfirmCancel";
+import PropTypes from "prop-types";
 
-const REPORT_DATA = [
-  {
-    id: 1,
-    date: "01/10/2024",
-    roomName: "Aster Room",
-    roomType: "Small",
-    status: "Booked",
-  },
-  {
-    id: 2,
-    date: "01/10/2024",
-    roomName: "Aster Room",
-    roomType: "Small",
-    status: "Paid",
-  },
-  {
-    id: 3,
-    date: "01/10/2024",
-    roomName: "Aster Room",
-    roomType: "Small",
-    status: "Cancel",
-  },
-  {
-    id: 4,
-    date: "01/10/2024",
-    roomName: "Aster Room",
-    roomType: "Small",
-    status: "Paid",
-  },
-];
+function DateInput({ selectedDate, onChange, placeholder }) {
+  const [open, setOpen] = useState(false);
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case "Booked":
-      return "bg-[#FFEFE1] text-[#FF7316]";
-    case "Paid":
-      return "bg-[#E7F9EE] text-[#00B23B]";
-    case "Cancel":
-      return "bg-[#FFE1E1] text-[#E70000]";
-    default:
-      return "bg-gray-100 text-gray-600";
-  }
+  return (
+    <div className="relative w-44">
+      <DatePicker
+        selected={selectedDate}
+        onChange={onChange}
+        onClickOutside={() => setOpen(false)}
+        open={open}
+        onInputClick={() => setOpen(true)}
+        placeholderText={placeholder}
+        dateFormat="yyyy-MM-dd"
+        className="border rounded-lg px-3 py-2 text-sm w-full"
+      />
+      <button
+        type="button"
+        className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-500"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label="Toggle calendar"
+      >
+        <FiCalendar size={18} />
+      </button>
+    </div>
+  );
+}
+DateInput.propTypes = {
+  selectedDate: PropTypes.instanceOf(Date),
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+};
+
+DateInput.defaultProps = {
+  selectedDate: null,
+  placeholder: "",
 };
 
 export default function Report() {
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailData, setDetailData] = useState(null);
+  const [toast, setToast] = useState({ show: false, type: "", message: "" });
 
-  const handleCancelClick = (report) => {
-    setSelectedReport(report);
-    setShowCancelModal(true);
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    roomType: "",
+    status: "",
+  });
+
+  const DUMMY_DATA = [
+    { date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
+    { date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
+    { date: "02/15/2024", room: "Bluebell", type: "Small", status: "Cancel" },
+    { date: "03/20/2024", room: "Camellia", type: "Medium", status: "Paid" },
+    { date: "03/21/2024", room: "Daisy", type: "Large", status: "Paid" },
+  ];
+  const [filteredData, setFilteredData] = useState(DUMMY_DATA);
+
+  const showToast = (type, message) => {
+    setToast({ show: true, type, message });
+    setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
   };
 
-  const handleDetailClick = (report) => {
-    setSelectedReport(report);
-    setShowDetailModal(true);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Paid":
+        return "bg-green-100 text-green-600";
+      case "Cancel":
+        return "bg-red-100 text-red-500";
+      default:
+        return "bg-orange-100 text-orange-500";
+    }
   };
 
-  const handleCancelConfirm = () => {
-    setShowCancelModal(false);
-    alert("Reservation canceled successfully!");
+  const getToastColor = (type) => {
+    switch (type) {
+      case "success":
+        return "bg-green-600";
+      case "error":
+        return "bg-red-600";
+      default:
+        return "bg-gray-600";
+    }
+  };
+
+  const handleConfirmYes = () => {
+    setConfirmOpen(false);
+    showToast("success", "Your reservation successfully canceled");
+  };
+
+  const openDetail = (row) => {
+    setDetailData(row);
+    setDetailOpen(true);
+  };
+
+  const closeDetail = () => {
+    setDetailData(null);
+    setDetailOpen(false);
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSearch = () => {
+    const filterStart = filters.startDate ? new Date(filters.startDate) : null;
+    let filterEnd = filters.endDate ? new Date(filters.endDate) : null;
+
+    if (filterEnd) {
+      filterEnd.setHours(23, 59, 59, 999);
+    }
+
+    const results = DUMMY_DATA.filter((report) => {
+      const [month, day, year] = report.date.split("/").map(Number);
+      const reportDate = new Date(year, month - 1, day);
+
+      const dateMatch =
+        (!filterStart || reportDate >= filterStart) &&
+        (!filterEnd || reportDate <= filterEnd);
+
+      const typeMatch = !filters.roomType || report.type === filters.roomType;
+
+      const statusMatch = !filters.status || report.status === filters.status;
+
+      return dateMatch && typeMatch && statusMatch;
+    });
+
+    setFilteredData(results);
+    showToast("success", "Filter applied successfully");
+  };
+
+  // Fungsi download data hasil filter sebagai file teks
+  const downloadReport = () => {
+    if (filteredData.length === 0) {
+      showToast("error", "No data to download");
+      return;
+    }
+    const header = "Date,Room,Type,Status\n";
+    const content = filteredData
+      .map(({ date, room, type, status }) => `${date},${room},${type},${status}`)
+      .join("\n");
+    const blob = new Blob([header + content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Report-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    URL.revokeObjectURL(url);
+    showToast("success", "Download started");
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <header className="flex justify-between items-center border-b pb-4">
-        <h1 className="text-2xl font-bold">Report</h1>
-      </header>
-
-      {/* Filter Section */}
-      <div className="bg-white flex flex-wrap md:flex-nowrap justify-between items-center gap-4 border border-gray-200 rounded-xl px-5 py-4 shadow-sm">
-        <div className="flex flex-wrap md:flex-nowrap gap-3 items-center w-full">
-          {/* Start Date */}
-          <div className="relative w-full md:w-48">
+    <div className="p-6 bg-[#F9FAFB] min-h-screen">
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-xl shadow-md w-[1320px] h-[114px] top-[100px] left-[100px] p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div>
             <label
               htmlFor="startDate"
               className="block text-sm text-gray-600 mb-1"
             >
               Start Date
             </label>
-            <input
-              id="startDate"
-              type="date"
-              className="border border-gray-300 rounded-md pl-3 pr-3 py-2 text-gray-700 text-sm w-full focus:ring-1 focus:ring-[#FF7316] focus:outline-none"
+            <DateInput
+              selectedDate={filters.startDate ? new Date(filters.startDate) : null}
+              onChange={(date) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  startDate: date ? date.toISOString().slice(0, 10) : "",
+                }))
+              }
+              placeholder="Select start date"
             />
           </div>
 
-          {/* End Date */}
-          <div className="relative w-full md:w-48">
-            <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
+          <div>
+            <label
+              htmlFor="endDate"
+              className="block text-sm text-gray-600 mb-1"
+            >
               End Date
             </label>
-            <input
-              id="endDate"
-              type="date"
-              className="border border-gray-300 rounded-md pl-3 pr-3 py-2 text-gray-700 text-sm w-full focus:ring-1 focus:ring-[#FF7316] focus:outline-none"
+            <DateInput
+              selectedDate={filters.endDate ? new Date(filters.endDate) : null}
+              onChange={(date) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  endDate: date ? date.toISOString().slice(0, 10) : "",
+                }))
+              }
+              placeholder="Select end date"
             />
           </div>
 
-          {/* Room Type */}
-          <div className="relative w-full md:w-48">
+          <div>
             <label
               htmlFor="roomType"
               className="block text-sm text-gray-600 mb-1"
@@ -110,8 +214,10 @@ export default function Report() {
               Room Type
             </label>
             <select
-              id="roomType"
-              className="border border-gray-300 rounded-md pl-3 pr-3 py-2 text-gray-700 text-sm w-full focus:ring-1 focus:ring-[#FF7316] focus:outline-none"
+              name="roomType"
+              value={filters.roomType}
+              onChange={handleFilterChange}
+              className="border rounded-lg w-[257px] h-[48px] px-3 py- text-sm "
             >
               <option value="">Select Room Type</option>
               <option value="Small">Small</option>
@@ -120,14 +226,15 @@ export default function Report() {
             </select>
           </div>
 
-          {/* Status */}
-          <div className="relative w-full md:w-48">
+          <div>
             <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
               Status
             </label>
             <select
-              id="status"
-              className="border border-gray-300 rounded-md pl-3 pr-3 py-2 text-gray-700 text-sm w-full focus:ring-1 focus:ring-[#FF7316] focus:outline-none"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="border rounded-lg px-3 py-2 text-sm w-[257px] h-[48px]"
             >
               <option value="">Select Status</option>
               <option value="Booked">Booked</option>
@@ -135,157 +242,96 @@ export default function Report() {
               <option value="Cancel">Cancel</option>
             </select>
           </div>
+        </div>
 
-          {/* Buttons */}
-          <div className="flex items-end gap-3">
-            <button className="bg-[#FF7316] text-white px-4 py-2 rounded-md hover:bg-[#e76712] transition">
-              Search
-            </button>
-            <button className="border border-[#FF7316] text-[#FF7316] px-3 py-2 rounded-md hover:bg-[#FFF5EF] transition">
-              ⬇ Export
-            </button>
-          </div>
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={handleSearch}
+            className="bg-[#FF7316] text-white w-[102px] h-[48px] px-6 py-2 rounded-lg hover:bg-[#e86810] transition text-sm font-medium"
+          >
+            Search
+          </button>
+          <button
+            onClick={downloadReport}
+            className="flex items-center gap-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm"
+            aria-label="Download report"
+          >
+            <FiDownload size={18} />
+            
+          </button>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <table className="min-w-full text-sm text-gray-700">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="py-3 px-4 text-left font-semibold">
-                Date Reservation
-              </th>
-              <th className="py-3 px-4 text-left font-semibold">Room Name</th>
-              <th className="py-3 px-4 text-left font-semibold">Room Type</th>
-              <th className="py-3 px-4 text-left font-semibold">Status</th>
-              <th className="py-3 px-4 text-left font-semibold">Action</th>
+      {/* TABLE */}
+      <div className="bg-white rounded-xl shadow-md p-4">
+        <table className="min-w-full text-sm text-left border-collapse">
+          <thead>
+            <tr className="border-b text-gray-600">
+              <th className="p-3">Date Reservation</th>
+              <th className="p-3">Room Name</th>
+              <th className="p-3">Room Type</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {REPORT_DATA.map((item) => (
+            {filteredData.map((row, index) => (
               <tr
-                key={item.id}
-                className="border-b border-gray-100 hover:bg-gray-50 transition"
+                key={`${row.date}-${row.room}-${index}`}
+                className="border-b hover:bg-gray-50 transition"
               >
-                <td className="py-3 px-4">{item.date}</td>
-                <td className="py-3 px-4 font-medium">{item.roomName}</td>
-                <td className="py-3 px-4">{item.roomType}</td>
-                <td className="py-3 px-4">
+                <td className="p-3">{row.date}</td>
+                <td className="p-3">{row.room}</td>
+                <td className="p-3">{row.type}</td>
+                <td className="p-3">
                   <span
-                    className={`px-3 py-[3px] rounded-full text-xs font-medium ${getStatusClass(
-                      item.status
+                    className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      row.status
                     )}`}
                   >
-                    {item.status}
+                    {row.status}
                   </span>
                 </td>
-                <td className="py-3 px-4">
+                <td className="p-3 text-center">
                   <button
-                    onClick={() => handleDetailClick(item)}
-                    className="text-[#FF7316] hover:text-[#e76712]"
+                    onClick={() => openDetail(row)}
+                    className="text-[#FF7316] hover:text-[#e86610]"
+                    aria-label="View Details"
                   >
-                    <i className="ri-edit-box-line text-lg"></i>
+                    <FiEdit2 size={18} />
                   </button>
                 </td>
               </tr>
             ))}
+            {filteredData.length === 0 && (
+              <tr>
+                <td colSpan="5" className="p-3 text-center text-gray-500">
+                  No report data found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Cancel Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-[380px] text-center">
-            <div className="text-red-600 text-5xl mb-3">✖</div>
-            <p className="text-gray-800 font-medium mb-5">
-              Are you sure want to cancel reservation?
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setShowCancelModal(false)}
-                className="border border-gray-300 px-5 py-2 rounded-md hover:bg-gray-100 transition"
-              >
-                No
-              </button>
-              <button
-                onClick={handleCancelConfirm}
-                className="bg-red-600 text-white px-5 py-2 rounded-md hover:bg-red-700 transition"
-              >
-                Yes
-              </button>
-            </div>
-          </div>
+      {/* TOAST */}
+      {toast.show && (
+        <div
+          className={`fixed top-6 right-6 z-[60] px-4 py-2 rounded-lg shadow-lg text-white ${getToastColor(
+            toast.type
+          )}`}
+        >
+          {toast.message}
         </div>
       )}
 
-      {/* Detail Modal */}
-      {showDetailModal && selectedReport && (
-        <div className="fixed inset-0 bg-black/30 flex justify-end items-center z-50">
-          <div className="bg-white w-[400px] h-full shadow-xl overflow-y-auto p-6">
-            <div className="flex justify-between items-center border-b pb-3 mb-4">
-              <h2 className="font-semibold text-lg">Reservation Details</h2>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-5 text-sm">
-              <section>
-                <h3 className="font-semibold mb-2 text-gray-700">
-                  Room Details
-                </h3>
-                <p>Room Name: {selectedReport.roomName}</p>
-                <p>Room Type: {selectedReport.roomType}</p>
-                <p>Capacity: 10 people</p>
-                <p>Price/hour: Rp 100.000</p>
-              </section>
-
-              <section>
-                <h3 className="font-semibold mb-2 text-gray-700">
-                  Personal Data
-                </h3>
-                <p>Name: Angela Thomas</p>
-                <p>No.Hp: 085 123 456 789</p>
-                <p>Company: PT Maju Jaya</p>
-                <p>Reservation Date: {selectedReport.date}</p>
-                <p>Participants: 8 people</p>
-              </section>
-
-              <section>
-                <h3 className="font-semibold mb-2 text-gray-700">
-                  Snack Details
-                </h3>
-                <p>Snack Category: Lunch</p>
-                <p>Package: Lunch Package 1 - Rp 20.000/box</p>
-              </section>
-
-              <section>
-                <h3 className="font-semibold mb-2 text-gray-700">Total</h3>
-                <p>Room: Rp 200.000</p>
-                <p>Snack: Rp 160.000</p>
-                <p className="font-bold text-right text-lg">Rp 360.000</p>
-              </section>
-
-              <section className="flex justify-between mt-6">
-                <button
-                  onClick={() => handleCancelClick(selectedReport)}
-                  className="border border-red-500 text-red-600 px-4 py-2 rounded-md hover:bg-red-50 transition"
-                >
-                  Cancel Reservation
-                </button>
-                <button className="bg-[#FF7316] text-white px-5 py-2 rounded-md hover:bg-[#e76712] transition">
-                  Pay
-                </button>
-              </section>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODALS */}
+      <ModalReportDetail open={detailOpen} onClose={closeDetail} data={detailData} />
+      <ModalConfirmCancel
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmYes}
+      />
     </div>
   );
 }

@@ -5,8 +5,9 @@ import Reservation from "./pagesAdmin/Reservation";
 import Rooms from "./pagesAdmin/Rooms";
 import Report from "./pagesAdmin/Report";
 import Setting from "./pagesAdmin/Setting";
-import Login from "@/pagesAdmin/Login";
-import Register from "@/pagesAdmin/Register";
+import Login from "./pagesAdmin/Login";
+import Register from "./pagesAdmin/Register";
+import ResetPassword from './pagesAdmin/ResetPassword';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         {/* Login & Register */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Dashboard Layout */}
         <Route element={<DashboardLayout />}>

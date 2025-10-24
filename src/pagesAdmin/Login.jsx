@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import meetingImg from "../assets/meeting.png";
 
+
 export default function Login() {
   const navigate = useNavigate();
   const [remember, setRemember] = useState(false);
@@ -13,7 +14,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex   bg-gray-50">
+    <div className="relative min-h-screen flex bg-gray-50">
       <div className="absolute inset-0">
         <img
           src={meetingImg}
@@ -22,10 +23,7 @@ export default function Login() {
         />
         <div className="absolute inset-0 bg-black/30" />
       </div>
-
-      <div
-        className="relative bg-white w-[600px] h-[644px] left-[120px] top-[50px] rounded-[20px] shadow-xl border border-gray-200 radius-20 p-8">
-        
+      <div className="relative bg-white w-[600px] h-[644px] left-[120px] top-[50px] rounded-[20px] shadow-xl border border-gray-200 radius-20 p-8">
         <div className="flex justify-center items-center gap-3 mb-6">
           <div className="w-[50px] h-[50px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold text-lg">
             E
@@ -34,14 +32,12 @@ export default function Login() {
             E-Meeting
           </span>
         </div>
-
         <h2 className="text-[38px] md:text-[36px] font-bold text-center text-gray-800">
           Welcome Back!
         </h2>
         <p className="text-[14px] text-center text-gray-500 mb-8">
           Please enter your username and password here
         </p>
-
         <form onSubmit={handleSubmit} className="flex flex-col">
           <label
             htmlFor="username"
@@ -69,7 +65,6 @@ export default function Login() {
             required
             className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316]"
           />
-
           <div className="flex items-center justify-between mt-3 mb-6">
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input
@@ -80,16 +75,16 @@ export default function Login() {
               />
               <span>Remember me</span>
             </label>
-
-            <button
-              type="button"
-              className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400"
-              onClick={() => alert("Redirect to reset password page")}
-            >
-              Forgot Password?
-            </button>
+            {/* Dua link (Reset Password dan Register) sama-sama berjalan */}
+            <div className="flex gap-3">
+              <Link
+                to="/reset-password"
+                className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </div>
-
           {/* Tombol Login */}
           <button
             type="submit"
@@ -98,7 +93,6 @@ export default function Login() {
             Login
           </button>
         </form>
-
         <p className="text-[13px] text-center text-gray-600 mt-6">
           Don’t have an account?{" "}
           <Link

@@ -2,7 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
-
+import ResetPassword from "@/pagesAdmin/ResetPassword";
+import NewPassword from "@/pagesAdmin/NewPassword";
 import Login from "@/pagesAdmin/Login";
 import Register from "@/pagesAdmin/Register";
 import DashboardLayout from "@/pagesAdmin/DashboardLayout";
@@ -19,6 +20,8 @@ const router = createBrowserRouter([
   { path: "/", element: <Login /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { path: "/reset-password", element: <ResetPassword /> },
+  { path: "/new-password", element: <NewPassword /> },
 
   {
     path: "/",

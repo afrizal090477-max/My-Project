@@ -63,23 +63,23 @@ export default function Setting() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-6xl mx-auto">
+      <div className="w-[1320px] h-[622px] top-[100px] left-[100px] bg-white  shadow-md p-8 ">
+          <h2 className="text-xl font-semibold text-gray-700">My Account</h2>
         {/* My Account Section */}
         <div className="flex items-center gap-4 mb-8">
           <img
             src={photo}
             alt="User"
-            className="w-20 h-20 rounded-full object-cover border-2 border-orange-400"
+            className="w-[100px] h-[100px] rounded-full object-cover border-2 border-orange-400"
           />
           <div>
-            <h2 className="text-xl font-semibold text-gray-700">My Account</h2>
 
             {/* Tombol Change Picture hanya muncul saat mode edit */}
             {isEditing && (
               <>
                 <button
                   onClick={handleChangePicture}
-                  className="mt-2 bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600 transition"
+                  className="mt-2 w-[106px] h-[34px] bg-orange-500 text-white px-4 py-2 rounded-md !text-xs font-medium hover:bg-orange-600 transition"
                 >
                   Change Picture
                 </button>
@@ -98,7 +98,7 @@ export default function Setting() {
         {/* Form */}
         <div className="space-y-6">
           {/* Row 1: Email - Username - Role */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 w-[1270px] h-[74px] gap-[20px]">
             {/* Email */}
             <div>
               <label
@@ -114,7 +114,7 @@ export default function Setting() {
                 value={formData.email}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full border ${
+                className={`w-[410px] h-[48px] border ${
                   isEditing ? "border-orange-400" : "border-gray-300"
                 } rounded-lg px-3 py-2 focus:outline-none ${
                   isEditing && "focus:ring-2 focus:ring-orange-400"
@@ -137,7 +137,7 @@ export default function Setting() {
                 value={formData.username}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full border ${
+                className={`w-[410px] h-[48px] border ${
                   isEditing ? "border-orange-400" : "border-gray-300"
                 } rounded-lg px-3 py-2 focus:outline-none ${
                   isEditing && "focus:ring-2 focus:ring-orange-400"
@@ -159,13 +159,13 @@ export default function Setting() {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-[410px] h-[48px] border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                   <option>Admin</option>
                   <option>User</option>
                 </select>
               ) : (
-                <p className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 bg-gray-50">
+                <p className="w-[410px] h-[48px] border border-gray-300 rounded-lg px-3 py-2 text-gray-700 bg-gray-50">
                   {formData.role}
                 </p>
               )}
@@ -173,7 +173,7 @@ export default function Setting() {
           </div>
 
           {/* Row 2: Status - Language */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 w-[840px] h-[74px] gap-[20px] ">
             {/* Status */}
             <div>
               <label
@@ -189,7 +189,7 @@ export default function Setting() {
                 value={formData.status}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full border ${
+                className={`w-[410px] h-[48px] border ${
                   isEditing ? "border-orange-400" : "border-gray-300"
                 } rounded-lg px-3 py-2 focus:outline-none ${
                   isEditing && "focus:ring-2 focus:ring-orange-400"
@@ -211,7 +211,7 @@ export default function Setting() {
                 value={formData.language}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full border ${
+                className={`w-[410px] h-[48px] border ${
                   isEditing ? "border-orange-400" : "border-gray-300"
                 } rounded-lg px-3 py-2 bg-white focus:outline-none ${
                   isEditing && "focus:ring-2 focus:ring-orange-400"
@@ -238,7 +238,7 @@ export default function Setting() {
               value={formData.password}
               disabled={!isEditing}
               onChange={handleChange}
-              className={`w-full border ${
+              className={`w-[410px] h-[48px] border ${
                 isEditing ? "border-orange-400" : "border-gray-300"
               } rounded-lg px-3 py-2 focus:outline-none ${
                 isEditing && "focus:ring-2 focus:ring-orange-400"
@@ -248,10 +248,10 @@ export default function Setting() {
         </div>
 
         {/* Tombol Simpan / Edit */}
-        <div className="flex justify-end mt-8">
+        <div className="flex justify-start mt-8">
           <button
             onClick={handleToggleEdit}
-            className="px-6 py-3 font-semibold rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
+            className="px-6 py-3 w-[133px] h-[48px] font-semibold rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors duration-300"
           >
             {isEditing ? "Save Changes" : "Edit"}
           </button>

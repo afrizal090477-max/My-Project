@@ -8,6 +8,7 @@ import Setting from "./pagesAdmin/Setting";
 import Login from "./pagesAdmin/Login";
 import Register from "./pagesAdmin/Register";
 import ResetPassword from './pagesAdmin/ResetPassword';
+import History from "./pagesAdmin/History";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/history" element={<History />} />
 
         {/* Dashboard Layout */}
         <Route element={<DashboardLayout />}>

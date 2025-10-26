@@ -1,10 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FiEdit2, FiUsers, FiTag } from "react-icons/fi";
-import RoomsImage from "../assets/Rooms.png"; // 👈 Import image
+import { FiUsers, FiTag, FiCalendar } from "react-icons/fi";
+import RoomsImage from "../assets/Rooms.png";
 
-
-function RoomCard({ room, onEdit }) {
+function RoomCardUser({ room, onBook }) {
   const formatRupiah = (number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -13,8 +12,6 @@ function RoomCard({ room, onEdit }) {
     }).format(number);
   };
 
-
-  // Bersihkan nested ternary
   let statusColor;
   if (room.status === "Available") {
     statusColor = "bg-green-500";
@@ -24,33 +21,21 @@ function RoomCard({ room, onEdit }) {
     statusColor = "bg-yellow-500";
   }
 
-
-  // 👇 Gunakan image lokal sebagai default
   const imageUrl = room.image || RoomsImage;
-
 
   return (
     <article
       className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl"
       aria-label={`Kartu ruangan ${room.name}`}
     >
-      {/* === Status & Edit Button === */}
-      <div className="absolute top-2 right-2 flex space-x-2 z-10">
+      {/* === Status Badge === */}
+      <div className="absolute top-2 right-2 z-10">
         <span
           className={`${statusColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
         >
           {room.status}
         </span>
-        <button
-          type="button"
-          onClick={() => onEdit(room)}
-          className="bg-white text-gray-700 p-2 rounded-full shadow-md opacity-80 hover:opacity-100 hover:text-blue-600 transition"
-          title={`Edit ${room.name}`}
-        >
-          <FiEdit2 size={16} />
-        </button>
       </div>
-
 
       {/* === Image === */}
       <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
@@ -62,13 +47,11 @@ function RoomCard({ room, onEdit }) {
         />
       </div>
 
-
       {/* === Content === */}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
           {room.name}
         </h3>
-
 
         <div className="flex items-center text-sm text-gray-600 mb-2">
           <FiUsers
@@ -79,23 +62,34 @@ function RoomCard({ room, onEdit }) {
           <span>{room.capacity} people</span>
         </div>
 
-
         <div className="flex items-center text-sm text-gray-600 mb-3">
           <FiTag className="mr-2 text-green-500" size={16} aria-hidden="true" />
           <span>{room.type} Type</span>
         </div>
 
-
-        <p className="text-xl font-bold text-orange-500">
+        <p className="text-xl font-bold text-orange-500 mb-3">
           {formatRupiah(room.price)} / hour
         </p>
+
+        {/* === Button Book Now === */}
+        <button
+          onClick={() => onBook(room)}
+          disabled={room.status === "Booked"}
+          className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-semibold transition ${
+            room.status === "Booked"
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-orange-500 text-white hover:bg-orange-600"
+          }`}
+        >
+          <FiCalendar size={16} />
+          {room.status === "Booked" ? "Not Available" : "Book Now"}
+        </button>
       </div>
     </article>
   );
 }
 
-
-RoomCard.propTypes = {
+RoomCardUser.propTypes = {
   room: PropTypes.shape({
     name: PropTypes.string.isRequired,
     type: PropTypes.string,
@@ -104,8 +98,7 @@ RoomCard.propTypes = {
     status: PropTypes.string,
     image: PropTypes.string,
   }).isRequired,
-  onEdit: PropTypes.func.isRequired,
+  onBook: PropTypes.func.isRequired,
 };
 
-
-export default React.memo(RoomCard);
+export default React.memo(RoomCardUser);

@@ -26,23 +26,17 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      // Simulasi request sukses: email ditemukan, email reset terkirim
+      // Simulasi proses reset sukses
       setTimeout(() => {
         setLoading(false);
         setMessage({
           type: "success",
           text: "Permintaan reset password berhasil! Silakan cek email Anda.",
         });
-        // Redirect ke 'new password' setelah beberapa detik
         setTimeout(() => {
           navigate("/new-password");
-        }, 1500);
+        }, 1600);
       }, 1200);
-
-      // Jika sudah terhubung ke backend:
-      // const response = await fetch(API_ENDPOINT, { ... });
-      // if (response.ok) { ...navigate("/new-password") }
-      // else { setMessage({ type: "error", text: "Email tidak ditemukan..." }) }
     } catch (error) {
       console.error(error);
       setMessage({
@@ -54,53 +48,79 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 relative">
-      <div className="absolute inset-0 z-0">
-        {/* Ganti src background jika ingin yang lain */}
-        <img
-          src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/30"></div>
-      </div>
-      <form
-        onSubmit={handleSubmit}
-        className="relative z-10 bg-white rounded-[20px] shadow-xl p-12 w-[380px] flex flex-col items-center"
-        autoComplete="off"
-      >
-        <Logo />
-        <h2 className="mt-2 font-bold text-[28px] text-center">Reset Password</h2>
-        <p className="text-[13px] text-gray-500 mb-7 text-center">
-          Please enter your registered email here!
-        </p>
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] mb-5 bg-gray-50"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold py-3 rounded-lg transition mb-3"
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Background image */}
+      <img
+        src="/meeting.png"
+        alt="meeting"
+        className="absolute top-0 left-0 w-full h-full object-cover z-0"
+        style={{ minWidth: 1536, minHeight: 1024 }}
+      />
+      <div className="absolute inset-0 bg-black/40 z-10"></div>
+
+      {/* Form */}
+      <div className="relative z-20 min-h-screen w-full">
+        <form
+          onSubmit={handleSubmit}
+          className="absolute bg-white rounded-[20px] shadow-xl border border-gray-200 flex flex-col items-center"
+          style={{
+            left: 120,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 600,
+            height: 644,
+            maxWidth: "calc(100vw - 140px)",
+            maxHeight: "96vh",
+            padding: 48
+          }}
+          autoComplete="off"
         >
-          {loading ? "Memproses ..." : "Submit"}
-        </button>
-        {message.text && (
-          <div
-            className={`mt-1 w-full text-center text-sm font-medium ${
-              message.type === "success"
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-            role={message.type === "success" ? "status" : "alert"}
-          >
-            {message.text}
+          <div className="flex flex-col items-center justify-center w-full mb-8">
+            <Logo />
+            <h2 className="w-full mt-3 font-bold text-[32px] text-center">
+              Reset Password
+            </h2>
+            <p className="w-full text-[15px] text-gray-500 text-center mt-1">
+              Please enter your registered email here!
+            </p>
           </div>
-        )}
-      </form>
+          {/* ------ FIELD WRAPPER UNTUK LABEL+INPUT ------ */}
+          <div className="w-full max-w-[400px] flex flex-col items-start mb-5">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700 mb-1"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Email"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-gray-50"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          {/* ------ END FIELD WRAPPER ------ */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full max-w-[400px] h-[48px] bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold py-3 rounded-lg transition mb-3"
+          >
+            {loading ? "Memproses ..." : "Submit"}
+          </button>
+          {message.text && (
+            <div
+              className={`mt-1 w-full text-center text-sm font-medium ${
+                message.type === "success" ? "text-green-600" : "text-red-600"
+              }`}
+              role={message.type === "success" ? "status" : "alert"}
+            >
+              {message.text}
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

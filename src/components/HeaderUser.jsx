@@ -11,7 +11,7 @@ const HeaderUser = () => {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("role");
-    navigate("/user/login");
+    navigate("/login");
   };
 
   // (Nanti data user bisa diambil dari context/auth Redux, untuk sementara manual)
@@ -33,7 +33,7 @@ const HeaderUser = () => {
         <img
           src={user.photo}
           alt="User Avatar"
-          className="w-10 h-10 rounded-full object-cover"
+          className="w-[50px] h-[50px] rounded-full "
         />
         <div className="text-left">
           <p className="text-sm font-medium">{user.name}</p>

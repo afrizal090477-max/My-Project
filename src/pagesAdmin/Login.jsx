@@ -1,107 +1,136 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import meetingImg from "../assets/meeting.png";
-
+import Logo from "../components/Logo"; // pastikan path benar
 
 export default function Login() {
   const navigate = useNavigate();
   const [remember, setRemember] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    localStorage.setItem("isLoggedIn", "true");
-    navigate("/dashboard");
+    if (email === "admin@email.com") {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("role", "admin");
+      navigate("/dashboard");
+    } else if (email.endsWith("@email.com")) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("role", "user");
+      navigate("/user/room-reservation");
+    } else {
+      setMessage("Email tidak dikenali! Gunakan admin@email.com atau user@email.com");
+    }
   };
 
   return (
-    <div className="relative min-h-screen flex bg-gray-50">
-      <div className="absolute inset-0">
-        <img
-          src={meetingImg}
-          alt="Meeting Room"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
-      <div className="relative bg-white w-[600px] h-[644px] left-[120px] top-[50px] rounded-[20px] shadow-xl border border-gray-200 radius-20 p-8">
-        <div className="flex justify-center items-center gap-3 mb-6">
-          <div className="w-[50px] h-[50px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold text-lg">
-            E
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Background image */}
+      <img
+        src="/meeting.png"
+        alt="Meeting"
+        className="absolute top-0 left-0 w-full h-full object-cover z-0"
+        style={{ minWidth: 1536, minHeight: 1024 }}
+      />
+      <div className="absolute inset-0 bg-black/30 z-10" />
+
+      {/* Wrapper for correct vertical alignment */}
+      <div className="relative z-20 min-h-screen w-full">
+        {/* Main Form Box */}
+        <div
+          className="absolute rounded-[20px] shadow-xl bg-white border border-gray-200"
+          style={{
+            left: 120,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 600,
+            height: 644,
+            maxWidth: "calc(100vw - 140px)",
+            maxHeight: "96vh",
+            padding: 48,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center"
+          }}
+        >
+          {/* Centered Logo & Title */}
+          <div className="flex flex-col items-center justify-center w-full mb-8">
+            <Logo />
+            <h2 className="font-bold text-[32px] text-gray-800 w-full text-center mt-3">
+              Welcome Back!
+            </h2>
+            <p className="text-[15px] text-gray-500 w-full text-center mt-1">
+              Please enter your email and password here
+            </p>
           </div>
-          <span className="text-[20px] font-semibold bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent">
-            E-Meeting
-          </span>
-        </div>
-        <h2 className="text-[38px] md:text-[36px] font-bold text-center text-gray-800">
-          Welcome Back!
-        </h2>
-        <p className="text-[14px] text-center text-gray-500 mb-8">
-          Please enter your username and password here
-        </p>
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          <label
-            htmlFor="username"
-            className="text-sm font-medium text-gray-700 mb-1"
-          >
-            Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            placeholder="Enter your username"
-            required
-            className="block w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316]"
-          />
-          <label
-            htmlFor="password"
-            className="text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            required
-            className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316]"
-          />
-          <div className="flex items-center justify-between mt-3 mb-6">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 text-[#FF7316] border-gray-300 rounded focus:ring-[#FF7316]"
-              />
-              <span>Remember me</span>
+
+          <form onSubmit={handleSubmit} className="flex flex-col">
+            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">
+              Email
             </label>
-            {/* Dua link (Reset Password dan Register) sama-sama berjalan */}
-            <div className="flex gap-3">
-              <Link
-                to="/reset-password"
-                className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400"
-              >
-                Forgot Password?
-              </Link>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+            <label htmlFor="password" className="text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+            <div className="flex items-center justify-between mt-3 mb-6">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="w-4 h-4 text-[#FF7316] border-gray-300 rounded focus:ring-[#FF7316]"
+                />
+                <span>Remember me</span>
+              </label>
+              <div>
+                <Link
+                  to="/reset-password"
+                  className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400 transition"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
-          </div>
-          {/* Tombol Login */}
-          <button
-            type="submit"
-            className="w-full h-[48px] bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg transition"
-          >
-            Login
-          </button>
-        </form>
-        <p className="text-[13px] text-center text-gray-600 mt-6">
-          Don’t have an account?{" "}
-          <Link
-            to="/register"
-            className="text-[#FF7316] font-medium hover:underline"
-          >
-            Register
-          </Link>
-        </p>
+            <button
+              type="submit"
+              className="w-full h-[48px] bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg transition text-lg"
+            >
+              Login
+            </button>
+            {message && (
+              <div className="mt-3 text-red-600 text-center text-sm">{message}</div>
+            )}
+          </form>
+          <p className="text-[14px] text-center text-gray-600 mt-6">
+            Don’t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-[#FF7316] font-medium hover:underline"
+            >
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

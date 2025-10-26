@@ -44,18 +44,90 @@ export default function UserHistory() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const DUMMY_DATA = [
-    { id: 1, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
-    { id: 2, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
-    { id: 3, date: "02/10/2024", room: "Tulip Room", type: "Medium", status: "Paid" },
-    { id: 4, date: "03/15/2024", room: "Daisy", type: "Large", status: "Cancel" },
-    { id: 5, date: "04/01/2024", room: "Bluebell", type: "Small", status: "Paid" },
-    { id: 6, date: "04/10/2024", room: "Camellia", type: "Medium", status: "Paid" },
-    { id: 7, date: "04/11/2024", room: "Bluebell", type: "Large", status: "Booked" },
-    { id: 8, date: "04/12/2024", room: "Bluebell", type: "Large", status: "Paid" },
-    { id: 9, date: "05/01/2024", room: "Tulip Room", type: "Small", status: "Paid" },
-    { id: 10, date: "05/02/2024", room: "Tulip Room", type: "Small", status: "Cancel" },
-    { id: 11, date: "05/03/2024", room: "Aster Room", type: "Small", status: "Paid" },
-    { id: 12, date: "05/04/2024", room: "Aster Room", type: "Small", status: "Paid" },
+    {
+      id: 1,
+      date: "01/10/2024",
+      room: "Aster Room",
+      type: "Small",
+      status: "Booked",
+    },
+    {
+      id: 2,
+      date: "01/10/2024",
+      room: "Aster Room",
+      type: "Small",
+      status: "Paid",
+    },
+    {
+      id: 3,
+      date: "02/10/2024",
+      room: "Tulip Room",
+      type: "Medium",
+      status: "Paid",
+    },
+    {
+      id: 4,
+      date: "03/15/2024",
+      room: "Daisy",
+      type: "Large",
+      status: "Cancel",
+    },
+    {
+      id: 5,
+      date: "04/01/2024",
+      room: "Bluebell",
+      type: "Small",
+      status: "Paid",
+    },
+    {
+      id: 6,
+      date: "04/10/2024",
+      room: "Camellia",
+      type: "Medium",
+      status: "Paid",
+    },
+    {
+      id: 7,
+      date: "04/11/2024",
+      room: "Bluebell",
+      type: "Large",
+      status: "Booked",
+    },
+    {
+      id: 8,
+      date: "04/12/2024",
+      room: "Bluebell",
+      type: "Large",
+      status: "Paid",
+    },
+    {
+      id: 9,
+      date: "05/01/2024",
+      room: "Tulip Room",
+      type: "Small",
+      status: "Paid",
+    },
+    {
+      id: 10,
+      date: "05/02/2024",
+      room: "Tulip Room",
+      type: "Small",
+      status: "Cancel",
+    },
+    {
+      id: 11,
+      date: "05/03/2024",
+      room: "Aster Room",
+      type: "Small",
+      status: "Paid",
+    },
+    {
+      id: 12,
+      date: "05/04/2024",
+      room: "Aster Room",
+      type: "Small",
+      status: "Paid",
+    },
   ];
 
   const filteredData = DUMMY_DATA.filter((item) => {
@@ -139,18 +211,26 @@ export default function UserHistory() {
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] p-4 mb-6 flex gap-4 items-end justify-between">
         <div className="flex gap-4 flex-1 items-end">
           <div>
-            <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
+            <label
+              htmlFor="startDate"
+              className="block text-sm text-gray-600 mb-1"
+            >
               Start Date
             </label>
             <DateInput
               id="startDate"
               selectedDate={filters.startDate}
-              onChange={(date) => setFilters((f) => ({ ...f, startDate: date }))}
+              onChange={(date) =>
+                setFilters((f) => ({ ...f, startDate: date }))
+              }
               placeholder="Start date"
             />
           </div>
           <div>
-            <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
+            <label
+              htmlFor="endDate"
+              className="block text-sm text-gray-600 mb-1"
+            >
               End Date
             </label>
             <DateInput
@@ -161,7 +241,10 @@ export default function UserHistory() {
             />
           </div>
           <div>
-            <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
+            <label
+              htmlFor="roomType"
+              className="block text-sm text-gray-600 mb-1"
+            >
               Room Type
             </label>
             <select
@@ -178,7 +261,10 @@ export default function UserHistory() {
             </select>
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
+            <label
+              htmlFor="status"
+              className="block text-sm text-gray-600 mb-1"
+            >
               Status
             </label>
             <select
@@ -204,10 +290,18 @@ export default function UserHistory() {
           </button>
           <button
             onClick={handleDownload}
-            className="flex items-center justify-center w-[48px] h-[48px] bg-[#F71F1F] hover:bg-red-600 rounded-lg"
+            className="
+            w-[48px] h-[48px] flex items-center justify-center
+            border-2 !border-orange-500 rounded-xl
+            bg-transparent
+            transition
+            group
+            hover:border-orange-600
+            focus:outline-none"
+        
             title="Download"
           >
-            <FiDownload size={22} className="text-white" />
+            <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
           </button>
         </div>
       </div>
@@ -231,7 +325,9 @@ export default function UserHistory() {
                 <td className="p-3">{row.room}</td>
                 <td className="p-3">{row.type}</td>
                 <td className="p-3">
-                  <span className={getStatusStyle(row.status)}>{row.status}</span>
+                  <span className={getStatusStyle(row.status)}>
+                    {row.status}
+                  </span>
                 </td>
                 <td className="p-3 text-center">
                   <button

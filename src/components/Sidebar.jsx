@@ -24,7 +24,7 @@ const Sidebar = () => {
     { id: "reservation", name: "Reservation Schedule", path: "/reservation", icon: <FaClipboardList /> },
     { id: "room", name: "Room", path: "/room", icon: <FaBed /> },
     { id: "report", name: "Report", path: "/report", icon: <FaFileAlt /> },
-    { id: "settings", name: "Settings", path: "/settings", icon: <FaCog /> },
+    { id: "setting", name: "Setting", path: "/setting", icon: <FaCog /> },
   ];
 
   const handleNavigation = (path, name) => {

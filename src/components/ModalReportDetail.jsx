@@ -30,38 +30,57 @@ export default function ModalReportDetail({ open, onClose, data }) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-4 text-sm">
           {data ? (
             <>
-              {/* Room Details */}
               <div>
                 <h3 className="font-semibold text-base mb-2">Room Details</h3>
-                <p><strong>Room Name:</strong> {data.room}</p>
-                <p><strong>Room Type:</strong> {data.type}</p>
-                <p><strong>Capacity:</strong> 10 people</p>
-                <p><strong>Price/hour:</strong> Rp 100.000</p>
+                <p>
+                  <strong>Room Name:</strong> {data.room}
+                </p>
+                <p>
+                  <strong>Room Type:</strong> {data.type}
+                </p>
+                <p>
+                  <strong>Capacity:</strong> 10 people
+                </p>
+                <p>
+                  <strong>Price/hour:</strong> Rp 100.000
+                </p>
               </div>
 
-              {/* Personal Data */}
               <div>
                 <h3 className="font-semibold text-base mb-2">Personal Data</h3>
-                <p><strong>Name:</strong> Angela Thomas</p>
-                <p><strong>No. HP:</strong> 0851 2345 6789</p>
-                <p><strong>Company:</strong> PT Maju Jaya</p>
-                <p><strong>Reservation Date:</strong> {data.date}</p>
-                <p><strong>Duration:</strong> 2 hours</p>
-                <p><strong>Total Participants:</strong> 8</p>
+                <p>
+                  <strong>Name:</strong> Angela Thomas
+                </p>
+                <p>
+                  <strong>No. HP:</strong> 0851 2345 6789
+                </p>
+                <p>
+                  <strong>Company:</strong> PT Maju Jaya
+                </p>
+                <p>
+                  <strong>Reservation Date:</strong> {data.date}
+                </p>
+                <p>
+                  <strong>Duration:</strong> 2 hours
+                </p>
+                <p>
+                  <strong>Total Participants:</strong> 8
+                </p>
               </div>
 
-              {/* Snack Details */}
               <div>
                 <h3 className="font-semibold text-base mb-2">Snack Details</h3>
-                <p><strong>Snack Category:</strong> Lunch</p>
-                <p><strong>Package:</strong> Lunch 1 - Rp 20.000/box</p>
+                <p>
+                  <strong>Snack Category:</strong> Lunch
+                </p>
+                <p>
+                  <strong>Package:</strong> Lunch 1 - Rp 20.000/box
+                </p>
               </div>
 
-              {/* Total */}
               <div className="border-t pt-4">
                 <h3 className="font-semibold text-base mb-2">Total</h3>
                 <p>
@@ -71,7 +90,6 @@ export default function ModalReportDetail({ open, onClose, data }) {
                 </p>
               </div>
 
-              {/* Action */}
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={onClose}
@@ -79,9 +97,7 @@ export default function ModalReportDetail({ open, onClose, data }) {
                 >
                   Cancel
                 </button>
-                <button
-                  className="w-1/2 py-2 rounded-lg bg-[#FF7316] text-white hover:bg-[#e76712]"
-                >
+                <button className="w-1/2 py-2 rounded-lg bg-[#FF7316] text-white hover:bg-[#e76712]">
                   Pay
                 </button>
               </div>

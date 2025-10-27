@@ -2,7 +2,7 @@ import React, { useState, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
-import ModalReportDetail from "@/components/ModalReportDetail"; // Pastikan ada!
+import ModalReportDetail from "@/components/ModalReportDetail";
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
@@ -107,7 +107,6 @@ export default function Report() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
 
-  // Filtered data
   const filteredData = DUMMY_DATA.filter((item) => {
     let valid = true;
     if (filters.startDate) {
@@ -195,7 +194,6 @@ export default function Report() {
 
   return (
     <div className="p-8 bg-[#F9FAFB] min-h-screen">
-      {/* FILTER BAR */}
       <div className="bg-white rounded-xl shadow-md max-w-[1320px] min-h-[114px] mx-auto p-6 mb-6">
         <div className="flex gap-6 items-end">
           <div className="flex flex-col w-[257px]">
@@ -285,7 +283,6 @@ export default function Report() {
               group
               hover:border-orange-600
               focus:outline-none"
-  
               title="Download"
             >
               <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
@@ -294,7 +291,6 @@ export default function Report() {
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="bg-white rounded-xl shadow-md p-4 max-w-[1320px] mx-auto">
         <table className="min-w-full text-sm text-left border-collapse">
           <thead>
@@ -338,7 +334,6 @@ export default function Report() {
           </tbody>
         </table>
 
-        {/* Pagination & Show Entries */}
         <div className="flex flex-col md:flex-row items-center justify-between mt-4">
           <div className="mb-2 md:mb-0">
             <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">

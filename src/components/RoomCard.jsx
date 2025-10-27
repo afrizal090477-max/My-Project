@@ -1,8 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { FiEdit2, FiUsers, FiTag } from "react-icons/fi";
-import RoomsImage from "../assets/Rooms.png"; // 👈 Import image
-
+import RoomsImage from "../assets/Rooms.png";
 
 function RoomCard({ room, onEdit }) {
   const formatRupiah = (number) => {
@@ -12,7 +11,6 @@ function RoomCard({ room, onEdit }) {
       minimumFractionDigits: 0,
     }).format(number);
   };
-
 
   // Bersihkan nested ternary
   let statusColor;
@@ -24,17 +22,13 @@ function RoomCard({ room, onEdit }) {
     statusColor = "bg-yellow-500";
   }
 
-
-  // 👇 Gunakan image lokal sebagai default
   const imageUrl = room.image || RoomsImage;
-
 
   return (
     <article
       className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl"
       aria-label={`Kartu ruangan ${room.name}`}
     >
-      {/* === Status & Edit Button === */}
       <div className="absolute top-2 right-2 flex space-x-2 z-10">
         <span
           className={`${statusColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
@@ -51,8 +45,6 @@ function RoomCard({ room, onEdit }) {
         </button>
       </div>
 
-
-      {/* === Image === */}
       <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
         <img
           src={imageUrl}
@@ -62,13 +54,10 @@ function RoomCard({ room, onEdit }) {
         />
       </div>
 
-
-      {/* === Content === */}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
           {room.name}
         </h3>
-
 
         <div className="flex items-center text-sm text-gray-600 mb-2">
           <FiUsers
@@ -79,12 +68,10 @@ function RoomCard({ room, onEdit }) {
           <span>{room.capacity} people</span>
         </div>
 
-
         <div className="flex items-center text-sm text-gray-600 mb-3">
           <FiTag className="mr-2 text-green-500" size={16} aria-hidden="true" />
           <span>{room.type} Type</span>
         </div>
-
 
         <p className="text-xl font-bold text-orange-500">
           {formatRupiah(room.price)} / hour
@@ -93,7 +80,6 @@ function RoomCard({ room, onEdit }) {
     </article>
   );
 }
-
 
 RoomCard.propTypes = {
   room: PropTypes.shape({
@@ -106,6 +92,5 @@ RoomCard.propTypes = {
   }).isRequired,
   onEdit: PropTypes.func.isRequired,
 };
-
 
 export default React.memo(RoomCard);

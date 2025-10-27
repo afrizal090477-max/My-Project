@@ -11,7 +11,6 @@ export default function ModalConfirmCancel({ open, onClose, onConfirm }) {
       aria-labelledby="cancel-modal-title"
       aria-modal="true"
     >
-      {/* ✅ Backdrop pakai button transparan */}
       <button
         type="button"
         className="absolute inset-0 cursor-default bg-transparent border-none p-0 m-0"
@@ -29,9 +28,7 @@ export default function ModalConfirmCancel({ open, onClose, onConfirm }) {
           >
             Are you sure you want to cancel this reservation?
           </h2>
-          <p className="text-sm text-gray-500">
-            This action cannot be undone.
-          </p>
+          <p className="text-sm text-gray-500">This action cannot be undone.</p>
         </div>
 
         {/* Dummy input biar label warning hilang */}

@@ -1,5 +1,5 @@
 import React from "react";
-import UserPhoto from "../assets/JhonDoe.png"; // Path sesuai avatar user
+import UserPhoto from "../assets/JhonDoe.png";
 import LogoutIcon from "../assets/logout.png";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "../context/PageTitleContext";
@@ -23,12 +23,10 @@ const HeaderUser = () => {
 
   return (
     <header className="w-full bg-white border-b border-gray-200 flex items-center justify-between px-8 py-4 shadow-sm">
-      {/* Title dinamis dari PageTitleContext */}
       <h1 className="text-[22px] font-semibold font-roboto transition-all duration-300">
         {pageTitle}
       </h1>
 
-      {/* Bagian kanan: profile user dan logout */}
       <div className="flex items-center gap-4">
         <img
           src={user.photo}
@@ -40,7 +38,6 @@ const HeaderUser = () => {
           <p className="text-xs text-gray-500">{user.status}</p>
         </div>
 
-        {/* Logout Button */}
         <button
           onClick={handleLogout}
           className="ml-4 focus:outline-none"

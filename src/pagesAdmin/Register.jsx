@@ -13,7 +13,6 @@ function Register() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#bfc0c0] overflow-hidden">
-      {/* Background image */}
       <img
         src={meetingImg}
         alt="Meeting"
@@ -22,7 +21,6 @@ function Register() {
       />
       <div className="absolute inset-0 bg-black/30 z-10"></div>
 
-      {/* Form wrapper */}
       <div className="relative z-20 min-h-screen w-full">
         <div
           className="absolute bg-white shadow-2xl backdrop-blur-md border border-gray-200 rounded-[20px]"
@@ -37,10 +35,9 @@ function Register() {
             padding: 48,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
-          {/* Header center */}
           <div className="flex flex-col items-center justify-center w-full mb-8">
             <div className="flex items-center justify-center gap-3 mb-3">
               <div className="w-[50px] h-[50px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold text-xl shadow">

@@ -28,7 +28,6 @@ function RoomCardUser({ room, onBook }) {
       className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl"
       aria-label={`Kartu ruangan ${room.name}`}
     >
-      {/* === Status Badge === */}
       <div className="absolute top-2 right-2 z-10">
         <span
           className={`${statusColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
@@ -37,7 +36,6 @@ function RoomCardUser({ room, onBook }) {
         </span>
       </div>
 
-      {/* === Image === */}
       <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
         <img
           src={imageUrl}
@@ -47,7 +45,6 @@ function RoomCardUser({ room, onBook }) {
         />
       </div>
 
-      {/* === Content === */}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
           {room.name}
@@ -71,7 +68,6 @@ function RoomCardUser({ room, onBook }) {
           {formatRupiah(room.price)} / hour
         </p>
 
-        {/* === Button Book Now === */}
         <button
           onClick={() => onBook(room)}
           disabled={room.status === "Booked"}

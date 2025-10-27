@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  FaArrowLeft,
+  // FaArrowLeft,
   FaClipboardList,
   FaHistory,
   FaCog,
+  FaArrowRight,
 } from "react-icons/fa";
 import { usePageTitle } from "../context/PageTitleContext";
 
@@ -15,14 +16,14 @@ const SidebarUser = () => {
   const [activeMenu, setActiveMenu] = useState(location.pathname);
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
-  // Menu khusus user: sesuai kebutuhan Figma
+ 
   const menuItems = [
     { id: "reservation", name: "Room Reservation", path: "/user/room-reservation", icon: <FaClipboardList /> },
     { id: "history", name: "History", path: "/user/history", icon: <FaHistory /> },
     { id: "settings", name: "Setting", path: "/user/setting", icon: <FaCog /> },
   ];
 
-  // Untuk button back
+ 
   const handleGoBack = () => {
   if (globalThis.history.state && globalThis.history.state.idx > 0) {
     navigate(-1);
@@ -40,12 +41,12 @@ const SidebarUser = () => {
 
   return (
     <aside className="w-[80px] bg-white border-r border-gray-200 flex flex-col items-center py-8 space-y-10">
-      {/* Logo */}
+      
       <div className="w-[40px] h-[40px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold shadow-md">
         E
       </div>
 
-      {/* Tombol Go Back */}
+      
       <div className="relative">
         <button
           type="button"
@@ -54,7 +55,7 @@ const SidebarUser = () => {
           onMouseLeave={() => setHoveredMenu(null)}
           className="w-[48px] h-[48px] flex items-center justify-center"
         >
-          <FaArrowLeft
+          <FaArrowRight
             size={22}
             className={`transition-colors duration-300 ${
               hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"
@@ -68,7 +69,7 @@ const SidebarUser = () => {
         )}
       </div>
 
-      {/* Menu Navigasi */}
+      
       <nav className="flex flex-col items-center gap-6 mt-2">
         {menuItems.map((item) => {
           const isActive = activeMenu === item.path;

@@ -19,7 +19,10 @@ export default function NewPassword() {
       return;
     }
     if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "Password dan konfirmasi harus sama." });
+      setMessage({
+        type: "error",
+        text: "Password dan konfirmasi harus sama.",
+      });
       return;
     }
     if (!validatePassword(newPassword)) {
@@ -52,7 +55,6 @@ export default function NewPassword() {
 
   return (
     <div className="relative min-h-screen w-full  overflow-hidden">
-      {/* Background image */}
       <img
         src="/meeting.png"
         alt="meeting"
@@ -73,7 +75,7 @@ export default function NewPassword() {
             height: 644,
             maxWidth: "calc(100vw - 140px)",
             maxHeight: "96vh",
-            padding: 48
+            padding: 48,
           }}
           autoComplete="off"
         >
@@ -93,7 +95,7 @@ export default function NewPassword() {
               Masukkan password baru dan konfirmasi di bawah.
             </p>
           </div>
-          {/* NEW PASSWORD */}
+
           <div className="w-full max-w-[400px] flex flex-col items-start mb-4">
             <label
               htmlFor="newPassword"
@@ -110,7 +112,7 @@ export default function NewPassword() {
               onChange={(e) => setNewPassword(e.target.value)}
             />
           </div>
-          {/* CONFIRM PASSWORD */}
+
           <div className="w-full max-w-[400px] flex flex-col items-start mb-4">
             <label
               htmlFor="confirmPassword"
@@ -138,9 +140,7 @@ export default function NewPassword() {
           {message.text && (
             <div
               className={`mt-3 text-center font-medium w-full ${
-                message.type === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
+                message.type === "success" ? "text-green-600" : "text-red-600"
               }`}
               role={message.type === "success" ? "status" : "alert"}
             >

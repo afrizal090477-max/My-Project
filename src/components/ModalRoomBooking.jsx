@@ -18,8 +18,13 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.date || !formData.startTime || !formData.endTime || !formData.purpose) {
+
+    if (
+      !formData.date ||
+      !formData.startTime ||
+      !formData.endTime ||
+      !formData.purpose
+    ) {
       alert("Please fill all fields!");
       return;
     }
@@ -35,7 +40,6 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -43,28 +47,26 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
           <FiX size={24} />
         </button>
 
-        {/* Header */}
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Book {roomData?.name}
         </h2>
 
-        {/* Room Info */}
         <div className="bg-gray-50 p-3 rounded-lg mb-4">
           <p className="text-sm text-gray-600">
-            <strong>Type:</strong> {roomData?.type} | <strong>Capacity:</strong> {roomData?.capacity} people
+            <strong>Type:</strong> {roomData?.type} | <strong>Capacity:</strong>{" "}
+            {roomData?.capacity} people
           </p>
           <p className="text-lg font-bold text-orange-500 mt-1">
             {new Intl.NumberFormat("id-ID", {
               style: "currency",
               currency: "IDR",
               minimumFractionDigits: 0,
-            }).format(roomData?.price || 0)} / hour
+            }).format(roomData?.price || 0)}{" "}
+            / hour
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Date */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <FiCalendar className="inline mr-2" />
@@ -80,7 +82,6 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
             />
           </div>
 
-          {/* Start Time */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <FiClock className="inline mr-2" />
@@ -94,7 +95,6 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
             />
           </div>
 
-          {/* End Time */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <FiClock className="inline mr-2" />
@@ -108,7 +108,6 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
             />
           </div>
 
-          {/* Purpose */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Meeting Purpose
@@ -122,7 +121,6 @@ function ModalRoomBooking({ isOpen, onClose, onSubmit, roomData }) {
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3">
             <button
               type="button"

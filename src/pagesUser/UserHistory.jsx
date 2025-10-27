@@ -10,7 +10,7 @@ const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
     type="button"
     onClick={onClick}
     ref={ref}
-    className="flex items-center justify-between w-[257px] h-[48px] border !border-gray-300 rounded-[10px] px-[14px] bg-white text-left hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+    className="flex items-center justify-between w-[257px] h-[48px] border !border-gray-500 rounded-[10px] px-[14px] bg-white text-left hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
   >
     <span className={value ? "text-gray-700" : "text-gray-400"}>
       {value || placeholder}
@@ -207,7 +207,6 @@ export default function UserHistory() {
 
   return (
     <div className="p-6 bg-[#F9FAFB] min-h-screen">
-      {/* === FILTER BAR === */}
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] p-4 mb-6 flex gap-4 items-end justify-between">
         <div className="flex gap-4 flex-1 items-end">
           <div>
@@ -298,7 +297,6 @@ export default function UserHistory() {
             group
             hover:border-orange-600
             focus:outline-none"
-        
             title="Download"
           >
             <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
@@ -306,7 +304,6 @@ export default function UserHistory() {
         </div>
       </div>
 
-      {/* === TABEL === */}
       <div className="bg-white rounded-xl shadow-md p-4">
         <table className="min-w-full text-sm text-left border-collapse">
           <thead>
@@ -349,7 +346,6 @@ export default function UserHistory() {
           </tbody>
         </table>
 
-        {/* PAGINATION & SHOW ENTRIES */}
         <div className="flex flex-col md:flex-row items-center justify-between mt-3">
           <div className="mb-2 md:mb-0">
             <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">

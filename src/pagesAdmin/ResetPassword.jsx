@@ -49,7 +49,6 @@ export default function ResetPassword() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background image */}
       <img
         src="/meeting.png"
         alt="meeting"
@@ -58,7 +57,6 @@ export default function ResetPassword() {
       />
       <div className="absolute inset-0 bg-black/40 z-10"></div>
 
-      {/* Form */}
       <div className="relative z-20 min-h-screen w-full">
         <form
           onSubmit={handleSubmit}
@@ -71,7 +69,7 @@ export default function ResetPassword() {
             height: 644,
             maxWidth: "calc(100vw - 140px)",
             maxHeight: "96vh",
-            padding: 48
+            padding: 48,
           }}
           autoComplete="off"
         >
@@ -84,7 +82,7 @@ export default function ResetPassword() {
               Please enter your registered email here!
             </p>
           </div>
-          {/* ------ FIELD WRAPPER UNTUK LABEL+INPUT ------ */}
+
           <div className="w-full max-w-[400px] flex flex-col items-start mb-5">
             <label
               htmlFor="email"
@@ -101,7 +99,7 @@ export default function ResetPassword() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          {/* ------ END FIELD WRAPPER ------ */}
+
           <button
             type="submit"
             disabled={loading}

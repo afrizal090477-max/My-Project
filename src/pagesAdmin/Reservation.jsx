@@ -3,52 +3,73 @@ import ReservationForm from "@/components/ReservationForm";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
-import { ROOM_LIST } from "@/data/rooms"; // ✅ Import daftar 12 room
+import { ROOM_LIST } from "@/data/rooms";
 
 export default function Reservation() {
-  // === Data awal dengan 4 room berisi event ===
   const DEFAULT_ROOMS = [
     {
       name: "Aster Room",
       events: [
-        { company: "PT Maju Jaya", start: "13:00", end: "15:00", status: "Done" },
-        { company: "Organisasi Muslim Pusat", start: "13:00", end: "15:00", status: "Up Coming" },
+        {
+          company: "PT Maju Jaya",
+          start: "13:00",
+          end: "15:00",
+          status: "Done",
+        },
+        {
+          company: "Organisasi Muslim Pusat",
+          start: "13:00",
+          end: "15:00",
+          status: "Up Coming",
+        },
       ],
     },
     {
       name: "Bluebell Room",
       events: [
-        { company: "PT XYZ Corp", start: "10:00", end: "11:00", status: "In Progress" },
+        {
+          company: "PT XYZ Corp",
+          start: "10:00",
+          end: "11:00",
+          status: "In Progress",
+        },
       ],
     },
     {
       name: "Camellia Room",
       events: [
-        { company: "Alisa Company", start: "14:00", end: "15:00", status: "Up Coming" },
+        {
+          company: "Alisa Company",
+          start: "14:00",
+          end: "15:00",
+          status: "Up Coming",
+        },
       ],
     },
     {
       name: "Daisy Room",
       events: [
-        { company: "PT Lestari", start: "15:00", end: "18:00", status: "Up Coming" },
+        {
+          company: "PT Lestari",
+          start: "15:00",
+          end: "18:00",
+          status: "Up Coming",
+        },
       ],
     },
   ];
 
-  // === Gabungkan semua room ===
   const initialRooms = ROOM_LIST.map((room) => {
     const existing = DEFAULT_ROOMS.find((r) => r.name === room.name);
     return existing || { ...room, events: [] };
   });
 
-  // === State utama (agar bisa nambah event) ===
   const [roomsData, setRoomsData] = useState(initialRooms);
   const [showForm, setShowForm] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
 
-  // === Fungsi tambah event dari form ===
   const handleAddReservation = (newEvent) => {
     setRoomsData((prev) =>
       prev.map((room) => {
@@ -71,7 +92,6 @@ export default function Reservation() {
     );
   };
 
-  // === Notifikasi search ===
   const handleSearch = () => {
     if (!startDate || !endDate) {
       setToast({
@@ -79,7 +99,10 @@ export default function Reservation() {
         type: "error",
         message: "Pilih Start Date dan End Date terlebih dahulu!",
       });
-      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
+      setTimeout(
+        () => setToast({ visible: false, type: "", message: "" }),
+        3000
+      );
       return;
     }
     setToast({
@@ -90,7 +113,6 @@ export default function Reservation() {
     setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
   };
 
-  // === Format tanggal hari ini ===
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -98,33 +120,33 @@ export default function Reservation() {
     year: "numeric",
   });
 
-  // === Waktu timeline ===
-  const times = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, "0")}:00`);
+  const times = Array.from(
+    { length: 24 },
+    (_, i) => `${i.toString().padStart(2, "0")}:00`
+  );
 
-  // === Styling status ===
-  const getEventClass = (status) => ({
-    Done: "bg-gray-100 border border-gray-300",
-    "In Progress": "bg-green-50 border border-green-400",
-    "Up Coming": "bg-orange-50 border border-orange-400",
-  }[status] || "bg-white border border-gray-200");
+  const getEventClass = (status) =>
+    ({
+      Done: "bg-gray-100 border border-gray-300",
+      "In Progress": "bg-green-50 border border-green-400",
+      "Up Coming": "bg-orange-50 border border-orange-400",
+    }[status] || "bg-white border border-gray-200");
 
-  const getBadgeClass = (status) => ({
-    Done: "bg-gray-200 text-gray-600",
-    "In Progress": "bg-green-100 text-green-700",
-    "Up Coming": "bg-orange-100 text-orange-700",
-  }[status] || "bg-gray-50 text-gray-400");
+  const getBadgeClass = (status) =>
+    ({
+      Done: "bg-gray-200 text-gray-600",
+      "In Progress": "bg-green-100 text-green-700",
+      "Up Coming": "bg-orange-100 text-orange-700",
+    }[status] || "bg-gray-50 text-gray-400");
 
-  // === Toast warna ===
   let toastBg = "bg-gray-500";
 
-if (toast.type === "success") {
-  toastBg = "bg-green-500";
-} else if (toast.type === "error") {
-  toastBg = "bg-red-500";
-}
+  if (toast.type === "success") {
+    toastBg = "bg-green-500";
+  } else if (toast.type === "error") {
+    toastBg = "bg-red-500";
+  }
 
-
-  // === Render ===
   return (
     <div className="flex flex-col mb-1">
       {/* Toast */}
@@ -136,7 +158,6 @@ if (toast.type === "success") {
         </div>
       )}
 
-      {/* Filter Section */}
       <section className="w-[1320px] bg-white flex justify-between items-center gap-2 border border-gray-200 rounded-xl px-5 py-4 shadow-sm mb-1px">
         <div className="flex flex-wrap md:flex-nowrap gap-10 items-center">
           <p className="font-semibold text-gray-900">{today}</p>
@@ -175,12 +196,10 @@ if (toast.type === "success") {
         </button>
       </section>
 
-      {/* === Schedule Grid === */}
       <div
         className="relative bg-white border border-gray-200 shadow-sm rounded-xl overflow-auto"
-        style={{ width: "1320px", height: "770px", position: "relative",  }}
+        style={{ width: "1320px", height: "770px", position: "relative" }}
       >
-        {/* Time Labels */}
         <div
           className="absolute z-10 bg-white border-r border-dashed border-gray-200"
           style={{ top: 0, left: 0, width: "90px", height: "1440px" }}
@@ -202,7 +221,6 @@ if (toast.type === "success") {
           ))}
         </div>
 
-        {/* Room Columns */}
         <div
           className="absolute widht-[400px] left-[90px] top-0 border-l border-gray-200"
           style={{
@@ -213,18 +231,24 @@ if (toast.type === "success") {
           }}
         >
           {roomsData.map((room) => (
-            <div key={room.name} className="relative border-r border-dashed border-gray-200">
+            <div
+              key={room.name}
+              className="relative border-r border-dashed border-gray-200"
+            >
               <h2 className="font-semibold text-center py-3 border-b border-gray-200 text-gray-800">
                 {room.name}
               </h2>
               {room.events.map((ev) => {
                 const [sh, sm] = ev.start.split(":").map(Number);
                 const [eh, em] = ev.end.split(":").map(Number);
-                const st = sh * 60 + sm, et = eh * 60 + em;
+                const st = sh * 60 + sm,
+                  et = eh * 60 + em;
                 return (
                   <div
                     key={`${room.name}-${ev.company}-${ev.start}`}
-                    className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(ev.status)}`}
+                    className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(
+                      ev.status
+                    )}`}
                     style={{
                       top: `${(st / 60) * 60 + 40}px`,
                       height: `${((et - st) / 60) * 60}px`,
@@ -235,7 +259,9 @@ if (toast.type === "success") {
                       {ev.start} - {ev.end} WIB
                     </p>
                     <span
-                      className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(ev.status)}`}
+                      className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(
+                        ev.status
+                      )}`}
                     >
                       {ev.status}
                     </span>
@@ -247,7 +273,6 @@ if (toast.type === "success") {
         </div>
       </div>
 
-      {/* Reservation Form */}
       {showForm && (
         <ReservationForm
           onClose={() => setShowForm(false)}

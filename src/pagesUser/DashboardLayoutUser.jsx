@@ -17,10 +17,8 @@ const DashboardLayoutUser = () => {
         darkMode ? "bg-gray-900 text-black" : "bg-[#F7F7F7] text-gray-900"
       } transition-colors duration-500`}
     >
-      {/* Sidebar khusus user */}
       <SidebarUser />
       <div className="flex-1 flex flex-col">
-        {/* Header khusus user */}
         <HeaderUser />
 
         <main className="flex-1 p-6 overflow-y-auto">

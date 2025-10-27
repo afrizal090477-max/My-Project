@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../components/Logo"; // pastikan path benar
+import Logo from "../components/Logo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -20,13 +20,14 @@ export default function Login() {
       localStorage.setItem("role", "user");
       navigate("/user/room-reservation");
     } else {
-      setMessage("Email tidak dikenali! Gunakan admin@email.com atau user@email.com");
+      setMessage(
+        "Email tidak dikenali! Gunakan admin@email.com atau user@email.com"
+      );
     }
   };
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background image */}
       <img
         src="/meeting.png"
         alt="Meeting"
@@ -35,9 +36,7 @@ export default function Login() {
       />
       <div className="absolute inset-0 bg-black/30 z-10" />
 
-      {/* Wrapper for correct vertical alignment */}
       <div className="relative z-20 min-h-screen w-full">
-        {/* Main Form Box */}
         <div
           className="absolute rounded-[20px] shadow-xl bg-white border border-gray-200"
           style={{
@@ -51,10 +50,9 @@ export default function Login() {
             padding: 48,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
-          {/* Centered Logo & Title */}
           <div className="flex flex-col items-center justify-center w-full mb-8">
             <Logo />
             <h2 className="font-bold text-[32px] text-gray-800 w-full text-center mt-3">
@@ -66,7 +64,10 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700 mb-1"
+            >
               Email
             </label>
             <input
@@ -76,10 +77,13 @@ export default function Login() {
               required
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
-            <label htmlFor="password" className="text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-700 mb-1"
+            >
               Password
             </label>
             <input
@@ -89,7 +93,7 @@ export default function Login() {
               required
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
             <div className="flex items-center justify-between mt-3 mb-6">
@@ -118,7 +122,9 @@ export default function Login() {
               Login
             </button>
             {message && (
-              <div className="mt-3 text-red-600 text-center text-sm">{message}</div>
+              <div className="mt-3 text-red-600 text-center text-sm">
+                {message}
+              </div>
             )}
           </form>
           <p className="text-[14px] text-center text-gray-600 mt-6">

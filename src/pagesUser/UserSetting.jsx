@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import defaultPhoto from "../assets/home.png"; // ganti sesuai nama file kamu
+import defaultPhoto from "../assets/home.png";
 
 export default function Setting() {
   // 🔸 Inisialisasi state
@@ -65,7 +65,7 @@ export default function Setting() {
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="w-[1320px] h-[622px] top-[100px] left-[100px] bg-white  shadow-md p-8 ">
         <h2 className="text-xl font-semibold text-gray-700">My Account</h2>
-        {/* My Account Section */}
+
         <div className="flex items-center gap-4 mb-8">
           <img
             src={photo}
@@ -94,9 +94,7 @@ export default function Setting() {
           </div>
         </div>
 
-        {/* Form */}
         <div className="space-y-6">
-          {/* Row 1: Email - Username - Role */}
           <div className="grid grid-cols-1 md:grid-cols-3 w-[1270px] h-[74px] gap-[20px]">
             {/* Email */}
             <div>
@@ -121,7 +119,6 @@ export default function Setting() {
               />
             </div>
 
-            {/* Username */}
             <div>
               <label
                 htmlFor="username"
@@ -144,7 +141,6 @@ export default function Setting() {
               />
             </div>
 
-            {/* Role */}
             <div>
               <label
                 htmlFor="role"
@@ -170,7 +166,6 @@ export default function Setting() {
             </div>
           </div>
 
-          {/* Row 2: Status - Language */}
           <div className="grid grid-cols-1 md:grid-cols-2 w-[840px] h-[74px] gap-[20px] ">
             {/* Status */}
             <div>
@@ -195,7 +190,6 @@ export default function Setting() {
               />
             </div>
 
-            {/* Language */}
             <div>
               <label
                 htmlFor="language"
@@ -221,7 +215,6 @@ export default function Setting() {
             </div>
           </div>
 
-          {/* Password */}
           <div>
             <label
               htmlFor="password"
@@ -245,7 +238,6 @@ export default function Setting() {
           </div>
         </div>
 
-        {/* Tombol Simpan / Edit */}
         <div className="flex justify-start mt-8">
           <button
             onClick={handleToggleEdit}

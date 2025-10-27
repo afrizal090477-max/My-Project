@@ -12,7 +12,7 @@ export default function ReservationForm({ onClose, rooms = [] }) {
     // auto-close toast setelah 3 detik
     setTimeout(() => {
       setShowToast(false);
-      onClose(); // menutup form modal setelah submit
+      onClose();
     }, 3000);
   };
 
@@ -31,16 +31,13 @@ export default function ReservationForm({ onClose, rooms = [] }) {
           </button>
         </div>
 
-        {/* Toast Notification */}
         {showToast && (
           <div className="bg-green-100 text-green-700 px-4 py-2 m-4 rounded-md border border-green-300">
             ✅ New reservation successfully added!
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Room Dropdown */}
           <div>
             <label
               htmlFor="roomName"
@@ -62,7 +59,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             </select>
           </div>
 
-          {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
               Name
@@ -76,7 +72,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium mb-1">
               No. HP
@@ -90,12 +85,8 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             />
           </div>
 
-          {/* Company */}
           <div>
-            <label
-              htmlFor="company"
-              className="block text-sm font-medium mb-1"
-            >
+            <label htmlFor="company" className="block text-sm font-medium mb-1">
               Company/Organization
             </label>
             <input
@@ -106,7 +97,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             />
           </div>
 
-          {/* Date */}
           <div>
             <label htmlFor="date" className="block text-sm font-medium mb-1">
               Date Reservation
@@ -119,7 +109,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             />
           </div>
 
-          {/* Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
@@ -152,7 +141,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             </div>
           </div>
 
-          {/* Participants */}
           <div>
             <label
               htmlFor="participants"
@@ -168,7 +156,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             />
           </div>
 
-          {/* Add Snack */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -182,13 +169,9 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             </label>
           </div>
 
-          {/* Snack Dropdown (if checked) */}
           {addSnack && (
             <div>
-              <label
-                htmlFor="snack"
-                className="block text-sm font-medium mb-1"
-              >
+              <label htmlFor="snack" className="block text-sm font-medium mb-1">
                 Snack Category
               </label>
               <select
@@ -212,7 +195,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             </div>
           )}
 
-          {/* Note */}
           <div>
             <label htmlFor="note" className="block text-sm font-medium mb-1">
               Note
@@ -225,7 +207,6 @@ export default function ReservationForm({ onClose, rooms = [] }) {
             ></textarea>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full h-[48px] bg-[#FF7316] hover:bg-[#e76712] text-white py-2 rounded-lg font-semibold mt-4"

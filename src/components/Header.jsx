@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AdminPhoto from "@/assets/admin.png";
 import LogoutIcon from "@/assets/logout.png";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,18 @@ import { usePageTitle } from "@/context/PageTitleContext";
 const Header = () => {
   const navigate = useNavigate();
   const { pageTitle } = usePageTitle();
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState("");
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+    if (storedRole) {
+      setRole(storedRole);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -27,8 +39,8 @@ const Header = () => {
           className="w-10 h-10 rounded-full object-cover"
         />
         <div className="text-left">
-          <p className="text-sm font-medium">Angelina</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Admin</p>
+          <p className="text-sm font-medium">{username}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{role}</p>
         </div>
 
         <button

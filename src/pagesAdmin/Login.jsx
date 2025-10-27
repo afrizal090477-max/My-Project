@@ -14,6 +14,7 @@ export default function Login() {
     if (email === "admin@email.com") {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "admin");
+      localStorage.setItem("username", "admin@email.com")
       navigate("/dashboard");
     } else if (email.endsWith("@email.com")) {
       localStorage.setItem("isLoggedIn", "true");

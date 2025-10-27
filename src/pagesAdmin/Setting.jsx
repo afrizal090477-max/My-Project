@@ -14,13 +14,14 @@ export default function Setting() {
   });
 
   // 🔹 State untuk foto profil dan input file ref
-  const [photo, setPhoto] = useState(defaultPhoto);
+  const [photo, setPhoto] = useState('');
   const fileInputRef = useRef(null);
 
   // 🔹 Load foto dari localStorage (jika sudah pernah diganti)
   useEffect(() => {
     const savedPhoto = localStorage.getItem("userPhoto");
     if (savedPhoto) {
+      console.log("savedPhoto type:", typeof savedPhoto);
       setPhoto(savedPhoto);
     }
   }, []);
@@ -60,18 +61,26 @@ export default function Setting() {
       reader.readAsDataURL(file);
     }
   };
-
+  console.log('photo state:', photo);
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="w-[1320px] h-[622px] top-[100px] left-[100px] bg-white  shadow-md p-8 ">
         <h2 className="text-xl font-semibold text-gray-700">My Account</h2>
 
         <div className="flex items-center gap-4 mb-8">
-          <img
-            src={photo}
-            alt="User"
-            className="w-[100px] h-[100px] rounded-full object-cover border-2 border-orange-400"
-          />
+          {photo !== '' ? (
+            <img
+              src={photo}
+              alt="User 123"
+              className="w-[100px] h-[100px] rounded-full object-cover border-2 border-orange-400"
+            />
+          ) : (
+            <img
+              src={defaultPhoto}
+              alt="User 456"
+              className="w-[100px] h-[100px] rounded-full object-cover border-2 border-orange-400"
+            />
+          )}
           <div>
             {isEditing && (
               <>

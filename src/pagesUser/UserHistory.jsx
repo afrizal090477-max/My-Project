@@ -10,7 +10,7 @@ const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
     type="button"
     onClick={onClick}
     ref={ref}
-    className="flex items-center justify-between w-[257px] h-[48px] border !border-gray-500 rounded-[10px] px-[14px] bg-white text-left hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+    className="flex items-center justify-between border !border-gray-300 rounded-[10px] w-[257px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
   >
     <span className={value ? "text-gray-700" : "text-gray-400"}>
       {value || placeholder}
@@ -207,7 +207,7 @@ export default function UserHistory() {
 
   return (
     <div className="p-6 bg-[#F9FAFB] min-h-screen">
-      <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] p-4 mb-6 flex gap-4 items-end justify-between">
+      <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] top-[100px] left-[100px] p-4 mb-1 flex gap-4 items-end justify-between">
         <div className="flex gap-4 flex-1 items-end">
           <div>
             <label
@@ -304,8 +304,8 @@ export default function UserHistory() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-4">
-        <table className="min-w-full text-sm text-left border-collapse">
+      <div className="w-[1320px] h-[780px] top-[214px] left-[100px] bg-white rounded-xl shadow-md p-4">
+        <table className="w-[1280px] h-[660px] text-sm text-left border-collapse">
           <thead>
             <tr className="border-b text-gray-600">
               <th className="p-3">Date Reservation</th>

@@ -29,7 +29,7 @@ function Register() {
             top: "50%",
             transform: "translateY(-50%)",
             width: 600,
-            height: 644,
+            height: 815,
             maxWidth: "calc(100vw - 140px)",
             maxHeight: "96vh",
             padding: 48,
@@ -48,10 +48,10 @@ function Register() {
               </span>
             </div>
             <h2 className="text-[32px] font-bold text-gray-800 w-full text-center mt-2">
-              Create an Account
+              Welcome Back
             </h2>
             <p className="text-sm text-gray-500 w-full text-center mt-1">
-              Please fill in your details below
+              Create your account here!
             </p>
           </div>
 

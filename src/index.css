@@ -17,11 +17,11 @@
 
 a {
   font-weight: 500;
-  color: #ef2a0b;
+  color: gray;
   text-decoration: Roboto;
 }
 a:hover {
-  color: #f0bf70;
+  color: orange;
 }
 
 

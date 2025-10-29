@@ -4,7 +4,7 @@ import Logo from "../components/Logo";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [remember, setRemember] = useState(false);
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -14,6 +14,7 @@ export default function Login() {
     if (email === "admin@email.com") {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("role", "admin");
+      localStorage.setItem("username", "admin@email.com");
       navigate("/dashboard");
     } else if (email.endsWith("@email.com")) {
       localStorage.setItem("isLoggedIn", "true");
@@ -96,23 +97,16 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
-            <div className="flex items-center justify-between mt-3 mb-6">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 text-[#FF7316] border-gray-300 rounded focus:ring-[#FF7316]"
-                />
-                <span>Remember me</span>
-              </label>
-              <div>
+            <div className="flex justify-end mt-1 mb-6">
+              
                 <Link
                   to="/reset-password"
-                  className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400 transition"
+                  className="text-xs  text-[#b7bcc0] font-medium hover:text-orange-400 transition"
+                  
                 >
                   Forgot Password?
                 </Link>
+              <div>
               </div>
             </div>
             <button
@@ -131,7 +125,7 @@ export default function Login() {
             Don’t have an account?{" "}
             <Link
               to="/register"
-              className="text-[#FF7316] font-medium hover:underline"
+              className="!text-[#FF7316] font-medium hover:underline"
             >
               Register
             </Link>

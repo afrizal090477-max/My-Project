@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  FaArrowRight,
-  FaThLarge,
-  FaClipboardList,
-  FaBed,
-  FaFileAlt,
-  FaCog,
-} from "react-icons/fa";
+  ArrowRightIcon,
+  Squares2X2Icon,
+  ClipboardDocumentListIcon,
+  BuildingOffice2Icon,
+  DocumentTextIcon,
+  Cog6ToothIcon
+} from "@heroicons/react/24/outline";
 import { usePageTitle } from "../context/PageTitleContext";
 
 const Sidebar = () => {
@@ -18,21 +18,11 @@ const Sidebar = () => {
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
   const menuItems = [
-    {
-      id: "dashboard",
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: <FaThLarge />,
-    },
-    {
-      id: "reservation",
-      name: "Reservation Schedule",
-      path: "/reservation",
-      icon: <FaClipboardList />,
-    },
-    { id: "room", name: "Room", path: "/room", icon: <FaBed /> },
-    { id: "report", name: "Report", path: "/report", icon: <FaFileAlt /> },
-    { id: "setting", name: "Setting", path: "/setting", icon: <FaCog /> },
+    { id: "dashboard", name: "Dashboard", path: "/dashboard", icon: <Squares2X2Icon className="w-6 h-6" /> },
+    { id: "reservation", name: "Reservation Schedule", path: "/reservation", icon: <ClipboardDocumentListIcon className="w-6 h-6" /> },
+    { id: "room", name: "Room", path: "/room", icon: <BuildingOffice2Icon className="w-6 h-6" /> },
+    { id: "report", name: "Report", path: "/report", icon: <DocumentTextIcon className="w-6 h-6" /> },
+    { id: "setting", name: "Setting", path: "/setting", icon: <Cog6ToothIcon className="w-6 h-6" /> }
   ];
 
   const handleNavigation = (path, name) => {
@@ -54,7 +44,6 @@ const Sidebar = () => {
       <div className="w-[40px] h-[40px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold shadow-md">
         E
       </div>
-
       <div className="relative">
         <button
           type="button"
@@ -63,26 +52,20 @@ const Sidebar = () => {
           onMouseLeave={() => setHoveredMenu(null)}
           className="w-[48px] h-[48px] flex items-center justify-center"
         >
-          <FaArrowRight
-            size={22}
-            className={`transition-colors duration-300 ${
-              hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"
-            }`}
+          <ArrowRightIcon
+            className={`w-6 h-6 transition-colors duration-300 ${hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"}`}
           />
         </button>
-
         {hoveredMenu === "back" && (
           <div className="absolute left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
             Go Back
           </div>
         )}
       </div>
-
       <nav className="flex flex-col items-center gap-6 mt-2">
         {menuItems.map((item) => {
           const isActive = activeMenu === item.path;
           const isHovered = hoveredMenu === item.path;
-
           return (
             <div key={item.id} className="relative flex flex-col items-center">
               <button
@@ -93,20 +76,13 @@ const Sidebar = () => {
                 onMouseLeave={() => setHoveredMenu(null)}
                 className="w-[48px] h-[48px] flex items-center justify-center"
               >
-                <span
-                  className={`transition-colors duration-300 text-[22px] ${
-                    isActive || isHovered ? "text-orange-500" : "text-gray-700"
-                  }`}
-                >
+                <span className={`transition-colors duration-300 text-[22px] ${isActive || isHovered ? "text-orange-500" : "text-gray-700"}`}>
                   {item.icon}
                 </span>
-
                 {isActive && (
                   <span className="absolute right-[-10px] w-[4px] h-[24px] bg-orange-500 rounded-full shadow-[0_0_6px_rgba(249,115,22,0.5)] transition-all duration-300"></span>
                 )}
               </button>
-
-              {/* Tooltip */}
               {hoveredMenu === item.path && (
                 <div className="absolute left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
                   {item.name}
@@ -116,7 +92,6 @@ const Sidebar = () => {
           );
         })}
       </nav>
-
       {hoveredMenu === "home" && (
         <div className="absolute left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
           Home

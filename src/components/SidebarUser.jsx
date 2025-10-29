@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  // FaArrowLeft,
-  FaClipboardList,
-  FaHistory,
-  FaCog,
-  FaArrowRight,
-} from "react-icons/fa";
+  ArrowRightIcon,
+  BuildingOffice2Icon,
+  DocumentTextIcon,
+  Cog6ToothIcon
+} from "@heroicons/react/24/outline";
 import { usePageTitle } from "../context/PageTitleContext";
 
 const SidebarUser = () => {
@@ -16,22 +15,19 @@ const SidebarUser = () => {
   const [activeMenu, setActiveMenu] = useState(location.pathname);
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
- 
   const menuItems = [
-    { id: "reservation", name: "Room Reservation", path: "/user/room-reservation", icon: <FaClipboardList /> },
-    { id: "history", name: "History", path: "/user/history", icon: <FaHistory /> },
-    { id: "settings", name: "Setting", path: "/user/setting", icon: <FaCog /> },
+    { id: "reservation", name: "Room Reservation", path: "/user/room-reservation", icon: <BuildingOffice2Icon className="w-6 h-6" /> },
+    { id: "history", name: "History", path: "/user/history", icon: <DocumentTextIcon className="w-6 h-6" /> },
+    { id: "settings", name: "Setting", path: "/user/setting", icon: <Cog6ToothIcon className="w-6 h-6" /> }
   ];
 
- 
   const handleGoBack = () => {
-  if (globalThis.history.state && globalThis.history.state.idx > 0) {
-    navigate(-1);
-  } else {
-    navigate("/user/room-reservation");
-  }
-};
-
+    if (globalThis.history.state && globalThis.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/user/room-reservation");
+    }
+  };
 
   const handleNavigation = (path, name) => {
     setActiveMenu(path);
@@ -41,12 +37,9 @@ const SidebarUser = () => {
 
   return (
     <aside className="w-[80px] bg-white border-r border-gray-200 flex flex-col items-center py-8 space-y-10">
-      
       <div className="w-[40px] h-[40px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold shadow-md">
         E
       </div>
-
-      
       <div className="relative">
         <button
           type="button"
@@ -55,11 +48,8 @@ const SidebarUser = () => {
           onMouseLeave={() => setHoveredMenu(null)}
           className="w-[48px] h-[48px] flex items-center justify-center"
         >
-          <FaArrowRight
-            size={22}
-            className={`transition-colors duration-300 ${
-              hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"
-            }`}
+          <ArrowRightIcon
+            className={`w-6 h-6 transition-colors duration-300 ${hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"}`}
           />
         </button>
         {hoveredMenu === "back" && (
@@ -68,8 +58,6 @@ const SidebarUser = () => {
           </div>
         )}
       </div>
-
-      
       <nav className="flex flex-col items-center gap-6 mt-2">
         {menuItems.map((item) => {
           const isActive = activeMenu === item.path;
@@ -84,11 +72,7 @@ const SidebarUser = () => {
                 onMouseLeave={() => setHoveredMenu(null)}
                 className="w-[48px] h-[48px] flex items-center justify-center"
               >
-                <span
-                  className={`transition-colors duration-300 text-[22px] ${
-                    isActive || isHovered ? "text-orange-500" : "text-gray-700"
-                  }`}
-                >
+                <span className={`transition-colors duration-300 text-[22px] ${isActive || isHovered ? "text-orange-500" : "text-gray-700"}`}>
                   {item.icon}
                 </span>
                 {isActive && (

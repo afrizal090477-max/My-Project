@@ -92,7 +92,7 @@ export default function NewPassword() {
               Set New Password
             </h2>
             <p className="text-[13px] text-gray-500 text-center mb-2 w-full">
-              Masukkan password baru dan konfirmasi di bawah.
+              Please enter your new password and confirm
             </p>
           </div>
 

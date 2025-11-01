@@ -1,218 +1,42 @@
-import React, { useState, useMemo } from "react";
-import {
-  FiSearch,
-  FiPlus,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+// src/pagesAdmin/Room.jsx
+import React, { useMemo, useState } from "react";
+import { FiSearch, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import RoomCard from "../components/RoomCard";
 import ModalRoomForm from "../components/ModalRoomForm";
 import RoomsImage from "../assets/Rooms.png";
 
 const DUMMY_ROOMS_BASE = [
-  {
-    id: 1,
-    name: "Aster Room",
-    type: "Small",
-    capacity: 6,
-    price: 200000,
-    status: "Available",
-  },
-  {
-    id: 2,
-    name: "Bluebell Room",
-    type: "Medium",
-    capacity: 10,
-    price: 350000,
-    status: "Booked",
-  },
-  {
-    id: 3,
-    name: "Camellia Room",
-    type: "Small",
-    capacity: 8,
-    price: 250000,
-    status: "Available",
-  },
-  {
-    id: 4,
-    name: "Daisy Room",
-    type: "Medium",
-    capacity: 12,
-    price: 300000,
-    status: "Available",
-  },
-  {
-    id: 5,
-    name: "Edelweiss Room",
-    type: "Large",
-    capacity: 20,
-    price: 450000,
-    status: "Booked",
-  },
-  {
-    id: 6,
-    name: "Freesia Room",
-    type: "Small",
-    capacity: 5,
-    price: 180000,
-    status: "Available",
-  },
-  {
-    id: 7,
-    name: "Gardenia Room",
-    type: "Medium",
-    capacity: 15,
-    price: 320000,
-    status: "Booked",
-  },
-  {
-    id: 8,
-    name: "Hibiscus Room",
-    type: "Large",
-    capacity: 25,
-    price: 500000,
-    status: "Available",
-  },
-  {
-    id: 9,
-    name: "Ivy Room",
-    type: "Small",
-    capacity: 6,
-    price: 200000,
-    status: "Booked",
-  },
-  {
-    id: 10,
-    name: "Jasmine Room",
-    type: "Medium",
-    capacity: 12,
-    price: 350000,
-    status: "Available",
-  },
-  {
-    id: 11,
-    name: "Lily Room",
-    type: "Large",
-    capacity: 18,
-    price: 400000,
-    status: "Available",
-  },
-  {
-    id: 12,
-    name: "Magnolia Room",
-    type: "Small",
-    capacity: 7,
-    price: 220000,
-    status: "Booked",
-  },
-  {
-    id: 13,
-    name: "Narcissus Room",
-    type: "Medium",
-    capacity: 10,
-    price: 330000,
-    status: "Available",
-  },
-  {
-    id: 14,
-    name: "Orchid Room",
-    type: "Large",
-    capacity: 22,
-    price: 480000,
-    status: "Available",
-  },
-  {
-    id: 15,
-    name: "Peony Room",
-    type: "Small",
-    capacity: 6,
-    price: 210000,
-    status: "Booked",
-  },
-  {
-    id: 16,
-    name: "Rose Room",
-    type: "Medium",
-    capacity: 14,
-    price: 340000,
-    status: "Available",
-  },
-  {
-    id: 17,
-    name: "Sunflower Room",
-    type: "Large",
-    capacity: 30,
-    price: 550000,
-    status: "Booked",
-  },
-  {
-    id: 18,
-    name: "Tulip Room",
-    type: "Small",
-    capacity: 8,
-    price: 240000,
-    status: "Available",
-  },
-  {
-    id: 19,
-    name: "Violet Room",
-    type: "Medium",
-    capacity: 10,
-    price: 350000,
-    status: "Available",
-  },
-  {
-    id: 20,
-    name: "Willow Room",
-    type: "Large",
-    capacity: 25,
-    price: 480000,
-    status: "Booked",
-  },
-  {
-    id: 21,
-    name: "Xenia Room",
-    type: "Small",
-    capacity: 5,
-    price: 200000,
-    status: "Available",
-  },
-  {
-    id: 22,
-    name: "Yarrow Room",
-    type: "Medium",
-    capacity: 12,
-    price: 340000,
-    status: "Booked",
-  },
-  {
-    id: 23,
-    name: "Zinnia Room",
-    type: "Large",
-    capacity: 20,
-    price: 470000,
-    status: "Available",
-  },
-  {
-    id: 24,
-    name: "Azalea Room",
-    type: "Small",
-    capacity: 6,
-    price: 230000,
-    status: "Available",
-  },
+  { id: 1, name: "Aster Room", type: "Small", capacity: 6, price: 200000, status: "Available" },
+  { id: 2, name: "Bluebell Room", type: "Medium", capacity: 10, price: 350000, status: "Booked" },
+  { id: 3, name: "Camellia Room", type: "Small", capacity: 8, price: 250000, status: "Available" },
+  { id: 4, name: "Daisy Room", type: "Medium", capacity: 12, price: 300000, status: "Available" },
+  { id: 5, name: "Edelweiss Room", type: "Large", capacity: 20, price: 450000, status: "Booked" },
+  { id: 6, name: "Freesia Room", type: "Small", capacity: 5, price: 180000, status: "Available" },
+  { id: 7, name: "Gardenia Room", type: "Medium", capacity: 15, price: 320000, status: "Booked" },
+  { id: 8, name: "Hibiscus Room", type: "Large", capacity: 25, price: 500000, status: "Available" },
+  { id: 9, name: "Ivy Room", type: "Small", capacity: 6, price: 200000, status: "Booked" },
+  { id: 10, name: "Jasmine Room", type: "Medium", capacity: 12, price: 350000, status: "Available" },
+  { id: 11, name: "Lily Room", type: "Large", capacity: 18, price: 400000, status: "Available" },
+  { id: 12, name: "Magnolia Room", type: "Small", capacity: 7, price: 220000, status: "Booked" },
+  { id: 13, name: "Narcissus Room", type: "Medium", capacity: 10, price: 330000, status: "Available" },
+  { id: 14, name: "Orchid Room", type: "Large", capacity: 22, price: 480000, status: "Available" },
+  { id: 15, name: "Peony Room", type: "Small", capacity: 6, price: 210000, status: "Booked" },
+  { id: 16, name: "Rose Room", type: "Medium", capacity: 14, price: 340000, status: "Available" },
+  { id: 17, name: "Sunflower Room", type: "Large", capacity: 30, price: 550000, status: "Booked" },
+  { id: 18, name: "Tulip Room", type: "Small", capacity: 8, price: 240000, status: "Available" },
+  { id: 19, name: "Violet Room", type: "Medium", capacity: 10, price: 350000, status: "Available" },
+  { id: 20, name: "Willow Room", type: "Large", capacity: 25, price: 480000, status: "Booked" },
+  { id: 21, name: "Xenia Room", type: "Small", capacity: 5, price: 200000, status: "Available" },
+  { id: 22, name: "Yarrow Room", type: "Medium", capacity: 12, price: 340000, status: "Booked" },
+  { id: 23, name: "Zinnia Room", type: "Large", capacity: 20, price: 470000, status: "Available" },
+  { id: 24, name: "Azalea Room", type: "Small", capacity: 6, price: 230000, status: "Available" },
 ];
 
 const ITEMS_PER_PAGE = 12;
 
 export default function Rooms() {
   const [rooms, setRooms] = useState(DUMMY_ROOMS_BASE);
-  const [filters, setFilters] = useState({
-    search: "",
-    type: "",
-    capacity: "",
-  });
+  const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -229,9 +53,7 @@ export default function Rooms() {
 
   const handleFormSubmit = (formData) => {
     if (formData.id) {
-      setRooms((prev) =>
-        prev.map((r) => (r.id === formData.id ? formData : r))
-      );
+      setRooms((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
     } else {
       const newRoom = {
         ...formData,
@@ -245,32 +67,32 @@ export default function Rooms() {
   };
 
   const handleFilterChange = (key, value) => {
+    // Normalisasi capacity ke number string tetap ok, tapi kita reset page
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
   const filteredRooms = useMemo(() => {
+    const search = filters.search.toLowerCase();
+    const type = filters.type; // bisa di-lowercase jika tipe akan non-standar
+    const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
+
     return rooms.filter((room) => {
-      const matchSearch = room.name
-        .toLowerCase()
-        .includes(filters.search.toLowerCase());
-      const matchType = filters.type ? room.type === filters.type : true;
-      const matchCapacity = filters.capacity
-        ? room.capacity >= Number.parseInt(filters.capacity, 10)
-        : true;
+      const matchSearch = room.name.toLowerCase().includes(search);
+      const matchType = type ? room.type === type : true;
+      const matchCapacity = minCapacity !== null ? room.capacity >= minCapacity : true;
       return matchSearch && matchType && matchCapacity;
     });
   }, [rooms, filters]);
 
-  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
   const roomsToDisplay = filteredRooms.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -284,10 +106,7 @@ export default function Rooms() {
               onChange={(e) => handleFilterChange("search", e.target.value)}
               className="w-full h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none"
             />
-            <FiSearch
-              className="absolute left-3 top-3 text-gray-400"
-              size={18}
-            />
+            <FiSearch className="absolute left-3 top-3 text-gray-400" size={18} />
           </div>
 
           <select
@@ -338,23 +157,17 @@ export default function Rooms() {
               onClick={handlePrevPage}
               disabled={currentPage === 1}
               className={`p-2 rounded-md border ${
-                currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
+                currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronLeft />
             </button>
-            <span className="text-gray-700 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
+            <span className="text-gray-700 text-sm">Page {currentPage} of {totalPages}</span>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md border ${
-                currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
+                currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronRight />

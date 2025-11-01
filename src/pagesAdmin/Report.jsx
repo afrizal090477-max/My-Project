@@ -2,7 +2,7 @@ import React, { useState, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
-import ModalReportDetail from "@/components/ModalReportDetail";
+import ModalReportDetail from "../components/ModalReportDetail";
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button

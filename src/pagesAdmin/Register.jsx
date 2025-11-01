@@ -1,5 +1,5 @@
 import React from "react";
-import meetingImg from "@/assets/meeting.png";
+import meetingImg from "../assets/meeting.png";
 import { Link, useNavigate } from "react-router-dom";
 
 function Register() {

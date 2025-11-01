@@ -1,36 +1,84 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";  // TAMBAHAN: import useSelector
 import ProtectedRoute from "./components/ProtectedRoute";
+
+
+// Admin pages
 import Dashboard from "./pagesAdmin/Dashboard";
 import Reservation from "./pagesAdmin/Reservation";
 import Room from "./pagesAdmin/Room";
 import Report from "./pagesAdmin/Report";
 import Setting from "./pagesAdmin/Setting";
-import Login from "./pagesAdmin/Login";
-import Register from "./pagesAdmin/Register";
-import ResetPassword from './pagesAdmin/ResetPassword';
-import NewPassword from './pagesAdmin/NewPassword';
 import History from "./pagesAdmin/History";
-import RoomReservation from "./pagesUser/RoomReservation";
+import DashboardLayout from "./pagesAdmin/DashboardLayout";
+
+
+// User pages
 import DashboardUser from "./pagesUser/DashboardUser";
+import RoomReservation from "./pagesUser/RoomReservation";
 import UserHistory from "./pagesUser/UserHistory";
 import UserSetting from "./pagesUser/UserSetting";
-import DashboardLayout from "./pagesAdmin/DashboardLayout";
 import DashboardLayoutUser from "./pagesUser/DashboardLayoutUser";
 
-function App() {
+
+// Auth pages
+import Login from "./pagesAdmin/Login";
+import Register from "./pagesAdmin/Register";
+import ResetPassword from "./pagesAdmin/ResetPassword";
+import NewPassword from "./pagesAdmin/NewPassword";
+
+
+export default function App() {
+  // TAMBAHAN: Ambil token dan role dari Redux
+  const { token, role } = useSelector((state) => state.auth);
+
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        {/* AUTH */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
+        {/* Root route - redirect based on auth status */}
+        <Route 
+          path="/" 
+          element={
+            token ? (
+              role === 'admin' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/user/room-reservation" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+
+        {/* Auth routes - redirect jika sudah login */}
+        <Route 
+          path="/login" 
+          element={
+            token ? (
+              role === 'admin' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/user/room-reservation" replace />
+              )
+            ) : (
+              <Login />
+            )
+          } 
+        />
         <Route path="/register" element={<Register />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/new-password" element={<NewPassword />} />
 
-        {/* ADMIN - dengan layout */}
-        <Route element={<ProtectedRoute allowedRoles={["admin"]}><DashboardLayout /></ProtectedRoute>}>
+
+        {/* Admin routes */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reservation" element={<Reservation />} />
           <Route path="/room" element={<Room />} />
@@ -39,26 +87,38 @@ function App() {
           <Route path="/history" element={<History />} />
         </Route>
 
-        {/* USER - dengan layout */}
-        <Route element={<ProtectedRoute allowedRoles={["user"]}><DashboardLayoutUser /></ProtectedRoute>}>
+
+        {/* User routes */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <DashboardLayoutUser />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/user" element={<DashboardUser />} />
           <Route path="/user/room-reservation" element={<RoomReservation />} />
           <Route path="/user/history" element={<UserHistory />} />
           <Route path="/user/setting" element={<UserSetting />} />
         </Route>
 
-        {/* HALAMAN AKSES DITOLAK */}
-        <Route path="/forbidden" element={
-          <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "#e53935", fontWeight: 700 }}>
-            Access Forbidden
-          </div>
-        } />
 
-        {/* CATCH ALL */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Catch-all - redirect based on auth status */}
+        <Route 
+          path="*" 
+          element={
+            token ? (
+              role === 'admin' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/user/room-reservation" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
-
-export default App;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import RoomCardUser from "../components/RoomCardUser";
 import ModalRoomBooking from "../components/ModalRoomBooking";
@@ -51,7 +51,9 @@ export default function RoomReservation() {
   const handleBookingSubmit = (bookingData) => {
     console.log("Booking submitted:", bookingData);
     setIsModalOpen(false);
-    alert(`Successfully booked ${selectedRoom.name}!`);
+    if (selectedRoom?.name) {
+      alert(`Successfully booked ${selectedRoom.name}!`);
+    }
   };
 
   const handleFilterChange = (key, value) => {
@@ -60,19 +62,19 @@ export default function RoomReservation() {
   };
 
   const filteredRooms = useMemo(() => {
+    const search = filters.search.toLowerCase();
+    const type = filters.type;
+    const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
+
     return rooms.filter((room) => {
-      const matchSearch = room.name
-        .toLowerCase()
-        .includes(filters.search.toLowerCase());
-      const matchType = filters.type ? room.type === filters.type : true;
-      const matchCapacity = filters.capacity
-        ? room.capacity >= Number.parseInt(filters.capacity, 10)
-        : true;
+      const matchSearch = room.name.toLowerCase().includes(search);
+      const matchType = type ? room.type === type : true;
+      const matchCapacity = minCapacity !== null ? room.capacity >= minCapacity : true;
       return matchSearch && matchType && matchCapacity;
     });
   }, [rooms, filters]);
 
-  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
   const roomsToDisplay = filteredRooms.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE

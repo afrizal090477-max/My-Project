@@ -1,70 +1,38 @@
-import React, { useState } from "react";
-import ReservationForm from "@/components/ReservationForm";
+// src/pagesAdmin/Reservation.jsx
+import React, { useMemo, useState } from "react";
+import ReservationForm from "../components/ReservationForm";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
-import { ROOM_LIST } from "@/data/rooms";
 
 export default function Reservation() {
-  const DEFAULT_ROOMS = [
-    {
-      name: "Aster Room",
-      events: [
-        {
-          company: "PT Maju Jaya",
-          start: "13:00",
-          end: "15:00",
-          status: "Done",
-        },
-        {
-          company: "Organisasi Muslim Pusat",
-          start: "13:00",
-          end: "15:00",
-          status: "Up Coming",
-        },
-      ],
-    },
-    {
-      name: "Bluebell Room",
-      events: [
-        {
-          company: "PT XYZ Corp",
-          start: "10:00",
-          end: "11:00",
-          status: "In Progress",
-        },
-      ],
-    },
-    {
-      name: "Camellia Room",
-      events: [
-        {
-          company: "Alisa Company",
-          start: "14:00",
-          end: "15:00",
-          status: "Up Coming",
-        },
-      ],
-    },
-    {
-      name: "Daisy Room",
-      events: [
-        {
-          company: "PT Lestari",
-          start: "15:00",
-          end: "18:00",
-          status: "Up Coming",
-        },
-      ],
-    },
-  ];
+  // Data default statis untuk contoh jadwal
+  const DEFAULT_ROOMS = useMemo(
+    () => [
+      {
+        name: "Aster Room",
+        events: [
+          { company: "PT Maju Jaya", start: "13:00", end: "15:00", status: "Done" },
+          { company: "Organisasi Muslim Pusat", start: "13:00", end: "15:00", status: "Up Coming" },
+        ],
+      },
+      {
+        name: "Bluebell Room",
+        events: [{ company: "PT XYZ Corp", start: "10:00", end: "11:00", status: "In Progress" }],
+      },
+      {
+        name: "Camellia Room",
+        events: [{ company: "Alisa Company", start: "14:00", end: "15:00", status: "Up Coming" }],
+      },
+      {
+        name: "Daisy Room",
+        events: [{ company: "PT Lestari", start: "15:00", end: "18:00", status: "Up Coming" }],
+      },
+    ],
+    []
+  );
 
-  const initialRooms = ROOM_LIST.map((room) => {
-    const existing = DEFAULT_ROOMS.find((r) => r.name === room.name);
-    return existing || { ...room, events: [] };
-  });
-
-  const [roomsData, setRoomsData] = useState(initialRooms);
+  const [roomsData, setRoomsData] = useState(DEFAULT_ROOMS);
   const [showForm, setShowForm] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -72,23 +40,22 @@ export default function Reservation() {
 
   const handleAddReservation = (newEvent) => {
     setRoomsData((prev) =>
-      prev.map((room) => {
-        if (room.name === newEvent.room) {
-          return {
-            ...room,
-            events: [
-              ...room.events,
-              {
-                company: newEvent.company,
-                start: newEvent.start,
-                end: newEvent.end,
-                status: "Up Coming",
-              },
-            ],
-          };
-        }
-        return room;
-      })
+      prev.map((room) =>
+        room.name === newEvent.room
+          ? {
+              ...room,
+              events: [
+                ...room.events,
+                {
+                  company: newEvent.company,
+                  start: newEvent.start,
+                  end: newEvent.end,
+                  status: "Up Coming",
+                },
+              ],
+            }
+          : room
+      )
     );
   };
 
@@ -99,10 +66,7 @@ export default function Reservation() {
         type: "error",
         message: "Pilih Start Date dan End Date terlebih dahulu!",
       });
-      setTimeout(
-        () => setToast({ visible: false, type: "", message: "" }),
-        3000
-      );
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
       return;
     }
     setToast({
@@ -120,9 +84,9 @@ export default function Reservation() {
     year: "numeric",
   });
 
-  const times = Array.from(
-    { length: 24 },
-    (_, i) => `${i.toString().padStart(2, "0")}:00`
+  const times = useMemo(
+    () => Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, "0")}:00`),
+    []
   );
 
   const getEventClass = (status) =>
@@ -139,13 +103,8 @@ export default function Reservation() {
       "Up Coming": "bg-orange-100 text-orange-700",
     }[status] || "bg-gray-50 text-gray-400");
 
-  let toastBg = "bg-gray-500";
-
-  if (toast.type === "success") {
-    toastBg = "bg-green-500";
-  } else if (toast.type === "error") {
-    toastBg = "bg-red-500";
-  }
+  const toastBg =
+    toast.type === "success" ? "bg-green-500" : toast.type === "error" ? "bg-red-500" : "bg-gray-500";
 
   return (
     <div className="flex flex-col mb-1">
@@ -158,7 +117,8 @@ export default function Reservation() {
         </div>
       )}
 
-      <section className="w-[1320px] bg-white flex justify-between items-center gap-2 border border-gray-200 rounded-xl px-5 py-4 shadow-sm mb-1px">
+      {/* Filter bar */}
+      <section className="w-[1320px] bg-white flex justify-between items-center gap-2 border border-gray-200 rounded-xl px-5 py-4 shadow-sm mb-1">
         <div className="flex flex-wrap md:flex-nowrap gap-10 items-center">
           <p className="font-semibold text-gray-900">{today}</p>
           <div className="relative">
@@ -196,10 +156,12 @@ export default function Reservation() {
         </button>
       </section>
 
+      {/* Timeline grid */}
       <div
         className="relative bg-white border border-gray-200 shadow-sm rounded-xl overflow-auto"
         style={{ width: "1320px", height: "770px", position: "relative" }}
       >
+        {/* Time rail */}
         <div
           className="absolute z-10 bg-white border-r border-dashed border-gray-200"
           style={{ top: 0, left: 0, width: "90px", height: "1440px" }}
@@ -221,8 +183,9 @@ export default function Reservation() {
           ))}
         </div>
 
+        {/* Rooms grid */}
         <div
-          className="absolute widht-[400px] left-[90px] top-0 border-l border-gray-200"
+          className="absolute left-[90px] top-0 border-l border-gray-200"
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${roomsData.length}, 1fr)`,
@@ -231,49 +194,48 @@ export default function Reservation() {
           }}
         >
           {roomsData.map((room) => (
-            <div
-              key={room.name}
-              className="relative border-r border-dashed border-gray-200"
-            >
+            <div key={room.name} className="relative border-r border-dashed border-gray-200">
               <h2 className="font-semibold text-center py-3 border-b border-gray-200 text-gray-800">
                 {room.name}
               </h2>
-              {room.events.map((ev) => {
-                const [sh, sm] = ev.start.split(":").map(Number);
-                const [eh, em] = ev.end.split(":").map(Number);
-                const st = sh * 60 + sm,
-                  et = eh * 60 + em;
-                return (
-                  <div
-                    key={`${room.name}-${ev.company}-${ev.start}`}
-                    className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(
-                      ev.status
-                    )}`}
-                    style={{
-                      top: `${(st / 60) * 60 + 40}px`,
-                      height: `${((et - st) / 60) * 60}px`,
-                    }}
-                  >
-                    <p className="font-medium">{ev.company}</p>
-                    <p className="text-sm text-gray-500">
-                      {ev.start} - {ev.end} WIB
-                    </p>
-                    <span
-                      className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(
+              {Array.isArray(room.events) &&
+                room.events.map((ev, idx) => {
+                  const [sh, sm] = ev.start.split(":").map(Number);
+                  const [eh, em] = ev.end.split(":").map(Number);
+                  const st = sh * 60 + sm;
+                  const et = eh * 60 + em;
+                  return (
+                    <div
+                      key={`${room.name}-${ev.company}-${ev.start}-${idx}`}
+                      className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(
                         ev.status
                       )}`}
+                      style={{
+                        top: `${(st / 60) * 60 + 40}px`,
+                        height: `${((et - st) / 60) * 60}px`,
+                      }}
                     >
-                      {ev.status}
-                    </span>
-                  </div>
-                );
-              })}
+                      <p className="font-medium">{ev.company}</p>
+                      <p className="text-sm text-gray-500">
+                        {ev.start} - {ev.end} WIB
+                      </p>
+                      <span
+                        className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(
+                          ev.status
+                        )}`}
+                      >
+                        {ev.status}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           ))}
         </div>
       </div>
 
-      {showForm && (
+      {/* Modal form */}
+      {showForm && ReservationForm && (
         <ReservationForm
           onClose={() => setShowForm(false)}
           onAddReservation={handleAddReservation}

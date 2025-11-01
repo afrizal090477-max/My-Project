@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowRightIcon,
@@ -15,6 +15,10 @@ const SidebarUser = () => {
   const [activeMenu, setActiveMenu] = useState(location.pathname);
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
+  useEffect(() => {
+    setActiveMenu(location.pathname);
+  }, [location.pathname]);
+
   const menuItems = [
     { id: "reservation", name: "Room Reservation", path: "/user/room-reservation", icon: <BuildingOffice2Icon className="w-6 h-6" /> },
     { id: "history", name: "History", path: "/user/history", icon: <DocumentTextIcon className="w-6 h-6" /> },
@@ -25,7 +29,7 @@ const SidebarUser = () => {
     if (globalThis.history.state && globalThis.history.state.idx > 0) {
       navigate(-1);
     } else {
-      navigate("/user/room-reservation");
+      navigate("/user");
     }
   };
 

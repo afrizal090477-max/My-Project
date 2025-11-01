@@ -1,31 +1,49 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Logo from "../components/Logo";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../features/auth/authAPI";
+import { clearError } from "../features/auth/authSlice";  // TAMBAHAN: import clearError
+
 
 export default function Login() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  
-  const [email, setEmail] = useState("");
+  const { loading, error, token, role } = useSelector((state) => state.auth);  // TAMBAHAN: ambil role
+
+
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (email === "admin@email.com") {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("username", "admin@email.com");
-      navigate("/dashboard");
-    } else if (email.endsWith("@email.com")) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("role", "user");
-      navigate("/user/room-reservation");
-    } else {
-      setMessage(
-        "Email tidak dikenali! Gunakan admin@email.com atau user@email.com"
-      );
-    }
+    const trimmedUser = username.trim();
+    const trimmedPass = password.trim();
+    if (!trimmedUser || !trimmedPass) return;
+    dispatch(loginUser({ username: trimmedUser, password: trimmedPass }));
   };
+
+
+  // MODIFIKASI: Redirect berdasarkan role
+  useEffect(() => {
+    if (token && role) {
+      if (role === 'admin') {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/user/room-reservation", { replace: true });
+      }
+    }
+  }, [token, role, navigate]);
+  
+  
+  // TAMBAHAN: Clear error saat component unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
+
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -36,7 +54,6 @@ export default function Login() {
         style={{ minWidth: 1536, minHeight: 1024 }}
       />
       <div className="absolute inset-0 bg-black/30 z-10" />
-
       <div className="relative z-20 min-h-screen w-full">
         <div
           className="absolute rounded-[20px] shadow-xl bg-white border border-gray-200"
@@ -60,27 +77,31 @@ export default function Login() {
               Welcome Back!
             </h2>
             <p className="text-[15px] text-gray-500 w-full text-center mt-1">
-              Please enter your email and password here
+              Please enter your username and password here
             </p>
           </div>
 
+
           <form onSubmit={handleSubmit} className="flex flex-col">
             <label
-              htmlFor="email"
+              htmlFor="username"
               className="text-sm font-medium text-gray-700 mb-1"
             >
-              Email
+              Username
             </label>
             <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
+              type="text"
+              id="username"
+              value={username}
+              autoComplete="username"
+              placeholder="Email: john@mail.com"
               required
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
             />
+
+
             <label
               htmlFor="password"
               className="text-sm font-medium text-gray-700 mb-1"
@@ -88,41 +109,47 @@ export default function Login() {
               Password
             </label>
             <input
-              id="password"
               type="password"
-              placeholder="Enter your password"
+              id="password"
+              value={password}
+              autoComplete="current-password"
+              placeholder="Password: changeme"
               required
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] bg-white"
-              value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              disabled={loading}
             />
+
+
             <div className="flex justify-end mt-1 mb-6">
-              
-                <Link
-                  to="/reset-password"
-                  className="text-xs  text-[#b7bcc0] font-medium hover:text-orange-400 transition"
-                  
-                >
-                  Forgot Password?
-                </Link>
-              <div>
-              </div>
+              <Link
+                to="/reset-password"
+                className="text-xs text-[#b7bcc0] font-medium hover:text-orange-400 transition"
+              >
+                Forgot Password?
+              </Link>
             </div>
+
+
             <button
               type="submit"
               className="w-full h-[48px] bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg transition text-lg"
+              disabled={loading}
             >
-              Login
+              {loading ? "Loading..." : "Login"}
             </button>
-            {message && (
+
+
+            {error && (
               <div className="mt-3 text-red-600 text-center text-sm">
-                {message}
+                {String(error)}
               </div>
             )}
           </form>
+
+
           <p className="text-[14px] text-center text-gray-600 mt-6">
-            Don’t have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               to="/register"
               className="!text-[#FF7316] font-medium hover:underline"

@@ -93,8 +93,8 @@ const Dashboard = () => {
   const displayedRooms = filteredRooms.length > 0 ? filteredRooms : rooms;
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg flex flex-wrap gap-6 items-end">
+    <div className="flex flex-col w-[1320px] h-[1003px] top-[100px] left-[100px] gap-[20px]">
+      <section className="w-[1320px] h-[114px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg flex flex-wrap gap-6 items-end">
         <div>
           <label
             htmlFor="start-date"
@@ -109,7 +109,7 @@ const Dashboard = () => {
               onChange={(date) => setStartDate(date)}
               placeholderText="Select start date"
               dateFormat="yyyy-MM-dd"
-              className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 w-[515px]  bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 w-[500px] h-[48px]  bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
             />
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>
@@ -129,7 +129,7 @@ const Dashboard = () => {
               onChange={(date) => setEndDate(date)}
               placeholderText="Select end date"
               dateFormat="yyyy-MM-dd"
-              className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 w-[515px] bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 w-[500px] h-[48px] bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
             />
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>

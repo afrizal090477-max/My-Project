@@ -1,13 +1,23 @@
-import { StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { PageTitleProvider } from "@/context/PageTitleContext"
+import { Provider } from "react-redux";
+import { store } from "./app/mystore";
+import { PageTitleProvider } from "./context/PageTitleContext";
+import { restoreSession } from "./features/auth/authSlice";  // TAMBAHAN: import restoreSession
+
+
+// TAMBAHAN: Restore session dari localStorage saat app load
+store.dispatch(restoreSession());
+
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <PageTitleProvider>
-    <App />
-    </PageTitleProvider>
+    <Provider store={store}>
+      <PageTitleProvider>
+        <App />
+      </PageTitleProvider>
+    </Provider>
   </StrictMode>
 );

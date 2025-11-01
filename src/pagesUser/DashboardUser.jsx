@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaCalendarAlt } from "react-icons/fa";
@@ -10,28 +10,30 @@ export default function DashboardUser() {
   const [endDate, setEndDate] = useState(null);
   const [filteredRooms, setFilteredRooms] = useState([]);
 
-  const rooms = [
-    { name: "Aster Room", usage: 100, omzet: "Rp 2.000.000" },
-    { name: "Bluebell Room", usage: 80, omzet: "Rp 2.000.000" },
-    { name: "Camellia Room", usage: 70, omzet: "Rp 1.500.000" },
-    { name: "Daisy Room", usage: 60, omzet: "Rp 1.200.000" },
-    { name: "Ivy Room", usage: 90, omzet: "Rp 2.300.000" },
-    { name: "Lily Room", usage: 75, omzet: "Rp 1.900.000" },
-    { name: "Magnolia Room", usage: 85, omzet: "Rp 2.100.000" },
-    { name: "Orchid Room", usage: 95, omzet: "Rp 2.500.000" },
-    { name: "Peony Room", usage: 88, omzet: "Rp 2.200.000" },
-    { name: "Rose Room", usage: 92, omzet: "Rp 2.400.000" },
-    { name: "Tulip Room", usage: 78, omzet: "Rp 1.800.000" },
-    { name: "Violet Room", usage: 83, omzet: "Rp 2.000.000" },
-  ];
+  const rooms = useMemo(
+    () => [
+      { name: "Aster Room", usage: 100, omzet: "Rp 2.000.000" },
+      { name: "Bluebell Room", usage: 80, omzet: "Rp 2.000.000" },
+      { name: "Camellia Room", usage: 70, omzet: "Rp 1.500.000" },
+      { name: "Daisy Room", usage: 60, omzet: "Rp 1.200.000" },
+      { name: "Ivy Room", usage: 90, omzet: "Rp 2.300.000" },
+      { name: "Lily Room", usage: 75, omzet: "Rp 1.900.000" },
+      { name: "Magnolia Room", usage: 85, omzet: "Rp 2.100.000" },
+      { name: "Orchid Room", usage: 95, omzet: "Rp 2.500.000" },
+      { name: "Peony Room", usage: 88, omzet: "Rp 2.200.000" },
+      { name: "Rose Room", usage: 92, omzet: "Rp 2.400.000" },
+      { name: "Tulip Room", usage: 78, omzet: "Rp 1.800.000" },
+      { name: "Violet Room", usage: 83, omzet: "Rp 2.000.000" },
+    ],
+    []
+  );
 
   const handleSearch = () => {
     if (!startDate || !endDate) {
       alert("Pilih Start Date dan End Date terlebih dahulu!");
       return;
     }
-    // Dummy filter, karena rooms tidak punya field date asli
-    setFilteredRooms([]); // Pakai penyesuaian nanti saat ada backend
+    setFilteredRooms([]);
   };
 
   const displayedRooms = filteredRooms.length > 0 ? filteredRooms : rooms;
@@ -55,6 +57,7 @@ export default function DashboardUser() {
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
+
         <div>
           <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
             End Date
@@ -71,6 +74,7 @@ export default function DashboardUser() {
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
+
         <button
           onClick={handleSearch}
           className="bg-orange-500 hover:bg-orange-600 text-white w-[140px] h-[48px] px-8 py-3 rounded-lg transition"

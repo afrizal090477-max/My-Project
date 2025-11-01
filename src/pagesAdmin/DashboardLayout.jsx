@@ -1,30 +1,23 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
 import { Outlet } from "react-router-dom";
 
 const DashboardLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    if (darkMode) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
+    document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
   return (
-    <div
-      className={`flex min-h-screen ${
-        darkMode ? "bg-gray-900 text-black" : "bg-[#F7F7F7] text-gray-900"
-      } transition-colors duration-500`}
-    >
+    <div className={`flex min-h-screen ${darkMode ? "bg-gray-900 text-black" : "bg-[#F7F7F7] text-gray-900"} transition-colors duration-500`}>
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header />
-
         <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
-
         <footer className="flex justify-center items-center py-4 border-t border-gray-300 dark:border-gray-700">
           <button
             onClick={() => setDarkMode(!darkMode)}

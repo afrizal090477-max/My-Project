@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   plugins: [react()],
 
+  // Path aliases untuk import yang lebih clean
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -17,18 +18,92 @@ export default defineConfig({
       "@pages": path.resolve(__dirname, "./src/pages"),
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@layouts": path.resolve(__dirname, "./src/layouts"),
+      "@features": path.resolve(__dirname, "./src/features"),
+      "@context": path.resolve(__dirname, "./src/context"),
+      "@data": path.resolve(__dirname, "./src/data"),
     },
   },
 
+  // Development server settings
   server: {
     port: 5173,
     open: true,
-    host: true, 
+    host: true,
+    strictPort: false,
+    hmr: {
+      overlay: true,
+    },
   },
 
+  // Preview server settings (untuk test production local)
+  preview: {
+    port: 4173,
+    open: true,
+    host: true,
+    strictPort: false,
+  },
+
+  // Production build settings
   build: {
     outDir: "dist",
+    assetsDir: "assets",
     sourcemap: false,
     emptyOutDir: true,
+    minify: "esbuild",
+    chunkSizeWarningLimit: 1500,
+    
+    rollupOptions: {
+      output: {
+        // Automatic chunking - lebih aman dan optimal
+        manualChunks: undefined,
+        
+        // Asset naming untuk cache busting
+        chunkFileNames: "assets/js/[name]-[hash].js",
+        entryFileNames: "assets/js/[name]-[hash].js",
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split(".");
+          const ext = info[info.length - 1];
+          
+          // Organize assets by type
+          if (/\.(png|jpe?g|svg|gif|webp|avif)$/i.test(assetInfo.name)) {
+            return `assets/images/[name]-[hash].${ext}`;
+          }
+          if (/\.(woff2?|eot|ttf|otf)$/i.test(assetInfo.name)) {
+            return `assets/fonts/[name]-[hash].${ext}`;
+          }
+          if (/\.css$/i.test(assetInfo.name)) {
+            return `assets/css/[name]-[hash].${ext}`;
+          }
+          return `assets/[name]-[hash].${ext}`;
+        },
+      },
+    },
+
+    // Optimization settings
+    cssCodeSplit: true,
+    cssMinify: true,
+    
+    // Asset handling
+    assetsInlineLimit: 4096, // 4kb - assets below this will be inlined as base64
   },
+
+  // Optimize dependencies
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@reduxjs/toolkit",
+      "react-redux",
+      "axios",
+    ],
+  },
+
+  // CSS settings
+  css: {
+    devSourcemap: false,
+  },
+
+  // Base public path
+  base: "/",
 });

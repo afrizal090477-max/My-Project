@@ -6,30 +6,30 @@ import ModalRoomForm from "../components/ModalRoomForm";
 import RoomsImage from "../assets/Rooms.png";
 
 const DUMMY_ROOMS_BASE = [
-  { id: 1, name: "Aster Room", type: "Small", capacity: 6, price: 200000, status: "Available" },
+  { id: 1, name: "Aster Room", type: "Small", capacity: 12, price: 200000, status: "Available" },
   { id: 2, name: "Bluebell Room", type: "Medium", capacity: 10, price: 350000, status: "Booked" },
-  { id: 3, name: "Camellia Room", type: "Small", capacity: 8, price: 250000, status: "Available" },
-  { id: 4, name: "Daisy Room", type: "Medium", capacity: 12, price: 300000, status: "Available" },
+  { id: 3, name: "Camellia Room", type: "Small", capacity: 18, price: 250000, status: "Available" },
+  { id: 4, name: "Daisy Room", type: "Medium", capacity: 22, price: 300000, status: "Available" },
   { id: 5, name: "Edelweiss Room", type: "Large", capacity: 20, price: 450000, status: "Booked" },
-  { id: 6, name: "Freesia Room", type: "Small", capacity: 5, price: 180000, status: "Available" },
+  { id: 6, name: "Freesia Room", type: "Small", capacity: 15, price: 180000, status: "Available" },
   { id: 7, name: "Gardenia Room", type: "Medium", capacity: 15, price: 320000, status: "Booked" },
   { id: 8, name: "Hibiscus Room", type: "Large", capacity: 25, price: 500000, status: "Available" },
   { id: 9, name: "Ivy Room", type: "Small", capacity: 6, price: 200000, status: "Booked" },
   { id: 10, name: "Jasmine Room", type: "Medium", capacity: 12, price: 350000, status: "Available" },
-  { id: 11, name: "Lily Room", type: "Large", capacity: 18, price: 400000, status: "Available" },
+  { id: 11, name: "Lily Room", type: "Large", capacity: 38, price: 400000, status: "Available" },
   { id: 12, name: "Magnolia Room", type: "Small", capacity: 7, price: 220000, status: "Booked" },
-  { id: 13, name: "Narcissus Room", type: "Medium", capacity: 10, price: 330000, status: "Available" },
-  { id: 14, name: "Orchid Room", type: "Large", capacity: 22, price: 480000, status: "Available" },
+  { id: 13, name: "Narcissus Room", type: "Medium", capacity: 20, price: 330000, status: "Available" },
+  { id: 14, name: "Orchid Room", type: "Large", capacity: 32, price: 480000, status: "Available" },
   { id: 15, name: "Peony Room", type: "Small", capacity: 6, price: 210000, status: "Booked" },
-  { id: 16, name: "Rose Room", type: "Medium", capacity: 14, price: 340000, status: "Available" },
+  { id: 16, name: "Rose Room", type: "Medium", capacity: 24, price: 340000, status: "Available" },
   { id: 17, name: "Sunflower Room", type: "Large", capacity: 30, price: 550000, status: "Booked" },
-  { id: 18, name: "Tulip Room", type: "Small", capacity: 8, price: 240000, status: "Available" },
-  { id: 19, name: "Violet Room", type: "Medium", capacity: 10, price: 350000, status: "Available" },
+  { id: 18, name: "Tulip Room", type: "Small", capacity: 11, price: 240000, status: "Available" },
+  { id: 19, name: "Violet Room", type: "Medium", capacity: 12, price: 350000, status: "Available" },
   { id: 20, name: "Willow Room", type: "Large", capacity: 25, price: 480000, status: "Booked" },
-  { id: 21, name: "Xenia Room", type: "Small", capacity: 5, price: 200000, status: "Available" },
+  { id: 21, name: "Xenia Room", type: "Small", capacity: 11, price: 200000, status: "Available" },
   { id: 22, name: "Yarrow Room", type: "Medium", capacity: 12, price: 340000, status: "Booked" },
-  { id: 23, name: "Zinnia Room", type: "Large", capacity: 20, price: 470000, status: "Available" },
-  { id: 24, name: "Azalea Room", type: "Small", capacity: 6, price: 230000, status: "Available" },
+  { id: 23, name: "Zinnia Room", type: "Large", capacity: 30, price: 470000, status: "Available" },
+  { id: 24, name: "Azalea Room", type: "Small", capacity: 13, price: 230000, status: "Available" },
 ];
 
 const ITEMS_PER_PAGE = 12;
@@ -131,9 +131,7 @@ export default function Rooms() {
             <option value="50">≤ 50 people</option>
           </select>
 
-          <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium w-[102px] h-[48px] px-5 py-2 rounded-lg transition">
-            Search
-          </button>
+          
         </div>
 
         <button

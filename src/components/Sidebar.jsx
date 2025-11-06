@@ -6,7 +6,7 @@ import {
   ClipboardDocumentListIcon,
   BuildingOffice2Icon,
   DocumentTextIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import { usePageTitle } from "../context/PageTitleContext";
 
@@ -22,11 +22,36 @@ const Sidebar = () => {
   }, [location.pathname]);
 
   const menuItems = [
-    { id: "dashboard", name: "Dashboard", path: "/dashboard", icon: <Squares2X2Icon className="w-6 h-6" /> },
-    { id: "reservation", name: "Reservation Schedule", path: "/reservation", icon: <ClipboardDocumentListIcon className="w-6 h-6" /> },
-    { id: "room", name: "Room", path: "/room", icon: <BuildingOffice2Icon className="w-6 h-6" /> },
-    { id: "report", name: "Report", path: "/report", icon: <DocumentTextIcon className="w-6 h-6" /> },
-    { id: "setting", name: "Setting", path: "/setting", icon: <Cog6ToothIcon className="w-6 h-6" /> }
+    {
+      id: "dashboard",
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: <Squares2X2Icon className="w-6 h-6" />,
+    },
+    {
+      id: "reservation",
+      name: "Reservation Schedule",
+      path: "/reservation",
+      icon: <ClipboardDocumentListIcon className="w-6 h-6" />,
+    },
+    {
+      id: "room",
+      name: "Room",
+      path: "/room",
+      icon: <BuildingOffice2Icon className="w-6 h-6" />,
+    },
+    {
+      id: "report",
+      name: "Report",
+      path: "/report",
+      icon: <DocumentTextIcon className="w-6 h-6" />,
+    },
+    {
+      id: "setting",
+      name: "Setting",
+      path: "/setting",
+      icon: <Cog6ToothIcon className="w-6 h-6" />,
+    },
   ];
 
   const handleNavigation = (path, name) => {
@@ -54,10 +79,12 @@ const Sidebar = () => {
           onClick={handleGoBack}
           onMouseEnter={() => setHoveredMenu("back")}
           onMouseLeave={() => setHoveredMenu(null)}
-          className="w-[48px] h-[48px] flex items-center justify-center"
+          className="w-[48px] h-[48px]  flex items-center justify-center"
         >
           <ArrowRightIcon
-            className={`w-6 h-6 transition-colors duration-300 ${hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"}`}
+            className={`w-6 h-6 transition-colors duration-300 ${
+              hoveredMenu === "back" ? "text-orange-500" : "text-gray-700"
+            }`}
           />
         </button>
         {hoveredMenu === "back" && (
@@ -80,7 +107,11 @@ const Sidebar = () => {
                 onMouseLeave={() => setHoveredMenu(null)}
                 className="w-[48px] h-[48px] flex items-center justify-center"
               >
-                <span className={`transition-colors duration-300 text-[22px] ${isActive || isHovered ? "text-orange-500" : "text-gray-700"}`}>
+                <span
+                  className={`transition-colors duration-300 text-[22px] ${
+                    isActive || isHovered ? "text-orange-500" : "text-gray-700"
+                  }`}
+                >
                   {item.icon}
                 </span>
                 {isActive && (
@@ -88,7 +119,7 @@ const Sidebar = () => {
                 )}
               </button>
               {hoveredMenu === item.path && (
-                <div className="absolute left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
+                <div className="absolute z-100 left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
                   {item.name}
                 </div>
               )}

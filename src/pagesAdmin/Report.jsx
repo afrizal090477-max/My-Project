@@ -267,12 +267,7 @@ export default function Report() {
             </select>
           </div>
           <div className="flex gap-2 items-end ml-2">
-            <button
-              onClick={handleSearch}
-              className="w-[119px] h-[48px] rounded-lg bg-[#FF7316] text-white text-lg font-semibold shadow hover:bg-[#e86810] transition"
-            >
-              Search
-            </button>
+            
             <button
               onClick={handleDownload}
               className="

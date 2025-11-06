@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FiUsers, FiTag, FiCalendar } from "react-icons/fi";
+import { FiUsers, FiTag } from "react-icons/fi";
 import RoomsImage from "../assets/Rooms.png";
 
-function RoomCardUser({ room, onBook }) {
+function RoomCardUser({ room, onClick }) {
   const formatRupiah = (number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -25,8 +25,11 @@ function RoomCardUser({ room, onBook }) {
 
   return (
     <article
-      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl"
+      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl cursor-pointer"
       aria-label={`Kartu ruangan ${room.name}`}
+      onClick={() => onClick && onClick(room)}
+      tabIndex={0}
+      role="button"
     >
       <div className="absolute top-2 right-2 z-10">
         <span
@@ -64,22 +67,9 @@ function RoomCardUser({ room, onBook }) {
           <span>{room.type} Type</span>
         </div>
 
-        <p className="text-xl font-bold text-orange-500 mb-3">
+        <p className="text-xl font-bold text-orange-500 mb-0">
           {formatRupiah(room.price)} / hour
         </p>
-
-        <button
-          onClick={() => onBook(room)}
-          disabled={room.status === "Booked"}
-          className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-semibold transition ${
-            room.status === "Booked"
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-orange-500 text-white hover:bg-orange-600"
-          }`}
-        >
-          <FiCalendar size={16} />
-          {room.status === "Booked" ? "Not Available" : "Book Now"}
-        </button>
       </div>
     </article>
   );
@@ -94,7 +84,7 @@ RoomCardUser.propTypes = {
     status: PropTypes.string,
     image: PropTypes.string,
   }).isRequired,
-  onBook: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
 };
 
 export default React.memo(RoomCardUser);

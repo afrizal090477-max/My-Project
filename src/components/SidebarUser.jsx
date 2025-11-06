@@ -84,7 +84,7 @@ const SidebarUser = () => {
                 )}
               </button>
               {hoveredMenu === item.path && (
-                <div className="absolute left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
+                <div className="absolute z-10 left-[65px] top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-md shadow-md whitespace-nowrap">
                   {item.name}
                 </div>
               )}

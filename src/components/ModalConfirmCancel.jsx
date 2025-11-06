@@ -5,56 +5,36 @@ export default function ModalConfirmCancel({ open, onClose, onConfirm }) {
   if (!open) return null;
 
   return (
-    <dialog
-      open
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-      aria-labelledby="cancel-modal-title"
-      aria-modal="true"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default bg-transparent border-none p-0 m-0"
-        aria-label="Close modal"
-        onClick={onClose}
-        onKeyDown={(e) => e.key === "Enter" && onClose()}
-      />
-
-      <div className="relative z-10 w-[380px] rounded-lg bg-white p-6 shadow-xl">
-        <div className="text-center">
-          <div className="mb-4 text-5xl text-red-500">⚠️</div>
-          <h2
-            id="cancel-modal-title"
-            className="mb-2 text-lg font-semibold text-gray-800"
-          >
-            Are you sure you want to cancel this reservation?
-          </h2>
-          <p className="text-sm text-gray-500">This action cannot be undone.</p>
-        </div>
-
-        {/* Dummy input biar label warning hilang */}
-        <div className="sr-only">
-          <label htmlFor="dummyInput">Hidden</label>
-          <input id="dummyInput" readOnly value="" />
-        </div>
-
-        <div className="mt-6 flex justify-center gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="relative z-10 w-[480px] h-[374px] rounded-lg bg-white p-8 shadow-xl flex flex-col items-center">
+        {/* Icon/Warning */}
+        <div className="mb-8 text-5xl text-yellow-500">⚠️</div>
+        <h2
+          className="mb-2 text-lg font-semibold text-center text-gray-800"
+        >
+          Are you sure you want to cancel this reservation?
+        </h2>
+        <p className="text-sm text-gray-500 mb-12 text-center">
+          This action cannot be undone.
+        </p>
+        <div className="flex justify-center gap-4 w-full">
           <button
             type="button"
             onClick={onClose}
-            className="h-10 rounded-md border border-gray-300 px-5 font-medium text-gray-700 hover:bg-gray-100 focus:outline-none"
+            className="w-[50%] h-[48px] rounded-md border !border-violet-600 px-5 font-medium text-gray-700 hover:bg-gray-100 focus:outline-none"
           >
             No
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="h-10 rounded-md bg-[#FF7316] px-5 font-medium text-white hover:bg-[#e76712] focus:outline-none"
+            className="w-[50%] h-[48px] rounded-md bg-red-500 px-5 font-medium text-white hover:bg-[#e76712] focus:outline-none"
           >
             Yes, Cancel
           </button>
         </div>
       </div>
-    </dialog>
+    </div>
   );
 }
 

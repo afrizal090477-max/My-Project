@@ -2,8 +2,10 @@ import React, { useState, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
+import ModalReportDetail from "../components/ModalReportDetail";
+import ModalConfirmCancel from "../components/ModalConfirmCancel";
 
-// Custom Date Picker With Border - Konsisten dengan Select
+// Custom DatePicker Input
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
     id={id}
@@ -43,91 +45,26 @@ export default function UserHistory() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // --- Modal & Toast State ---
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [toast, setToast] = useState("");
+
+  // Dummy data, ganti ke API/fetch nanti!
   const DUMMY_DATA = [
-    {
-      id: 1,
-      date: "01/10/2024",
-      room: "Aster Room",
-      type: "Small",
-      status: "Booked",
-    },
-    {
-      id: 2,
-      date: "01/10/2024",
-      room: "Aster Room",
-      type: "Small",
-      status: "Paid",
-    },
-    {
-      id: 3,
-      date: "02/10/2024",
-      room: "Tulip Room",
-      type: "Medium",
-      status: "Paid",
-    },
-    {
-      id: 4,
-      date: "03/15/2024",
-      room: "Daisy",
-      type: "Large",
-      status: "Cancel",
-    },
-    {
-      id: 5,
-      date: "04/01/2024",
-      room: "Bluebell",
-      type: "Small",
-      status: "Paid",
-    },
-    {
-      id: 6,
-      date: "04/10/2024",
-      room: "Camellia",
-      type: "Medium",
-      status: "Paid",
-    },
-    {
-      id: 7,
-      date: "04/11/2024",
-      room: "Bluebell",
-      type: "Large",
-      status: "Booked",
-    },
-    {
-      id: 8,
-      date: "04/12/2024",
-      room: "Bluebell",
-      type: "Large",
-      status: "Paid",
-    },
-    {
-      id: 9,
-      date: "05/01/2024",
-      room: "Tulip Room",
-      type: "Small",
-      status: "Paid",
-    },
-    {
-      id: 10,
-      date: "05/02/2024",
-      room: "Tulip Room",
-      type: "Small",
-      status: "Cancel",
-    },
-    {
-      id: 11,
-      date: "05/03/2024",
-      room: "Aster Room",
-      type: "Small",
-      status: "Paid",
-    },
-    {
-      id: 12,
-      date: "05/04/2024",
-      room: "Aster Room",
-      type: "Small",
-      status: "Paid",
-    },
+    { id: 1, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
+    { id: 2, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
+    { id: 3, date: "02/10/2024", room: "Tulip Room", type: "Medium", status: "Paid" },
+    { id: 4, date: "03/15/2024", room: "Daisy", type: "Large", status: "Cancel" },
+    { id: 5, date: "04/01/2024", room: "Bluebell", type: "Small", status: "Paid" },
+    { id: 6, date: "04/10/2024", room: "Camellia", type: "Medium", status: "Paid" },
+    { id: 7, date: "04/11/2024", room: "Bluebell", type: "Large", status: "Booked" },
+    { id: 8, date: "04/12/2024", room: "Bluebell", type: "Large", status: "Paid" },
+    { id: 9, date: "05/01/2024", room: "Tulip Room", type: "Small", status: "Paid" },
+    { id: 10, date: "05/02/2024", room: "Tulip Room", type: "Small", status: "Cancel" },
+    { id: 11, date: "05/03/2024", room: "Aster Room", type: "Small", status: "Paid" },
+    { id: 12, date: "05/04/2024", room: "Aster Room", type: "Small", status: "Paid" },
   ];
 
   const filteredData = DUMMY_DATA.filter((item) => {
@@ -153,6 +90,7 @@ export default function UserHistory() {
     currentPage * rowsPerPage
   );
 
+  // --- Table/Event Handlers ---
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
@@ -168,8 +106,6 @@ export default function UserHistory() {
     setFilters((prev) => ({ ...prev, [name]: value }));
     setCurrentPage(1);
   };
-
-  const handleSearch = () => setCurrentPage(1);
 
   const handleDownload = () => {
     const header = "Date,Room,Type,Status\n";
@@ -200,6 +136,27 @@ export default function UserHistory() {
     }
   };
 
+  // --- Modal Logic ---
+  const openDetail = (row) => {
+    setSelectedRow(row);
+    setShowDetailModal(true);
+  };
+
+  const triggerCancel = () => setShowCancelModal(true);
+
+  const triggerPay = () => {
+    setShowDetailModal(false);
+    setToast("Payment Success");
+    setTimeout(() => setToast(""), 2200);
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelModal(false);
+    setShowDetailModal(false);
+    setToast("Reservation Successfully Canceled");
+    setTimeout(() => setToast(""), 2200);
+  };
+
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
@@ -210,26 +167,18 @@ export default function UserHistory() {
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] top-[100px] left-[100px] p-4 mb-1 flex gap-4 items-end justify-between">
         <div className="flex gap-4 flex-1 items-end">
           <div>
-            <label
-              htmlFor="startDate"
-              className="block text-sm text-gray-600 mb-1"
-            >
+            <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
               Start Date
             </label>
             <DateInput
               id="startDate"
               selectedDate={filters.startDate}
-              onChange={(date) =>
-                setFilters((f) => ({ ...f, startDate: date }))
-              }
+              onChange={(date) => setFilters((f) => ({ ...f, startDate: date }))}
               placeholder="Start date"
             />
           </div>
           <div>
-            <label
-              htmlFor="endDate"
-              className="block text-sm text-gray-600 mb-1"
-            >
+            <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
               End Date
             </label>
             <DateInput
@@ -240,10 +189,7 @@ export default function UserHistory() {
             />
           </div>
           <div>
-            <label
-              htmlFor="roomType"
-              className="block text-sm text-gray-600 mb-1"
-            >
+            <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
               Room Type
             </label>
             <select
@@ -260,10 +206,7 @@ export default function UserHistory() {
             </select>
           </div>
           <div>
-            <label
-              htmlFor="status"
-              className="block text-sm text-gray-600 mb-1"
-            >
+            <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
               Status
             </label>
             <select
@@ -282,21 +225,8 @@ export default function UserHistory() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={handleSearch}
-            className="w-[119px] h-[48px] rounded-lg bg-[#FF7316] text-white text-lg font-semibold shadow hover:bg-[#e86810] transition"
-          >
-            Search
-          </button>
-          <button
             onClick={handleDownload}
-            className="
-            w-[48px] h-[48px] flex items-center justify-center
-            border-2 !border-orange-500 rounded-xl
-            bg-transparent
-            transition
-            group
-            hover:border-orange-600
-            focus:outline-none"
+            className="w-[48px] h-[48px] flex items-center justify-center border-2 !border-orange-500 rounded-xl bg-transparent transition group hover:border-orange-600 focus:outline-none"
             title="Download"
           >
             <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
@@ -330,6 +260,7 @@ export default function UserHistory() {
                   <button
                     className="text-orange-500 hover:text-orange-600"
                     title="Detail"
+                    onClick={() => openDetail(row)}
                   >
                     <FiCornerUpRight size={20} />
                   </button>
@@ -404,6 +335,31 @@ export default function UserHistory() {
           </div>
         </div>
       </div>
+
+      {/* --- MODALS --- */}
+      {showDetailModal && (
+        <ModalReportDetail
+          open={showDetailModal}
+          data={selectedRow}
+          onClose={() => setShowDetailModal(false)}
+          onCancelClick={triggerCancel}
+          onPayClick={triggerPay}
+        />
+      )}
+      {showCancelModal && (
+        <ModalConfirmCancel
+          open={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleConfirmCancel}
+        />
+      )}
+
+      {/* --- TOAST --- */}
+      {!!toast && (
+        <div className="fixed top-45 right-20 z-[100] bg-green-50 text-green-700 border border-green-300 px-6 py-3 rounded-lg shadow-lg animate-fadeIn">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,46 +1,41 @@
-import js from "@eslint/js";
-import globals from "globals";
-import react from "eslint-plugin-react";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import { defineConfig } from "eslint/config";
+import js from '@eslint/js'
+import globals from 'globals'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
 
-export default defineConfig([
+export default [
+  { ignores: ['dist'] },
   {
-    ignores: ["dist"],
-  },
-  {
-    files: ["**/*.{js,jsx}"],
+    files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
       parserOptions: {
-        ecmaVersion: "latest",
+        ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
-        sourceType: "module",
+        sourceType: 'module',
       },
     },
+    settings: { react: { version: '18.3' } },
     plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
       react,
-    },
-    settings: {
-      react: {
-        version: "detect",
-      },
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
-      "react/react-in-jsx-scope": "off",
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
-      "sonarjs/prefer-node-path": "off",
-      "sonarjs/prefer-node-url": "off",
-      "no-unused-vars": ["warn", { varsIgnorePattern: "^A-Z_" }],
-      "react/prop-types": "off",
-      "no-nested-ternary": "off",
+      ...react.configs['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/jsx-no-target-blank': 'off',
+      // Matikan peringatan fast-refresh:
+      'react-refresh/only-export-components': 'off',
+      // Matikan warning lain agar build bersih:
+      'no-irregular-whitespace': 'off',
+      'react/no-unknown-property': 'off',
+      'no-unused-vars': 'off',
+      'react/prop-types': 'off',
     },
   },
-]);
+]

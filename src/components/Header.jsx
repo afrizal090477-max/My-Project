@@ -13,9 +13,9 @@ const Header = () => {
   const { pageTitle } = usePageTitle();
   
   // MODIFIKASI: Ambil user dan role dari Redux store (bukan localStorage)
-  const { user, role } = useSelector((state) => state.auth);
-  const username = user?.username || user?.email || "Admin";
-  const userRole = role === 'admin' ? 'Administrator' : 'User';
+  const { admin, role } = useSelector((state) => state.auth);
+  const username = admin?.username || admin?.email || "Admin";
+  const userRole = role === 'admin' ? 'Administrator' : 'Admin';
 
 
   const handleLogout = () => {

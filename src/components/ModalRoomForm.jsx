@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { FiX, FiUpload } from "react-icons/fi";
+import { ROOM_LIST } from "../data/roomData";
 
 const INITIAL_STATE = {
   id: null,
@@ -11,7 +12,13 @@ const INITIAL_STATE = {
   image: "",
 };
 
-export default function ModalRoomForm({ isOpen, onClose, onSubmit, roomData }) {
+export default function ModalRoomForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  roomData,
+  onShowDetail, // fungsi untuk buka modal report/detail (optional)
+}) {
   const [formData, setFormData] = useState(INITIAL_STATE);
   const isEditMode = !!roomData;
 
@@ -39,13 +46,33 @@ export default function ModalRoomForm({ isOpen, onClose, onSubmit, roomData }) {
     }
   };
 
+  // Handler untuk submit/edit/save data
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price || !formData.capacity) {
       alert("Mohon isi semua field yang wajib.");
       return;
     }
-    onSubmit(formData);
+
+    // Merge room master (ambil detail full, tetap gunakan data yang diisi user)
+    const selectedRoom = ROOM_LIST.find(r => r.name === formData.name);
+    const payload = {
+      ...formData,
+      roomName: selectedRoom?.name || formData.name,
+      roomType: selectedRoom?.type || formData.type,
+      roomCapacity: selectedRoom?.capacity
+        ? `${selectedRoom.capacity} people`
+        : `${formData.capacity} people`,
+      roomPrice: selectedRoom?.price
+        ? `Rp ${selectedRoom.price.toLocaleString()}`
+        : `Rp ${formData.price.toLocaleString()}`
+    };
+
+    // Send to parent/app (biar bisa buka modal detail juga)
+    onSubmit(payload);
+
+    // Bisa juga optional: buka ModalReportDetail
+    if (onShowDetail) onShowDetail(payload);
   };
 
   if (!isOpen) return null;
@@ -68,6 +95,7 @@ export default function ModalRoomForm({ isOpen, onClose, onSubmit, roomData }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Image Upload */}
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             {formData.image ? (
               <div className="relative">
@@ -116,6 +144,7 @@ export default function ModalRoomForm({ isOpen, onClose, onSubmit, roomData }) {
             />
           </div>
 
+          {/* Room Name (autocomplete with ROOM_LIST, manual typing allowed) */}
           <div>
             <label
               htmlFor="room-name"
@@ -132,7 +161,13 @@ export default function ModalRoomForm({ isOpen, onClose, onSubmit, roomData }) {
               placeholder="Daisy Room"
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
+              list="room-names"
             />
+            <datalist id="room-names">
+              {ROOM_LIST.map(room => (
+                <option key={room.name} value={room.name} />
+              ))}
+            </datalist>
           </div>
 
           <div>
@@ -221,4 +256,5 @@ ModalRoomForm.propTypes = {
     capacity: PropTypes.number,
     image: PropTypes.string,
   }),
+  onShowDetail: PropTypes.func,
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { ROOM_LIST } from "../data/roomData";
 
 ModalReportDetail.propTypes = {
   open: PropTypes.bool.isRequired,
@@ -12,7 +13,13 @@ ModalReportDetail.propTypes = {
   }),
 };
 
-export default function ModalReportDetail({ open, onClose, data }) {
+export default function ModalReportDetail({
+  open,
+  onClose,
+  data,
+  onCancelClick,
+  onPayClick,
+}) {
   if (!open) return null;
 
   return (
@@ -92,12 +99,15 @@ export default function ModalReportDetail({ open, onClose, data }) {
 
               <div className="flex gap-4 mt-6">
                 <button
-                  onClick={onClose}
-                  className="w-1/2 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                  onClick={onCancelClick} // <--- HARUS INI, jangan onClose!
+                  className="w-1/2 h-[27px] py-2 rounded-lg border !border-orange-300 hover:bg-orange-100"
                 >
                   Cancel
                 </button>
-                <button className="w-1/2 py-2 rounded-lg bg-[#FF7316] text-white hover:bg-[#e76712]">
+                <button
+                  onClick={onPayClick} // <--- Langsung trigger Pay!
+                  className="w-1/2 h-[27px] py-2 rounded-lg bg-[#FF7316] text-white hover:bg-[#e76712]"
+                >
                   Pay
                 </button>
               </div>

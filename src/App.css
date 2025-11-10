@@ -1,3 +1,4 @@
+/* Root layout utama */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,11 +6,13 @@
   text-align: center;
 }
 
+/* Logo universal di navbar/landing/dashboard */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
+  display: inline-block;
 }
 .logo:hover {
   filter: drop-shadow(0 0 2em #f47403df);
@@ -18,41 +21,104 @@
   filter: drop-shadow(0 0 2em #ec5504aa);
 }
 
+/* Card (utama untuk panel/dashboard/konten-info/modal) */
+.card {
+  padding: 2em;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px 0 rgba(0,0,0,.08);
+  border: 1px solid #eee;
+  margin: 22px auto;
+  transition: box-shadow 0.15s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 18px 0 rgba(249,115,22,0.08);
+}
+
+/* Read-the-docs info section */
+.read-the-docs {
+  color: #888;
+  background: transparent;
+  margin-top: 18px;
+  font-size: 0.99em;
+}
+
+/* Animasi */
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg);}
+  to {transform: rotate(360deg);}
 }
-
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from {transform: translateX(100%); opacity: 0;}
+  to {transform: translateX(0); opacity: 1;}
 }
-
 .animate-slideInRight {
   animation: slideInRight 0.3s ease-out forwards;
 }
 
-
+/* Media query untuk animasi logo di landing */
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
 }
 
-.card {
-  padding: 2em;
+/* Responsif tambahan untuk card, logo, root */
+@media (max-width: 640px) {
+  #root {
+    padding: 1rem;
+  }
+  .logo {
+    height: 3.8em;
+    padding: 0.6em;
+  }
+  .card {
+    padding: 1em;
+    font-size: 0.98em;
+  }
 }
 
-.read-the-docs {
-  color: #888;
+/* Efek smooth untuk modal/overlay di landing/dashboard */
+.modal,
+.overlay,
+.backdrop {
+  transition: background 0.22s, box-shadow 0.2s;
+  background: rgba(249, 247, 240, 0.94) !important;
+  box-shadow: 0 4px 38px 0 rgba(34,34,34,.07);
 }
+
+/* Utility sidebar tooltip style agar tooltips selalu professional */
+.sidebar-tooltip {
+  z-index: 100;
+  color: #fff;
+  background: #213547;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.92em;
+}
+
+/* Tambahan shadow-button jika ingin button landing/dashboard tampil berbeda */
+.button-shadow {
+  box-shadow: 0 2px 8px 0 rgba(44, 44, 44, .09);
+}
+
+.button-shadow:hover {
+  box-shadow: 0 4px 22px 0 rgba(249,115,22,0.09);
+}
+
+/* RESET PAKSA ONLY BUTTON DI SIDEBAR ICON DAN SVG */
+aside button, .sidebar-icon, svg {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Kalau sidebar pakai <button> sebagai icon wrapper, auto clean border! */
+aside button svg, aside button .icon, aside nav button svg {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+

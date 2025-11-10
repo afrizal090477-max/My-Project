@@ -1,8 +1,9 @@
 import React, { useState, forwardRef } from "react";
 import DatePicker from "react-datepicker";
-import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
+import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import ModalReportDetail from "../components/ModalReportDetail";
+
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
@@ -35,63 +36,15 @@ function DateInput({ id, selectedDate, onChange, placeholder }) {
 }
 
 const DUMMY_DATA = [
-  {
-    id: 1,
-    date: "01/10/2024",
-    room: "Aster Room",
-    type: "Small",
-    status: "Booked",
-  },
-  {
-    id: 2,
-    date: "01/10/2024",
-    room: "Aster Room",
-    type: "Small",
-    status: "Paid",
-  },
-  {
-    id: 3,
-    date: "01/10/2024",
-    room: "Aster Room",
-    type: "Small",
-    status: "Cancel",
-  },
-  {
-    id: 4,
-    date: "01/10/2024",
-    room: "Aster Room",
-    type: "Small",
-    status: "Paid",
-  },
-  {
-    id: 5,
-    date: "02/10/2024",
-    room: "Tulip Room",
-    type: "Medium",
-    status: "Booked",
-  },
+  { id: 1, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
+  { id: 2, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
+  { id: 3, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Cancel" },
+  { id: 4, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
+  { id: 5, date: "02/10/2024", room: "Tulip Room", type: "Medium", status: "Booked" },
   { id: 6, date: "03/15/2024", room: "Daisy", type: "Large", status: "Cancel" },
-  {
-    id: 7,
-    date: "04/01/2024",
-    room: "Bluebell",
-    type: "Small",
-    status: "Paid",
-  },
-  {
-    id: 8,
-    date: "04/10/2024",
-    room: "Camellia",
-    type: "Medium",
-    status: "Paid",
-  },
-  {
-    id: 9,
-    date: "05/01/2024",
-    room: "Tulip Room",
-    type: "Small",
-    status: "Paid",
-  },
+  { id: 7, date: "04/01/2024", room: "Bluebell", type: "Small", status: "Paid" },
+  { id: 8, date: "04/10/2024", room: "Camellia", type: "Medium", status: "Paid" },
+  { id: 9, date: "05/01/2024", room: "Tulip Room", type: "Small", status: "Paid" },
 ];
 
 export default function Report() {
@@ -103,9 +56,11 @@ export default function Report() {
   });
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
+
+  // Untuk toast payment success
+  const [showPayToast, setShowPayToast] = useState(false);
 
   const filteredData = DUMMY_DATA.filter((item) => {
     let valid = true;
@@ -145,8 +100,6 @@ export default function Report() {
     setFilters((prev) => ({ ...prev, [name]: value }));
     setCurrentPage(1);
   };
-
-  const handleSearch = () => setCurrentPage(1);
 
   const handleDownload = () => {
     const header = "Date,Room,Type,Status\n";
@@ -192,8 +145,24 @@ export default function Report() {
     setDetailOpen(false);
   };
 
+  // Handler payment: akan dipanggil dari modal detail
+  // Toastnya muncul di landing page, mirip workflow cancel
+  const handlePay = () => {
+    setDetailOpen(false);
+    setShowPayToast(true);
+    setTimeout(() => setShowPayToast(false), 2200);
+  };
+
   return (
     <div className="p-8 bg-[#F9FAFB] min-h-screen">
+      {/* Toast Payment Success di halamannya */}
+      {showPayToast && (
+        <div className="fixed w-[456px] h-[82px] top-[100px] left-[964px] right-4 bg-green-500 text-white px-20 py-4 rounded shadow z-50 flex items-center gap-2">
+          <span className="text-xl">✔</span>
+          <span>Your Payment Successfully made</span>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-md max-w-[1320px] min-h-[114px] mx-auto p-6 mb-6">
         <div className="flex gap-6 items-end">
           <div className="flex flex-col w-[257px]">
@@ -267,17 +236,16 @@ export default function Report() {
             </select>
           </div>
           <div className="flex gap-2 items-end ml-2">
-            
             <button
               onClick={handleDownload}
               className="
-              w-[48px] h-[48px] flex items-center justify-center
-              border-2 !border-orange-500 rounded-xl
-              bg-transparent
-              transition
-              group
-              hover:border-orange-600
-              focus:outline-none"
+                w-[48px] h-[48px] flex items-center justify-center
+                border-2 !border-orange-500 rounded-xl
+                bg-transparent
+                transition
+                group
+                hover:border-orange-600
+                focus:outline-none"
               title="Download"
             >
               <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
@@ -348,7 +316,7 @@ export default function Report() {
             </select>
             <span className="ml-2">Entries</span>
           </div>
-          {/* Page Button */}
+          {/* Pagination */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
@@ -388,10 +356,12 @@ export default function Report() {
           </div>
         </div>
       </div>
+
       <ModalReportDetail
         open={detailOpen}
         onClose={closeDetail}
         data={detailData}
+        onPayClick={handlePay} // Button Pay logic
       />
     </div>
   );

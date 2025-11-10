@@ -7,34 +7,56 @@ const INITIAL_STATE = {
   id: null,
   name: "",
   type: "Medium",
-  price: 0,
-  capacity: 10,
+  price: 10000,
+  capacity: 1,
   image: "",
 };
 
-export default function ModalRoomForm({
+export default function ModalEditRoom({
   isOpen,
   onClose,
   onSubmit,
   roomData,
-  onShowDetail, // fungsi untuk buka modal report/detail (optional)
+  onShowDetail,
 }) {
   const [formData, setFormData] = useState(INITIAL_STATE);
+  const [rawPrice, setRawPrice] = useState("");
   const isEditMode = !!roomData;
 
   useEffect(() => {
     if (isOpen) {
       setFormData(roomData || INITIAL_STATE);
+      setRawPrice(roomData?.price ? `${roomData.price}` : "");
     } else {
       setFormData(INITIAL_STATE);
+      setRawPrice("");
     }
   }, [isOpen, roomData]);
+
+  const formatCurrency = (num) => (!num ? "" : Number(num).toLocaleString("id-ID"));
+  const stripCurrency = (value) => (!value ? "" : value.toString().replace(/\./g, "").replace(/\D/g, ""));
+  const handlePriceChange = (e) => {
+    let value = stripCurrency(e.target.value);
+    setRawPrice(value);
+    setFormData((prev) => ({
+      ...prev,
+      price: Number(value)
+    }));
+  };
+  const handlePriceBlur = () => {
+    setRawPrice(formData.price ? `${formData.price}` : "");
+  };
+  const handlePriceFocus = () => {
+    setRawPrice(formData.price ? `${formData.price}` : "");
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "price" || name === "capacity" ? Number(value) : value,
+      [name]: name === "capacity"
+        ? Number(value)
+        : value,
     }));
   };
 
@@ -45,17 +67,13 @@ export default function ModalRoomForm({
       setFormData((prev) => ({ ...prev, image: imageUrl }));
     }
   };
-
-  // Handler untuk submit/edit/save data
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price || !formData.capacity) {
       alert("Mohon isi semua field yang wajib.");
       return;
     }
-
-    // Merge room master (ambil detail full, tetap gunakan data yang diisi user)
-    const selectedRoom = ROOM_LIST.find(r => r.name === formData.name);
+    const selectedRoom = ROOM_LIST?.find?.((r) => r.name === formData.name);
     const payload = {
       ...formData,
       roomName: selectedRoom?.name || formData.name,
@@ -65,22 +83,17 @@ export default function ModalRoomForm({
         : `${formData.capacity} people`,
       roomPrice: selectedRoom?.price
         ? `Rp ${selectedRoom.price.toLocaleString()}`
-        : `Rp ${formData.price.toLocaleString()}`
+        : `Rp ${formData.price.toLocaleString()}`,
     };
-
-    // Send to parent/app (biar bisa buka modal detail juga)
     onSubmit(payload);
-
-    // Bisa juga optional: buka ModalReportDetail
     if (onShowDetail) onShowDetail(payload);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-end items-center z-50">
-      <div className="bg-white h-full w-full max-w-md p-6 overflow-y-auto shadow-2xl relative">
-        {/* Header Modal */}
+    <div className="fixed right-0 top-0 h-full max-w-md w-full bg-white shadow-2xl z-50 overflow-y-auto border-l border-gray-200">
+      <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">
             {isEditMode ? "Edit Room" : "Add New Room"}
@@ -93,9 +106,7 @@ export default function ModalRoomForm({
             <FiX size={24} />
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Image Upload */}
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             {formData.image ? (
               <div className="relative">
@@ -126,9 +137,7 @@ export default function ModalRoomForm({
                 </p>
                 <button
                   type="button"
-                  onClick={() =>
-                    document.getElementById("image-upload").click()
-                  }
+                  onClick={() => document.getElementById("image-upload").click()}
                   className="mt-2 text-sm text-orange-500 hover:text-orange-600 font-medium"
                 >
                   Upload File
@@ -143,40 +152,27 @@ export default function ModalRoomForm({
               onChange={handleImageChange}
             />
           </div>
-
-          {/* Room Name (autocomplete with ROOM_LIST, manual typing allowed) */}
           <div>
-            <label
-              htmlFor="room-name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Room Name
-            </label>
+            <label htmlFor="room-name" className="block text-sm font-medium text-gray-700">Room Name</label>
             <input
               type="text"
               id="room-name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Daisy Room"
+              placeholder="Room Name"
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
               list="room-names"
             />
             <datalist id="room-names">
-              {ROOM_LIST.map(room => (
+              {(ROOM_LIST || []).map((room) => (
                 <option key={room.name} value={room.name} />
               ))}
             </datalist>
           </div>
-
           <div>
-            <label
-              htmlFor="room-type"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Room Type
-            </label>
+            <label htmlFor="room-type" className="block text-sm font-medium text-gray-700">Room Type</label>
             <select
               id="room-type"
               name="type"
@@ -189,51 +185,41 @@ export default function ModalRoomForm({
               <option value="Large">Large</option>
             </select>
           </div>
-
           <div>
-            <label
-              htmlFor="price-hours"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Price/Hours
-            </label>
+            <label htmlFor="price-hours" className="block text-sm font-medium text-gray-700">Price/Hours</label>
             <input
-              type="number"
+              type="text"
               id="price-hours"
               name="price"
-              value={formData.price}
-              onChange={handleChange}
-              placeholder="500000"
-              min="0"
+              value={rawPrice ? formatCurrency(rawPrice) : ""}
+              onChange={handlePriceChange}
+              onFocus={handlePriceFocus}
+              onBlur={handlePriceBlur}
+              min={0}
+              placeholder="Price" // <-- placeholder ganti, bisa kosong, '0', atau 'Price'
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
+              inputMode="numeric"
             />
           </div>
-
           <div>
-            <label
-              htmlFor="capacity"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Capacity
-            </label>
+            <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity</label>
             <input
               type="number"
               id="capacity"
               name="capacity"
               value={formData.capacity}
               onChange={handleChange}
-              placeholder="25"
-              min="1"
+              min={1}
+              placeholder="Capacity"
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
             />
           </div>
-
           <div className="pt-4">
             <button
               type="submit"
-              className="w-[416px] h-[48px] bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition"
+              className="w-full h-[48px] bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition"
             >
               Save
             </button>
@@ -244,7 +230,7 @@ export default function ModalRoomForm({
   );
 }
 
-ModalRoomForm.propTypes = {
+ModalEditRoom.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,

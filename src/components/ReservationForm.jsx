@@ -19,8 +19,6 @@ const ROOM_LIST = [
   "Lily",
 ];
 
-const PARTICIPANT_OPTIONS = [2, 4, 6, 8, 10, 12, 15, 20];
-
 const SNACK_OPTIONS = [
   { value: "coffee1", label: "Coffee Break Package 1 - Rp 20.000/people" },
   { value: "coffee2", label: "Coffee Break Package 2 - Rp 50.000/people" },
@@ -28,7 +26,6 @@ const SNACK_OPTIONS = [
   { value: "lunch2", label: "Lunch Package 2 - Rp 50.000/people" },
 ];
 
-// generate array all option "HH:mm", step 15 menit
 const generateTimeOptions = () => {
   const arr = [];
   for (let h = 0; h < 24; h++) {
@@ -91,10 +88,10 @@ function ReservationForm({
     const mandatory =
       mode === "admin"
         ? [
-            "room","name","phone","company","date","startTime","endTime","participants"
+            "room", "name", "phone", "company", "date", "startTime", "endTime", "participants"
           ]
         : [
-            "room","name","phone","company","date","startTime","endTime","participants"
+            "room", "name", "phone", "company", "date", "startTime", "endTime", "participants"
           ];
     for (let f of mandatory)
       if (!form[f]) {
@@ -113,12 +110,12 @@ function ReservationForm({
 
   return (
     <>
+      {/* BACKDROP TRANSPARAN */}
       <div
-        className="fixed inset-0 z-40 bg-black bg-opacity-30"
+        className="fixed inset-0 z-40 bg-[rgba(255,255,255,0.01)] pointer-events-auto"
         onClick={onClose}
       />
       <div className="fixed top-0 right-0 w-[456px] h-full max-h-screen z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
-        {/* HEADER */}
         <div className="flex items-center h-[56px] mb-2 sticky top-0 bg-white z-10">
           <button
             onClick={onClose}
@@ -140,7 +137,6 @@ function ReservationForm({
             Reservation Form
           </span>
         </div>
-        {/* FORM */}
         <form className="flex flex-col gap-3" onSubmit={handleSubmit} autoComplete="off">
           {/* Room Name */}
           <div className="flex flex-col gap-1">
@@ -253,17 +249,16 @@ function ReservationForm({
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Total Participants
             </label>
-            <select
+            <input
+              type="number"
+              min={1}
               value={form.participants}
               onChange={e => handleChange("participants", e.target.value)}
-              className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900 bg-white"
+              className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400"
+              placeholder="Total Participants"
               required
-            >
-              <option value="">Total Participants</option>
-              {PARTICIPANT_OPTIONS.map(val => (
-                <option key={val} value={val}>{val}</option>
-              ))}
-            </select>
+              autoComplete="off"
+            />
           </div>
           {/* Add Snack */}
           <div className="flex items-center mb-1 pt-1">
@@ -309,7 +304,6 @@ function ReservationForm({
               placeholder="Note"
             />
           </div>
-          {/* Submit */}
           <button
             type="submit"
             className="w-full h-12 bg-[#FF7316] text-white text-lg font-semibold rounded-lg mt-4 mb-2 shadow-sm hover:bg-orange-600 transition"

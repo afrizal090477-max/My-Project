@@ -5,13 +5,10 @@ import ReservationForm from "../components/ReservationForm";
 import ReservationSchedule from "../components/ReservationSchedule";
 import ReservationDetails from "../components/ReservationDetails";
 
-// ------ Helper functions & dummy data ------
+// ------ Helper Function ------
 function getSnackPrice(snackCategory) {
   const prices = {
-    coffee1: 20000,
-    coffee2: 50000,
-    lunch1: 20000,
-    lunch2: 50000,
+    coffee1: 20000, coffee2: 50000, lunch1: 20000, lunch2: 50000,
   };
   return prices[snackCategory] || 0;
 }
@@ -24,36 +21,35 @@ function getDuration(start, end) {
 const DUMMY_ROOMS_BASE = [
   { id: 1, name: "Aster Room", type: "Small", capacity: 6, price: 200000, status: "Available" },
   { id: 2, name: "Bluebell Room", type: "Medium", capacity: 10, price: 350000, status: "Booked" },
-  { id: 3, name: "Camellia Room", type: "Small", capacity: 8, price: 250000, status: "Available" },
-  { id: 4, name: "Daisy Room", type: "Medium", capacity: 12, price: 300000, status: "Available" },
-  { id: 5, name: "Edelweiss Room", type: "Large", capacity: 20, price: 450000, status: "Booked" },
-  { id: 6, name: "Freesia Room", type: "Small", capacity: 5, price: 180000, status: "Available" },
-  { id: 7, name: "Gardenia Room", type: "Medium", capacity: 15, price: 320000, status: "Booked" },
-  { id: 8, name: "Hibiscus Room", type: "Large", capacity: 25, price: 500000, status: "Available" },
-  { id: 9, name: "Ivy Room", type: "Small", capacity: 6, price: 200000, status: "Booked" },
-  { id: 10, name: "Jasmine Room", type: "Medium", capacity: 12, price: 350000, status: "Available" },
-  { id: 11, name: "Lily Room", type: "Large", capacity: 18, price: 400000, status: "Available" },
-  { id: 12, name: "Magnolia Room", type: "Small", capacity: 7, price: 220000, status: "Booked" },
-  { id: 13, name: "Narcissus Room", type: "Medium", capacity: 10, price: 330000, status: "Available" },
-  { id: 14, name: "Orchid Room", type: "Large", capacity: 22, price: 480000, status: "Available" },
-  { id: 15, name: "Peony Room", type: "Small", capacity: 6, price: 210000, status: "Booked" },
-  { id: 16, name: "Rose Room", type: "Medium", capacity: 12, price: 360000, status: "Available" },
-  { id: 17, name: "Sunflower Room", type: "Large", capacity: 20, price: 500000, status: "Available" },
-  { id: 18, name: "Tulip Room", type: "Small", capacity: 6, price: 220000, status: "Booked" },
-  { id: 19, name: "Violet Room", type: "Medium", capacity: 10, price: 340000, status: "Available" },
-  { id: 20, name: "Willow Room", type: "Large", capacity: 25, price: 480000, status: "Booked" },
-  { id: 21, name: "Xenia Room", type: "Small", capacity: 5, price: 200000, status: "Available" },
-  { id: 22, name: "Yarrow Room", type: "Medium", capacity: 12, price: 340000, status: "Booked" },
-  { id: 23, name: "Zinnia Room", type: "Large", capacity: 20, price: 470000, status: "Available" },
-  { id: 24, name: "Azalea Room", type: "Small", capacity: 6, price: 230000, status: "Available" },
+  { id: 3, name: "Camellia Room", type: "Large", capacity: 8, price: 250000, status: "Available" },
+  { id: 4, name: "Daisy Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
+  { id: 5, name: "Edelweiss Room", type: "Medium", capacity: 10, price: 300000, status: "Available" },
+  { id: 6, name: "Freesia Room", type: "Large", capacity: 5, price: 200000, status: "Booked" },
+  { id: 7, name: "Gardenia Room", type: "Small", capacity: 6, price: 180000, status: "Available" },
+  { id: 8, name: "Hibiscus Room", type: "Medium", capacity: 8, price: 250000, status: "Booked" },
+  { id: 9, name: "Ivy Room", type: "Large", capacity: 12, price: 300000, status: "Available" },
+  { id: 10, name: "Jasmine Room", type: "Small", capacity: 5, price: 180000, status: "Booked" },
+  { id: 11, name: "Lily Room", type: "Medium", capacity: 10, price: 250000, status: "Available" },
+  { id: 12, name: "Magnolia Room", type: "Large", capacity: 8, price: 300000, status: "Booked" },
+  { id: 13, name: "Narcissus Room", type: "Small", capacity: 6, price: 180000, status: "Available" },
+  { id: 14, name: "Orchid Room", type: "Medium", capacity: 10, price: 250000, status: "Booked" },
+  { id: 15, name: "Peony Room", type: "Large", capacity: 5, price: 180000, status: "Available" },
+  { id: 16, name: "Rose Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
+  { id: 17, name: "Sunflower Room", type: "Medium", capacity: 8, price: 250000, status: "Available" },
+  { id: 18, name: "Tulip Room", type: "Large", capacity: 12, price: 300000, status: "Booked" },
+  { id: 19, name: "Violet Room", type: "Small", capacity: 5, price: 180000, status: "Available" },
+  { id: 20, name: "Wisteria Room", type: "Medium", capacity: 10, price: 250000, status: "Booked" }, 
+  { id: 21, name: "Yarrow Room", type: "Large", capacity: 8, price: 300000, status: "Available" },
+  { id: 22, name: "Zinnia Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
+  { id: 23, name: "Zinnia Room", type: "Medium", capacity: 10, price: 250000, status: "Available" },
+  { id: 24, name: "Zinnia Room", type: "Large", capacity: 5, price: 180000, status: "Booked" },
 ];
-const ITEMS_PER_PAGE = 12;
 
+const ITEMS_PER_PAGE = 12;
 function getRoomDetailByName(roomName) {
   return DUMMY_ROOMS_BASE.find((room) => room.name === roomName) || {};
 }
 
-// ------ Full RoomReservation Component ------
 export default function RoomReservation() {
   const [rooms] = useState(DUMMY_ROOMS_BASE);
   const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
@@ -76,23 +72,16 @@ export default function RoomReservation() {
   }, [rooms, filters]);
   const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
   const roomsToDisplay = filteredRooms.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE
   );
 
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const handleRoomCardClick = (room) => setSelectedRoom(room);
 
-  // -- SELECT ROOM BY CARD --
-  const handleRoomCardClick = (room) => {
-    setSelectedRoom(room);
-  };
-
-  // -- ADD NEW RESERVATION: Buka modal hanya bila room terpilih
   const handleAddReservation = () => {
     if (!selectedRoom) {
-      alert("Pilih room terlebih dulu!");
-      return;
+      alert("Pilih room terlebih dulu!"); return;
     }
     setReservationData({
       room: selectedRoom.name,
@@ -105,8 +94,7 @@ export default function RoomReservation() {
   };
 
   const showSuccessToast = () => {
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setShowSuccess(true); setTimeout(() => setShowSuccess(false), 3000);
   };
 
   // -- Perhitungan detail
@@ -138,21 +126,21 @@ export default function RoomReservation() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen relative">
+    <div className="p-2 sm:p-6 bg-gray-50 min-h-screen relative">
       {/* ---- FILTER & ADD BUTTON ---- */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 max-w-[1320px] h-[80px] mx-auto p-4 flex flex-wrap items-center justify-between gap-4 relative">
-        <div className="flex flex-wrap gap-4 items-center flex-1">
-          <div className="relative flex-1 min-w-[304px] max-w-[362px]">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-[1320px] mx-auto px-2 sm:px-6 py-4 flex flex-col md:flex-row flex-wrap md:items-center md:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 md:items-center flex-1">
+          <div className="relative flex-1 min-w-[180px] sm:min-w-[240px] max-w-[362px]">
             <input
               type="text"
               placeholder="Search room..."
               onChange={(e) =>
                 setFilters((f) => ({ ...f, search: e.target.value }))
               }
-              className="w-full h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none"
+              className="w-full h-[44px] sm:h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
             />
             <FiSearch
-              className="absolute left-3 top-3 text-gray-400"
+              className="absolute left-3 top-2.5 text-gray-400"
               size={18}
             />
           </div>
@@ -161,7 +149,7 @@ export default function RoomReservation() {
             onChange={(e) =>
               setFilters((f) => ({ ...f, type: e.target.value }))
             }
-            className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[280px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Room Type</option>
             <option value="Small">Small</option>
@@ -173,7 +161,7 @@ export default function RoomReservation() {
             onChange={(e) =>
               setFilters((f) => ({ ...f, capacity: e.target.value }))
             }
-            className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[280px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Capacity</option>
             <option value="10">≤ 10 people</option>
@@ -183,7 +171,7 @@ export default function RoomReservation() {
         </div>
         <button
           onClick={handleAddReservation}
-          className={`bg-orange-600 hover:bg-orange-700 text-white font-medium w-[198px] h-[48px] px-6 rounded-lg transition flex items-center gap-2 shadow-sm hover:shadow-md ${!selectedRoom ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`bg-orange-600 hover:bg-orange-700 text-white font-medium min-w-[150px] w-full sm:w-[180px] h-[44px] sm:h-[48px] px-6 rounded-lg transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${!selectedRoom ? 'opacity-50 cursor-not-allowed' : ''}`}
           disabled={!selectedRoom}
         >
           <FiPlus size={20} />
@@ -191,7 +179,7 @@ export default function RoomReservation() {
         </button>
       </div>
       {/* ---- Room Card GRID ---- */}
-      <div className="bg-white rounded-xl max-w-[1320px] mx-auto shadow-sm border border-gray-200 p-5">
+      <div className="bg-white rounded-xl w-full max-w-[1320px] mx-auto shadow-sm border border-gray-200 px-2 sm:px-6 py-4 sm:py-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {roomsToDisplay.map((room) => (
             <RoomCardUser
@@ -268,7 +256,7 @@ export default function RoomReservation() {
           }}
         />
       )}
-      {/* ---- DETAILS STEP ---- */}
+      {/* ---- DETAILS STEP (NO BACKDROP) ---- */}
       {step === "DETAILS" && (
         <ReservationDetails
           isOpen
@@ -282,8 +270,8 @@ export default function RoomReservation() {
       )}
       {/* ---- Toast Success ---- */}
       {showSuccess && (
-        <div className="fixed right-10 top-24 z-50">
-          <div className="bg-white border border-green-400 text-green-600 px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">
+        <div className="fixed right-4 sm:right-10 top-20 sm:top-24 z-50">
+          <div className="bg-white border border-green-400 text-green-600 px-4 sm:px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">
             <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
               <circle cx="11" cy="11" r="11" fill="#2ED477" />
               <path

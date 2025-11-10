@@ -5,89 +5,53 @@ import { FaCalendarAlt } from "react-icons/fa";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
+// Dummy room + field date (yyyy-mm-dd)
+const rooms = [
+  { name: "Aster Room", usage: 100, omzet: 2000000, date: "2025-11-01" },
+  { name: "Bluebell Room", usage: 80, omzet: 2000000, date: "2025-11-03" },
+  { name: "Camellia Room", usage: 70, omzet: 1500000, date: "2025-11-06" },
+  { name: "Daisy Room", usage: 60, omzet: 1200000, date: "2025-11-06" },
+  { name: "Ivy Room", usage: 90, omzet: 2300000, date: "2025-11-05" },
+  { name: "Lily Room", usage: 75, omzet: 1900000, date: "2025-11-04" },
+  { name: "Magnolia Room", usage: 85, omzet: 2100000, date: "2025-11-07" },
+  { name: "Orchid Room", usage: 95, omzet: 2500000, date: "2025-11-08" },
+  { name: "Peony Room", usage: 88, omzet: 2200000, date: "2025-11-07" },
+  { name: "Rose Room", usage: 92, omzet: 2400000, date: "2025-11-01" },
+  { name: "Tulip Room", usage: 78, omzet: 1800000, date: "2025-11-02" },
+  { name: "Violet Room", usage: 83, omzet: 2000000, date: "2025-11-05" },
+];
+
 const Dashboard = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [filteredRooms, setFilteredRooms] = useState([]);
+  const [statSummary, setStatSummary] = useState({
+    totalOmzet: rooms.reduce((a, b) => a + b.omzet, 0),
+    totalReservation: rooms.length * 10,
+    totalVisitor: rooms.length * 40,
+    totalRooms: rooms.length,
+  });
 
-  
-  const rooms = [
-    {
-      name: "Aster Room",
-      usage: 100,
-      omzet: "Rp 2.000.000",
-    },
-
-    {
-      name: "Bluebell Room",
-      usage: 80,
-      omzet: "Rp 2.000.000",
-    },
-
-    {
-      name: "Camellia Room",
-      usage: 70,
-      omzet: "Rp 1.500.000",
-    },
-
-    {
-      name: "Daisy Room",
-      usage: 60,
-      omzet: "Rp 1.200.000",
-    },
-
-    { name: "Ivy Room", usage: 90, omzet: "Rp 2.300.000" },
-
-    { name: "Lily Room", usage: 75, omzet: "Rp 1.900.000" },
-
-    {
-      name: "Magnolia Room",
-      usage: 85,
-      omzet: "Rp 2.100.000",
-    },
-
-    {
-      name: "Orchid Room",
-      usage: 95,
-      omzet: "Rp 2.500.000",
-    },
-
-    {
-      name: "Peony Room",
-      usage: 88,
-      omzet: "Rp 2.200.000",
-    },
-
-    { name: "Rose Room", usage: 92, omzet: "Rp 2.400.000" },
-
-    {
-      name: "Tulip Room",
-      usage: 78,
-      omzet: "Rp 1.800.000",
-    },
-
-    {
-      name: "Violet Room",
-      usage: 83,
-      omzet: "Rp 2.000.000",
-    },
-  ];
-
+  // Dummy alur filter date
   const handleSearch = () => {
     if (!startDate || !endDate) {
       alert("Pilih Start Date dan End Date terlebih dahulu!");
       return;
     }
+    // Ubah ke format tanggal string untuk banding
+    const start = new Date(startDate).toISOString().substring(0, 10);
+    const end = new Date(endDate).toISOString().substring(0, 10);
+    // Filter rooms by date
+    const filtered = rooms.filter((room) => room.date >= start && room.date <= end);
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    const filtered = rooms.filter((room) => {
-      const roomDate = new Date(room.date);
-      return roomDate >= start && roomDate <= end;
-    });
+    // Hitung summary dari rooms terfilter
+    const totalOmzet = filtered.reduce((a, b) => a + b.omzet, 0);
+    const totalReservation = filtered.length * 10; // Dummy
+    const totalVisitor = filtered.length * 40;     // Dummy
+    const totalRooms = filtered.length;
 
     setFilteredRooms(filtered);
+    setStatSummary({ totalOmzet, totalReservation, totalVisitor, totalRooms });
   };
 
   const displayedRooms = filteredRooms.length > 0 ? filteredRooms : rooms;
@@ -145,10 +109,10 @@ const Dashboard = () => {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Total Omzet", value: "Rp 8.000.000" },
-          { label: "Total Reservation", value: "100" },
-          { label: "Total Visitor", value: "500" },
-          { label: "Total Rooms", value: "12" },
+          { label: "Total Omzet", value: `Rp ${statSummary.totalOmzet.toLocaleString()}` },
+          { label: "Total Reservation", value: statSummary.totalReservation },
+          { label: "Total Visitor", value: statSummary.totalVisitor },
+          { label: "Total Rooms", value: statSummary.totalRooms },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -173,29 +137,26 @@ const Dashboard = () => {
               key={room.name}
               className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[10px] p-5 flex justify-between items-start shadow-sm hover:shadow-md transition-all duration-300 w-[315px] h-[227px]"
             >
-             
               <div className="flex flex-col w-[145px] h-[57px] gap-[5px] mt-[20px] ml-[10px]">
                 <p className="text-[16px] font-semibold text-gray-900 dark:text-white">
                   {room.name}
                 </p>
-
                 <p className="text-[12px] text-gray-400 dark:text-gray-500">
                   Percentage of Usage
                 </p>
-
                 <p className="text-[16px] font-bold text-gray-900 dark:text-white">
                   {room.usage}%
                 </p>
-
                 <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-[4px]">
                   Omzet
                 </p>
-
                 <p className="text-[16px] font-semibold text-gray-900 dark:text-white">
-                  {room.omzet}
+                  {`Rp ${room.omzet.toLocaleString()}`}
+                </p>
+                <p className="text-[12px] text-gray-400 dark:text-gray-500 mt-[2px]">
+                  Date: {room.date}
                 </p>
               </div>
-
               <div className="flex justify-center items-center mt-[40px] mr-[10px] w-[100px] h-[100px]">
                 <CircularProgressbar
                   value={Number(room.usage)}

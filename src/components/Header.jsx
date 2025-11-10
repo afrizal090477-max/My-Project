@@ -1,37 +1,23 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";  // TAMBAHAN: import useSelector
-import { logout as logoutAction } from "../features/auth/authSlice";
+import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../context/PageTitleContext";
 import AdminPhoto from "../assets/admin.png";
 import LogoutIcon from "../assets/logout.png";
 
-
 const Header = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { token, role, logout } = useAuth(); // ambil role, token, logout dari AuthContext
   const { pageTitle } = usePageTitle();
-  
-  // MODIFIKASI: Ambil user dan role dari Redux store (bukan localStorage)
-  const { admin, role } = useSelector((state) => state.auth);
-  const username = admin?.username || admin?.email || "Admin";
-  const userRole = role === 'admin' ? 'Administrator' : 'Admin';
 
+  // Username bisa ambil dari localStorage, atau tambah properti user di AuthContext sesuai response backend jika ada.
+  const username = localStorage.getItem("username") || "Admin";
+  const userRole = role === 'admin' ? 'Administrator' : 'User';
 
   const handleLogout = () => {
-    // Clear Redux store (sudah termasuk clear localStorage di dalam action)
-    dispatch(logoutAction());
-    
-    // HAPUS: localStorage manual clear (sudah di handle di authSlice)
-    // localStorage.removeItem("isLoggedIn");
-    // localStorage.removeItem("role");
-    // localStorage.removeItem("username");
-    // localStorage.removeItem("token");
-    
-    // Redirect ke login
+    logout();
     navigate("/login", { replace: true });
   };
-
 
   return (
     <header className="w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-8 py-4 shadow-sm">
@@ -51,6 +37,5 @@ const Header = () => {
     </header>
   );
 };
-
 
 export default Header;

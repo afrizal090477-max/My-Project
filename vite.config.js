@@ -17,8 +17,6 @@ export default defineConfig({
       "@components": path.resolve(__dirname, "./src/components"),
       "@pages": path.resolve(__dirname, "./src/pages"),
       "@utils": path.resolve(__dirname, "./src/utils"),
-      "@layouts": path.resolve(__dirname, "./src/layouts"),
-      "@features": path.resolve(__dirname, "./src/features"),
       "@context": path.resolve(__dirname, "./src/context"),
       "@data": path.resolve(__dirname, "./src/data"),
     },
@@ -26,14 +24,22 @@ export default defineConfig({
 
   // Development server settings
   server: {
-    port: 5173,
-    open: true,
-    host: true,
-    strictPort: false,
-    hmr: {
-      overlay: true,
+  port: 5173,
+  open: true,
+  host: true,
+  strictPort: false,
+  hmr: {
+    overlay: true,
+  },
+  proxy: {
+    "/api": {
+      target: "http://172.16.148.101:8883",
+      changeOrigin: true,
+      secure: false,
     },
   },
+},
+
 
   // Preview server settings (untuk test production local)
   preview: {

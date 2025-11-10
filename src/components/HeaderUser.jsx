@@ -1,37 +1,22 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";  // TAMBAHAN: import useSelector
-import { logout as logoutAction } from "../features/auth/authSlice";
+import { useAuth } from "../context/AuthContext"; 
 import { usePageTitle } from "../context/PageTitleContext";
 import UserPhoto from "../assets/JhonDoe.png";
 import LogoutIcon from "../assets/logout.png";
 
-
 const HeaderUser = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const { user, role, logout } = useAuth();
   const { pageTitle } = usePageTitle();
-  
-  // MODIFIKASI: Ambil user dan role dari Redux store (bukan localStorage)
-  const { user, role } = useSelector((state) => state.auth);
+
   const username = user?.username || user?.email || "User";
   const userRole = role === 'user' ? 'Customer' : role || 'Customer';
 
-
   const handleLogout = () => {
-    // Clear Redux store (sudah termasuk clear localStorage di dalam action)
-    dispatch(logoutAction());
-    
-    // HAPUS: localStorage manual clear (sudah di handle di authSlice)
-    // localStorage.removeItem("isLoggedIn");
-    // localStorage.removeItem("role");
-    // localStorage.removeItem("username");
-    // localStorage.removeItem("token");
-    
-    // Redirect ke login
+    logout();
     navigate("/login", { replace: true });
   };
-
 
   return (
     <header className="w-full bg-white border-b border-gray-200 flex items-center justify-between px-8 py-4 shadow-sm">
@@ -51,6 +36,5 @@ const HeaderUser = () => {
     </header>
   );
 };
-
 
 export default HeaderUser;

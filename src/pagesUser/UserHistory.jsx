@@ -197,7 +197,7 @@ export default function UserHistory() {
               name="roomType"
               value={filters.roomType}
               onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-[257px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+              className="border border-gray-300 rounded-[10px] w-[327px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
             >
               <option value="">Room Type</option>
               <option value="Small">Small</option>
@@ -214,7 +214,7 @@ export default function UserHistory() {
               name="status"
               value={filters.status}
               onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-[257px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+              className="border border-gray-300 rounded-[10px] w-[327px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
             >
               <option value="">Status</option>
               <option value="Booked">Booked</option>

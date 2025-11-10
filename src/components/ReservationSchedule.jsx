@@ -4,6 +4,7 @@ import { FiCalendar } from "react-icons/fi";
 
 const SLOT_START = 8;
 const SLOT_END = 21;
+
 function generateTimes() {
   const arr = [];
   for (let h = SLOT_START; h <= SLOT_END; h++) {
@@ -29,6 +30,8 @@ export default function ReservationSchedule({
   const inputRef = useRef();
 
   const times = generateTimes();
+  const rowHeight = 29;
+
   const dummyBooked = {
     "2024-10-01": [
       ["08:00", "09:00"],
@@ -38,6 +41,7 @@ export default function ReservationSchedule({
 
   const getBookedRanges = () =>
     bookedTimes[selectedDate] || dummyBooked[selectedDate] || [];
+
   function isBooked(idx) {
     return getBookedRanges().some(
       ([start, end]) =>
@@ -141,22 +145,8 @@ export default function ReservationSchedule({
           <div className="flex flex-col gap-1">
             {times.map((time, idx) => {
               let status = "";
-              let label = "";
-              if (isBooked(idx)) {
-                status = "booked";
-                const bookedSlots = getBookedRanges().find(
-                  ([start, end]) =>
-                    idx >= parseHour(start) - SLOT_START &&
-                    idx < parseHour(end) - SLOT_START
-                );
-                label =
-                  bookedSlots && bookedSlots.length
-                    ? `${bookedSlots[0]} - ${bookedSlots[0]} WIB`
-                    : "";
-              } else if (getRangeStatus(idx) === "range") {
-                status = "yours";
-                label = `${times[clickStart]} - ${times[clickEnd]} WIB`;
-              }
+              if (isBooked(idx)) status = "booked";
+              else if (getRangeStatus(idx) === "range") status = "yours";
               return (
                 <div
                   key={time}
@@ -168,13 +158,11 @@ export default function ReservationSchedule({
                   </span>
                   {status === "booked" ? (
                     <div className="bg-orange-50 text-orange-400 font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] border border-orange-200">
-                      Booked{" "}
-                      <span className="ml-2 text-xs font-normal">{label}</span>
+                      Booked
                     </div>
                   ) : status === "yours" ? (
                     <div className="bg-orange-500 text-white font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] shadow">
-                      Your Booking{" "}
-                      <span className="ml-2 text-xs font-normal">{label}</span>
+                      Your Booking
                     </div>
                   ) : (
                     <div className="flex-1 h-[29px] border-b border-dashed border-gray-200 hover:bg-orange-50 transition"></div>
@@ -224,51 +212,55 @@ export default function ReservationSchedule({
           <div className="text-center font-medium text-gray-700 pb-1">
             {roomName}
           </div>
-          <div className="flex flex-col gap-1">
-            {times.map((time, idx) => {
-              let status = "";
-              let label = "";
-              if (isBooked(idx)) {
-                status = "booked";
-                const bookedSlots = getBookedRanges().find(
-                  ([start, end]) =>
-                    idx >= parseHour(start) - SLOT_START &&
-                    idx < parseHour(end) - SLOT_START
-                );
-                label =
-                  bookedSlots && bookedSlots.length
-                    ? `${bookedSlots[0]} - ${bookedSlots[1]} WIB`
-                    : "";
-              } else if (
-                clickStart !== null &&
-                clickEnd !== null &&
-                idx >= clickStart &&
-                idx < clickEnd
-              ) {
-                status = "yours";
-                label = `${times[clickStart]} - ${times[clickEnd]} WIB`;
-              }
+          {/* Render Overlay Block Booking & User Selection */}
+          <div className="relative" style={{ height: times.length * rowHeight }}>
+            {/* Garis setiap jam */}
+            {times.map((time, idx) => (
+              <div key={time}
+                className="flex items-center gap-2 absolute left-0 right-0"
+                style={{ top: idx * rowHeight, height: rowHeight }}
+              >
+                <span className="w-[44px] text-xs text-gray-400">
+                  {time.replace(":", ".")}
+                </span>
+                <div className="flex-1 h-[29px] border-b border-dashed border-gray-200"></div>
+              </div>
+            ))}
+            {/* Blok booking existing */}
+            {getBookedRanges().map(([start, end], i) => {
+              const startIdx = parseHour(start) - SLOT_START;
+              const endIdx = parseHour(end) - SLOT_START;
               return (
-                <div key={time} className="flex items-center gap-2">
-                  <span className="w-[44px] text-xs text-gray-400">
-                    {time.replace(":", ".")}
+                <div
+                  key={i}
+                  className="absolute left-[44px] right-2 bg-[#FFC29B] border border-[#FFC29B] rounded z-10 flex items-center text-xs font-bold text-[#d6771b]"
+                  style={{
+                    top: startIdx * rowHeight,
+                    height: (endIdx - startIdx) * rowHeight - 3,
+                    opacity: 0.3,
+                  }}
+                >
+                  <span className="ml-2">
+                    {start} - {end}
                   </span>
-                  {status === "booked" ? (
-                    <div className="bg-orange-50 text-orange-400 font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] border border-orange-200">
-                      Booked{" "}
-                      <span className="ml-2 text-xs font-normal">{label}</span>
-                    </div>
-                  ) : status === "yours" ? (
-                    <div className="bg-orange-500 text-white font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] shadow">
-                      Your Booking{" "}
-                      <span className="ml-2 text-xs font-normal">{label}</span>
-                    </div>
-                  ) : (
-                    <div className="flex-1 h-[29px] border-b border-dashed border-gray-200"></div>
-                  )}
                 </div>
               );
             })}
+            {/* Blok booking pilihan user */}
+            {clickStart !== null && clickEnd !== null && (
+              <div
+                className="absolute left-[44px] right-2 bg-orange-500 rounded z-20 flex items-center text-xs font-bold text-white shadow"
+                style={{
+                  top: clickStart * rowHeight,
+                  height: (clickEnd - clickStart) * rowHeight - 3,
+                  opacity: 0.7,
+                }}
+              >
+                <span className="ml-2">
+                  {times[clickStart]} - {times[clickEnd]} WIB
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <div className="px-6 pb-6">

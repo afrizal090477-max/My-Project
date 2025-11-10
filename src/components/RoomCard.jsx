@@ -1,81 +1,68 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FiEdit2, FiUsers, FiTag } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiUsers, FiTag } from "react-icons/fi";
 import RoomsImage from "../assets/Rooms.png";
 
-function RoomCard({ room, onEdit }) {
-  const formatRupiah = (number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(number);
-  };
-
-  // Bersihkan nested ternary
-  let statusColor;
-  if (room.status === "Available") {
-    statusColor = "bg-green-500";
-  } else if (room.status === "Booked") {
-    statusColor = "bg-red-500";
-  } else {
-    statusColor = "bg-yellow-500";
-  }
+function RoomCard({ room, onEdit, onDelete }) {
+  // Format harga
+  const formatRupiah = (number) =>
+    `Rp ${number.toLocaleString("id-ID")} / hour`;
 
   const imageUrl = room.image || RoomsImage;
 
   return (
     <article
-      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl"
+      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl font-['Roboto']"
       aria-label={`Kartu ruangan ${room.name}`}
     >
-      <div className="absolute top-2 right-2 flex space-x-2 z-10">
-        <span
-          className={`${statusColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
+      {/* Icon Edit & Delete */}
+      <div className="absolute top-3 right-3 flex gap-2 z-10">
+        <button
+          type="button"
+          onClick={() => onDelete(room)}
+          className="bg-white text-red-500 p-2 rounded-full shadow hover:bg-red-50 transition"
+          title={`Delete ${room.name}`}
         >
-          {room.status}
-        </span>
+          <FiTrash2 size={16} />
+        </button>
         <button
           type="button"
           onClick={() => onEdit(room)}
-          className="bg-white text-gray-700 p-2 rounded-full shadow-md opacity-80 hover:opacity-100 hover:text-blue-600 transition"
+          className="bg-white text-orange-500 p-2 rounded-full shadow hover:bg-orange-50 transition"
           title={`Edit ${room.name}`}
         >
           <FiEdit2 size={16} />
         </button>
       </div>
 
+      {/* PHOTO */}
       <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
         <img
           src={imageUrl}
           alt={`Foto ruangan ${room.name}`}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-cover transition group-hover:scale-105 duration-300"
           loading="lazy"
         />
       </div>
-
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
-          {room.name}
-        </h3>
-
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <FiUsers
-            className="mr-2 text-blue-500"
-            size={16}
-            aria-hidden="true"
-          />
-          <span>{room.capacity} people</span>
+      
+      {/* INFO GRID 2 kolom */}
+      <div className="p-4 pb-5">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-bold text-gray-800 truncate">{room.name}</h3>
+          <span className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+            <FiTag className="text-green-500" size={15} />
+            {room.type} Type
+          </span>
         </div>
-
-        <div className="flex items-center text-sm text-gray-600 mb-3">
-          <FiTag className="mr-2 text-green-500" size={16} aria-hidden="true" />
-          <span>{room.type} Type</span>
+        <div className="flex justify-between items-center">
+          <span className="flex items-center gap-2 text-sm text-gray-600">
+            <FiUsers className="text-blue-500" size={15} />
+            {room.capacity} people
+          </span>
+          <span className="text-sm font-bold text-orange-500 whitespace-nowrap">
+            {formatRupiah(room.price)}
+          </span>
         </div>
-
-        <p className="text-xl font-bold text-orange-500">
-          {formatRupiah(room.price)} / hour
-        </p>
       </div>
     </article>
   );
@@ -87,10 +74,10 @@ RoomCard.propTypes = {
     type: PropTypes.string,
     capacity: PropTypes.number,
     price: PropTypes.number,
-    status: PropTypes.string,
     image: PropTypes.string,
   }).isRequired,
   onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default React.memo(RoomCard);

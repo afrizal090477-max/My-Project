@@ -1,36 +1,34 @@
 @import "tailwindcss";
 
+/* ---- Root: Default color scheme terang ---- */
 :root {
   font-family: Roboto, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color-scheme: light;
+  color: #213547;
+  background-color: #F7F8FC; /* Abu terang DEFAULT, tidak black! */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- Link, Typography, Button Fix --- */
 a {
   font-weight: 500;
   color: gray;
-  text-decoration: Roboto;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 a:hover {
   color: orange;
+  text-decoration: underline;
 }
-
-
-
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
-
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -39,47 +37,132 @@ button {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, box-shadow 0.2s;
 }
-
 button:focus,
 button:focus-visible {
-  outline: 4px auto -highlight;
+  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #e0953f;
-  }
- 
-}
-
+/* ---- BODY/DEFAULT BG LANDING ADMIN ---- */
 body {
   font-family: 'Roboto', sans-serif;
-  background-image: url('/src/assets/meeting.png'); 
+  background-color: #F7F8FC;
+  background-image: url('/src/assets/meeting.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
   overflow-x: hidden;
+  min-height: 100vh !important;
 }
 
-
+/* Komponen khusus tetap aman */
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0;
   position: absolute;
   right: 12px;
   cursor: pointer;
 }
-
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-thumb {
   background-color: #E0E0E0;
   border-radius: 10px;
 }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* PAKSA BACKGROUND TIDAK HITAM */
+body, html, #root {
+  background-color: #F7F8FC !important;
+  background-image: url('/src/assets/meeting.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* .logo style (bila dipakai di app/corner) */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #f47403df);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #ec5504aa);
+}
+
+/* Animasi logo spin & panel slide */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+/* Card Komponen (general, landing, dashboard, modal dll) */
+.card {
+  padding: 2em;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,.07);
+  border: 1px solid #eee;
+  transition: box-shadow 0.15s;
+}
+.card:hover {
+  box-shadow: 0 3px 22px 0 rgba(249,115,22,0.10);
+}
+
+/* Dokumentasi section (optional landing/info) */
+.read-the-docs {
+  color: #888;
+}
+
+/* FIX ICON SIDEBAR BORDER - GLOBAL NO BORDER EVERYWHERE */
+svg, .icon, .sidebar-icon {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important; /* Jika ada override background px dari UI library */
+}
+
+/* Tooltip, popover general universal (untuk Sidebar versi z-100) */
+.tooltip, .popover, .sidebar-tooltip {
+  z-index: 100;
+  font-size: 0.92em;
+  font-family: inherit;
+}
+
+/* Utility universal untuk panel/modal/overlay modern - tidak ganggu backdrop menu */
+.backdrop, .modal-backdrop, .drawer-backdrop {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* RESET PAKSA ONLY BUTTON DI SIDEBAR ICON DAN SVG */
+aside button, .sidebar-icon, svg {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Kalau sidebar pakai <button> sebagai icon wrapper, auto clean border! */
+aside button svg, aside button .icon, aside nav button svg {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+

@@ -1,5 +1,3 @@
-// src/utils/storage.js
-
 // Ambil token dari localStorage
 export const getToken = () => localStorage.getItem("token");
 

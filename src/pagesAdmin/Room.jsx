@@ -1,107 +1,165 @@
-import React, { useMemo, useState } from "react";
-import { FiSearch, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import {
+  FiSearch,
+  FiPlus,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import RoomCard from "../components/RoomCard";
 import ModalEditRoom from "../components/ModalEditRoom";
 import ModalConfirmDeleteRoom from "../components/ModalConfirmDeleteRoom";
 import RoomsImage from "../assets/Rooms.png";
-
-const DUMMY_ROOMS_BASE = [
-  { id: 1, name: "Aster Room", type: "Small", capacity: 12, price: 200000 },
-  { id: 2, name: "Bluebell Room", type: "Medium", capacity: 10, price: 350000 },
-  { id: 3, name: "Camellia Room", type: "Large", capacity: 8, price: 250000 },
-  { id: 4, name: "Daisy Room", type: "Small", capacity: 6, price: 180000 },
-  { id: 5, name: "Edelweiss Room", type: "Medium", capacity: 10, price: 300000 },
-  { id: 6, name: "Freesia Room", type: "Large", capacity: 5, price: 200000 },
-  { id: 7, name: "Gardenia Room", type: "Small", capacity: 6, price: 180000 },
-  { id: 8, name: "Hibiscus Room", type: "Medium", capacity: 8, price: 250000 },
-  { id: 9, name: "Ivy Room", type: "Large", capacity: 12, price: 300000 },
-  { id: 10, name: "Jasmine Room", type: "Small", capacity: 5, price: 180000 },
-  { id: 11, name: "Lily Room", type: "Medium", capacity: 10, price: 250000 },
-  { id: 12, name: "Magnolia Room", type: "Large", capacity: 8, price: 300000 },
-  { id: 13, name: "Narcissus Room", type: "Small", capacity: 6, price: 180000 },
-  { id: 14, name: "Orchid Room", type: "Medium", capacity: 10, price: 250000 },
-  { id: 15, name: "Peony Room", type: "Large", capacity: 5, price: 180000 },
-  { id: 16, name: "Rose Room", type: "Small", capacity: 6, price: 180000 },
-  { id: 17, name: "Sunflower Room", type: "Medium", capacity: 8, price: 250000 },
-  { id: 18, name: "Tulip Room", type: "Large", capacity: 12, price: 300000 },
-  { id: 19, name: "Violet Room", type: "Small", capacity: 5, price: 180000 },
-  { id: 20, name: "Willow Room", type: "Medium", capacity: 10, price: 250000 },
-  { id: 21, name: "Xenia Room", type: "Large", capacity: 8, price: 300000 },
-  { id: 22, name: "Yarrow Room", type: "Small", capacity: 6, price: 180000 },
-  { id: 23, name: "Zinnia Room", type: "Medium", capacity: 10, price: 250000 },
-  { id: 24, name: "Azalea Room", type: "Large", capacity: 5, price: 180000 },
-
-];
+import {
+  fetchRooms,
+  fetchRoomTypes,
+  fetchCapacities,
+  addRoom,
+  updateRoom,
+  deleteRoom,
+} from "../API/roomAPI";
 
 const ITEMS_PER_PAGE = 12;
 
 export default function Room() {
-  const [rooms, setRooms] = useState(DUMMY_ROOMS_BASE);
-  const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
+  const [rooms, setRooms] = useState([]);
+  const [filters, setFilters] = useState({
+    search: "",
+    type: "",
+    capacity: "",
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, room: null });
   const [currentPage, setCurrentPage] = useState(1);
-
-  // TAMBAH STATE TOAST
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const [roomTypes, setRoomTypes] = useState([]);
+  const [capacities, setCapacities] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const types = await fetchRoomTypes();
+        setRoomTypes(types);
+        const caps = await fetchCapacities();
+        setCapacities(caps);
+      } catch (err) {
+        console.error("Failed to load room filters", err);
+      }
+    };
+    loadFilters();
+  }, []);
+
+  useEffect(() => {
+    const loadRooms = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          room_type: filters.type,
+          capacity: filters.capacity,
+          page: currentPage - 1,
+          limit: ITEMS_PER_PAGE,
+        };
+        const data = await fetchRooms(params);
+        let apiRooms = data.data || [];
+        console.log("DEBUG DATA ROOMS:", apiRooms);
+
+
+        // Defensive: flatten possible object for type/room_type
+        apiRooms = apiRooms.map((room) => ({
+          ...room,
+          // Pastikan hanya label string yang dikirim ke komponen
+          type:
+            (room.type && typeof room.type === "object"
+              ? room.type.name || room.type.label
+              : room.type) ??
+            (room.room_type && typeof room.room_type === "object"
+              ? room.room_type.name || room.room_type.label
+              : room.room_type) ??
+            "",
+        }));
+
+        if (filters.search) {
+          const src = filters.search.toLowerCase();
+          apiRooms = apiRooms.filter((room) =>
+            room.name.toLowerCase().includes(src)
+          );
+        }
+        setRooms(apiRooms);
+        setTotalPages(Math.ceil((data.total || apiRooms.length) / ITEMS_PER_PAGE) || 1);
+      } catch (error) {
+        console.error("Failed to load rooms", error);
+      }
+      setLoading(false);
+    };
+    loadRooms();
+  }, [filters, currentPage]);
 
   function handleAddClick() {
     setSelectedRoom(null);
     setIsModalOpen(true);
   }
+
   function handleEditClick(room) {
     setSelectedRoom(room);
     setIsModalOpen(true);
   }
+
+  async function handleFormSubmit(formData) {
+    setLoading(true);
+    try {
+      if (formData.id) {
+        await updateRoom(formData.id, formData);
+        setRooms((prev) =>
+          prev.map((r) => (r.id === formData.id ? { ...formData } : r))
+        );
+      } else {
+        const roomToAdd = { ...formData, image: formData.image || RoomsImage };
+        await addRoom(roomToAdd);
+        setRooms((prev) => [roomToAdd, ...prev]);
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 3000);
+      }
+    } catch (error) {
+      console.error("Failed to save room", error);
+    }
+    setIsModalOpen(false);
+    setLoading(false);
+  }
+
+  async function handleDeleteConfirm() {
+    setLoading(true);
+    try {
+      if (deleteModal.room?.id) {
+        await deleteRoom(deleteModal.room.id);
+        setRooms((prev) => prev.filter((r) => r.id !== deleteModal.room.id));
+      }
+    } catch (error) {
+      console.error("Failed to delete room", error);
+    }
+    setDeleteModal({ open: false, room: null });
+    setLoading(false);
+  }
+
   function handleDeleteClick(room) {
     setDeleteModal({ open: true, room });
   }
-  function handleFormSubmit(formData) {
-    if (formData.id) {
-      setRooms((prev) => prev.map((r) => (r.id === formData.id ? { ...formData } : r)));
-    } else {
-      const newRoom = {
-        ...formData,
-        id: Date.now(),
-        image: formData.image || RoomsImage,
-      };
-      setRooms((prev) => [newRoom, ...prev]);
-      // TAMPILKAN TOAST
-      setShowSuccessToast(true);
-      setTimeout(() => setShowSuccessToast(false), 3000);
-    }
-    setIsModalOpen(false);
-  }
-  function handleDeleteConfirm() {
-    setRooms((prev) => prev.filter((r) => r.id !== deleteModal.room.id));
-    setDeleteModal({ open: false, room: null });
-  }
+
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   }
 
-  const filteredRooms = useMemo(() => {
-    const search = filters.search.toLowerCase();
-    const type = filters.type;
-    const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
-    return rooms.filter((room) => {
-      const matchSearch = room.name.toLowerCase().includes(search);
-      const matchType = type ? room.type === type : true;
-      const matchCapacity = minCapacity !== null ? room.capacity >= minCapacity : true;
-      return matchSearch && matchType && matchCapacity;
-    });
-  }, [rooms, filters]);
+  function handlePrevPage() {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  }
 
-  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
-  const roomsToDisplay = filteredRooms.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  function handleNextPage() {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  }
 
-  function handlePrevPage() { setCurrentPage((prev) => Math.max(prev - 1, 1)); }
-  function handleNextPage() { setCurrentPage((prev) => Math.min(prev + 1, totalPages)); }
+  const roomsToDisplay = rooms;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -118,25 +176,31 @@ export default function Room() {
             />
             <FiSearch className="absolute left-3 top-3 text-gray-400" size={18} />
           </div>
+          {/* Dropdown type dinamis */}
           <select
             value={filters.type}
             onChange={(e) => handleFilterChange("type", e.target.value)}
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Room Type</option>
-            <option value="Small">Small</option>
-            <option value="Medium">Medium</option>
-            <option value="Large">Large</option>
+            {roomTypes.map((type) => (
+              <option key={type.value || type} value={type.value || type}>
+                {type.label || type}
+              </option>
+            ))}
           </select>
+          {/* Dropdown capacity dinamis */}
           <select
             value={filters.capacity}
             onChange={(e) => handleFilterChange("capacity", e.target.value)}
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Capacity</option>
-            <option value="10">≥ 10 people</option>
-            <option value="20">≥ 20 people</option>
-            <option value="50">≥ 50 people</option>
+            {capacities.map((cap) => (
+              <option key={cap.value || cap} value={cap.value || cap}>
+                {cap.label || cap}
+              </option>
+            ))}
           </select>
         </div>
         <button
@@ -146,7 +210,6 @@ export default function Room() {
           <FiPlus size={18} /> Add New Room
         </button>
       </div>
-
       {/* GRID */}
       <div className="bg-white rounded-xl max-w-[1320px] mx-auto shadow-sm border border-gray-200 p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -159,13 +222,16 @@ export default function Room() {
             />
           ))}
         </div>
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-6 gap-3">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`p-2 rounded-md border ${currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}`}
+              className={`p-2 rounded-md border ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
+              }`}
             >
               <FiChevronLeft />
             </button>
@@ -175,39 +241,53 @@ export default function Room() {
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-md border ${currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}`}
+              className={`p-2 rounded-md border ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
+              }`}
             >
               <FiChevronRight />
             </button>
           </div>
         )}
       </div>
-
-      {/* MODAL EDIT/ADD */}
+      {/* MODALS */}
       <ModalEditRoom
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleFormSubmit}
         roomData={selectedRoom}
+        roomTypes={roomTypes}
+        capacities={capacities}
       />
-      {/* MODAL CONFIRM DELETE */}
       <ModalConfirmDeleteRoom
         isOpen={deleteModal.open}
         roomName={deleteModal.room?.name}
         onCancel={() => setDeleteModal({ open: false, room: null })}
         onConfirm={handleDeleteConfirm}
       />
-
-      {/* TOAST SUCCESS */}
+      {/* TOAST */}
       {showSuccessToast && (
         <div className="fixed right-4 top-20 z-50">
           <div className="bg-white border border-green-400 text-green-600 px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">
             <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
               <circle cx="11" cy="11" r="11" fill="#2ED477" />
-              <path d="M6 11.8462L9.23077 15L16 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M6 11.8462L9.23077 15L16 8"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             New Room Successfully Added
-            <button onClick={() => setShowSuccessToast(false)} className="ml-2 text-gray-400 hover:text-green-700">&times;</button>
+            <button
+              onClick={() => setShowSuccessToast(false)}
+              className="ml-2 text-gray-400 hover:text-green-700"
+            >
+              &times;
+            </button>
           </div>
         </div>
       )}

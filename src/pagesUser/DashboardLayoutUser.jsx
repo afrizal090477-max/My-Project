@@ -4,14 +4,23 @@ import HeaderUser from "../components/HeaderUser";
 import { Outlet } from "react-router-dom";
 
 const DashboardLayoutUser = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Ambil preferensi dark mode dari localStorage jika ada
+    const lsVal = localStorage.getItem("darkMode");
+    return lsVal ? JSON.parse(lsVal) : false;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
   return (
-    <div className={`flex min-h-screen ${darkMode ? "bg-gray-900 text-black" : "bg-[#F7F7F7] text-gray-900"} transition-colors duration-500`}>
+    <div
+      className={`flex min-h-screen ${
+        darkMode ? "bg-gray-900 text-black" : "bg-[#F7F7F7] text-gray-900"
+      } transition-colors duration-500`}
+    >
       <SidebarUser />
       <div className="flex-1 flex flex-col">
         <HeaderUser />

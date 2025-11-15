@@ -1,84 +1,141 @@
 import React, { useState, useRef, useEffect } from "react";
 import defaultPhoto from "../assets/home.png";
+import {
+  fetchUserProfile,
+  updateUserProfile,
+} from "../API/userProfileAPI";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-export default function Setting() {
+export default function UserSetting() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    email: "johndoe@gmail.com",
-    username: "John Doe",
-    role: "Admin",
-    status: "Active",
-    language: "English",
-    password: "********",
+    email: "",
+    username: "",
+    role: "",
+    status: "",
+    language: "",
+    password: "",
   });
-
   const [photo, setPhoto] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const savedPhoto = localStorage.getItem("userPhoto");
-    if (savedPhoto) setPhoto(savedPhoto);
+    const loadProfile = async () => {
+      try {
+        const data = await fetchUserProfile();
+        setFormData({
+          email: data.email || "",
+          username: data.username || "",
+          role: data.role || "",
+          status: data.status || "",
+          language: data.language || "",
+          password: "********",
+        });
+        setPhoto(data.photo_url || data.photo || "");
+      } catch {
+        toast.error("Gagal memuat profil user");
+      }
+      setLoading(false);
+    };
+    loadProfile();
   }, []);
+
   useEffect(() => {
-    localStorage.setItem("userPhoto", photo);
+    if (photo) localStorage.setItem("userPhoto", photo);
   }, [photo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  const handleToggleEdit = () => {
-    if (isEditing) alert("✅ Changes saved successfully!");
-    setIsEditing(!isEditing);
+
+  const handleToggleEdit = async () => {
+    if (isEditing) {
+      try {
+        await updateUserProfile({
+          ...formData,
+          password: formData.password === "********" ? "" : formData.password,
+          photo: photoFile,
+        });
+        toast.success("✅ Changes saved successfully!");
+        if (photoFile) {
+          setPhoto(URL.createObjectURL(photoFile));
+          setPhotoFile(null);
+        }
+      } catch {
+        toast.error("❌ Failed to update profile.");
+      }
+    }
+    setIsEditing((prev) => !prev);
   };
+
   const handleChangePicture = () => fileInputRef.current.click();
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPhoto(reader.result);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setPhotoFile(file);
+    setPhoto(URL.createObjectURL(file)); // preview langsung
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
+      <ToastContainer position="top-right" autoClose={2500} />
       <div className="w-full max-w-[1320px] mx-auto bg-white shadow-md p-8 rounded-xl">
         <h2 className="text-xl font-semibold text-gray-700 mb-2">My Account</h2>
-        {/* Profile picture */}
         <div className="flex items-center gap-4 mb-8">
-          {photo !== "" ? (
-            <img src={photo} alt="User" className="w-16 h-16 rounded-full object-cover" />
+          {photo ? (
+            <img
+              src={photo}
+              alt="User"
+              className="w-16 h-16 rounded-full object-cover"
+            />
           ) : (
-            <img src={defaultPhoto} alt="User" className="w-16 h-16 rounded-full object-cover" />
+            <img
+              src={defaultPhoto}
+              alt="User"
+              className="w-16 h-16 rounded-full object-cover"
+            />
           )}
-          <div>
-            {isEditing && (
-              <>
-                <button
-                  onClick={handleChangePicture}
-                  className="mt-2 w-[106px] h-[34px] bg-orange-500 text-white px-4 py-2 rounded-md !text-xs font-medium hover:bg-orange-600 transition"
-                >
-                  Change Picture
-                </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </>
-            )}
-          </div>
+          {isEditing && (
+            <>
+              <button
+                onClick={handleChangePicture}
+                className="mt-2 w-[106px] h-[34px] bg-orange-500 text-white px-4 py-2 rounded-md !text-xs font-medium hover:bg-orange-600 transition"
+              >
+                Change Picture
+              </button>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </>
+          )}
         </div>
 
         <div className="space-y-6">
-          {/* Baris 1: Email, Username, Role */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">Email</label>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
+                Email
+              </label>
               <input
                 id="email"
                 type="email"
@@ -86,12 +143,20 @@ export default function Setting() {
                 value={formData.email}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full h-[48px] border ${isEditing ? "border-orange-400" : "border-gray-300"} rounded-lg px-3 py-2 focus:outline-none ${isEditing && "focus:ring-2 focus:ring-orange-400"}`}
+                className={`w-full h-[48px] border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               />
             </div>
-            {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-2">Username</label>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
+                Username
+              </label>
               <input
                 id="username"
                 type="text"
@@ -99,12 +164,20 @@ export default function Setting() {
                 value={formData.username}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full h-[48px] border ${isEditing ? "border-orange-400" : "border-gray-300"} rounded-lg px-3 py-2 focus:outline-none ${isEditing && "focus:ring-2 focus:ring-orange-400"}`}
+                className={`w-full h-[48px] border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               />
             </div>
-            {/* Role */}
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-600 mb-2">Role</label>
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
+                Role
+              </label>
               {isEditing ? (
                 <select
                   id="role"
@@ -124,11 +197,14 @@ export default function Setting() {
             </div>
           </div>
 
-          {/* Baris 2: Status, Language (Role kosong di bawahnya) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Status */}
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-600 mb-2">Status</label>
+              <label
+                htmlFor="status"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
+                Status
+              </label>
               <input
                 id="status"
                 type="text"
@@ -136,12 +212,20 @@ export default function Setting() {
                 value={formData.status}
                 disabled={!isEditing}
                 onChange={handleChange}
-                className={`w-full h-[48px] border ${isEditing ? "border-orange-400" : "border-gray-300"} rounded-lg px-3 py-2 focus:outline-none ${isEditing && "focus:ring-2 focus:ring-orange-400"}`}
+                className={`w-full h-[48px] border ${
+                  isEditing ? "border-orange-400" : "border-gray-300"
+                } rounded-lg px-3 py-2 focus:outline-none ${
+                  isEditing && "focus:ring-2 focus:ring-orange-400"
+                }`}
               />
             </div>
-            {/* Language */}
             <div>
-              <label htmlFor="language" className="block text-sm font-medium text-gray-600 mb-2">Language</label>
+              <label
+                htmlFor="language"
+                className="block text-sm font-medium text-gray-600 mb-2"
+              >
+                Language
+              </label>
               {isEditing ? (
                 <select
                   id="language"
@@ -159,13 +243,13 @@ export default function Setting() {
                 </div>
               )}
             </div>
-            {/* Kolom role di bawahnya dibiarkan kosong */}
-            <div></div>
           </div>
 
-          {/* Baris 3: Password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-600 mb-2"
+            >
               Password
             </label>
             <input
@@ -175,12 +259,15 @@ export default function Setting() {
               value={formData.password}
               disabled={!isEditing}
               onChange={handleChange}
-              className={`w-full max-w-[410px] h-[48px] border ${isEditing ? "border-orange-400" : "border-gray-300"} rounded-lg px-3 py-2 focus:outline-none ${isEditing && "focus:ring-2 focus:ring-orange-400"}`}
+              className={`w-full max-w-[410px] h-[48px] border ${
+                isEditing ? "border-orange-400" : "border-gray-300"
+              } rounded-lg px-3 py-2 focus:outline-none ${
+                isEditing && "focus:ring-2 focus:ring-orange-400"
+              }`}
             />
           </div>
         </div>
 
-        {/* Edit/Save button */}
         <div className="flex justify-start mt-8">
           <button
             onClick={handleToggleEdit}

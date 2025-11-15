@@ -7,14 +7,14 @@ import LogoutIcon from "../assets/logout.png";
 
 const HeaderUser = () => {
   const navigate = useNavigate();
-  const { user, role, logout } = useAuth();
+  const { user, role, handleLogout } = useAuth();
   const { pageTitle } = usePageTitle();
 
   const username = user?.username || user?.email || "User";
   const userRole = role === 'user' ? 'Customer' : role || 'Customer';
 
-  const handleLogout = () => {
-    logout();
+  const onLogout = () => {
+    handleLogout();
     navigate("/login", { replace: true });
   };
 

@@ -1,18 +1,23 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, useEffect, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
 import ModalReportDetail from "../components/ModalReportDetail";
 import ModalConfirmCancel from "../components/ModalConfirmCancel";
+import { cancelReservation } from "../API/historyAPI";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-// Custom DatePicker Input
+const API_BASE = "https://emiting-be.vercel.app/api/v1";
+const getUserToken = () => localStorage.getItem("token");
+
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
     id={id}
     type="button"
     onClick={onClick}
     ref={ref}
-    className="flex items-center justify-between border !border-gray-300 rounded-[10px] w-[257px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+    className="flex items-center justify-between border !border-gray-300 rounded-[10px] w-full h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
   >
     <span className={value ? "text-gray-700" : "text-gray-400"}>
       {value || placeholder}
@@ -29,7 +34,7 @@ function DateInput({ id, selectedDate, onChange, placeholder }) {
       onChange={onChange}
       customInput={<CustomInput id={id} placeholder={placeholder} />}
       dateFormat="dd/MM/yyyy"
-      wrapperClassName="w-[257px] "
+      wrapperClassName="w-full"
       placeholderText={placeholder}
     />
   );
@@ -42,55 +47,61 @@ export default function UserHistory() {
     roomType: "",
     status: "",
   });
+  const [roomTypeOptions] = useState(["Small", "Medium", "Large"]);
+  const [statusOptions] = useState(["pending", "booked", "paid", "cancel"]);
+  const [histories, setHistories] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // --- Modal & Toast State ---
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [toast, setToast] = useState("");
 
-  // Dummy data, ganti ke API/fetch nanti!
-  const DUMMY_DATA = [
-    { id: 1, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
-    { id: 2, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
-    { id: 3, date: "02/10/2024", room: "Tulip Room", type: "Medium", status: "Paid" },
-    { id: 4, date: "03/15/2024", room: "Daisy", type: "Large", status: "Cancel" },
-    { id: 5, date: "04/01/2024", room: "Bluebell", type: "Small", status: "Paid" },
-    { id: 6, date: "04/10/2024", room: "Camellia", type: "Medium", status: "Paid" },
-    { id: 7, date: "04/11/2024", room: "Bluebell", type: "Large", status: "Booked" },
-    { id: 8, date: "04/12/2024", room: "Bluebell", type: "Large", status: "Paid" },
-    { id: 9, date: "05/01/2024", room: "Tulip Room", type: "Small", status: "Paid" },
-    { id: 10, date: "05/02/2024", room: "Tulip Room", type: "Small", status: "Cancel" },
-    { id: 11, date: "05/03/2024", room: "Aster Room", type: "Small", status: "Paid" },
-    { id: 12, date: "05/04/2024", room: "Aster Room", type: "Small", status: "Paid" },
-  ];
+  useEffect(() => {
+    const fetchUserHistory = async () => {
+      setLoading(true);
+      try {
+        let params = [];
+        if (filters.startDate)
+          params.push(`start_date=${filters.startDate.toISOString().slice(0, 10)}`);
+        if (filters.endDate)
+          params.push(`end_date=${filters.endDate.toISOString().slice(0, 10)}`);
+        if (filters.roomType) params.push(`room_type=${filters.roomType}`);
+        if (filters.status) params.push(`status=${filters.status}`);
+        params.push(`page=${currentPage}`);
+        params.push(`limit=${rowsPerPage}`);
+        const url = `${API_BASE}/reservations?${params.join("&")}`;
+        const res = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getUserToken(),
+          },
+        });
+        const data = await res.json();
 
-  const filteredData = DUMMY_DATA.filter((item) => {
-    let valid = true;
-    if (filters.startDate) {
-      const start = new Date(filters.startDate);
-      const d = new Date(item.date.split("/").reverse().join("-"));
-      valid = valid && d >= start;
-    }
-    if (filters.endDate) {
-      const end = new Date(filters.endDate);
-      const d = new Date(item.date.split("/").reverse().join("-"));
-      valid = valid && d <= end;
-    }
-    if (filters.roomType) valid = valid && item.type === filters.roomType;
-    if (filters.status) valid = valid && item.status === filters.status;
-    return valid;
-  });
+        // Fallback: some API returns "data", others "data.data"
+        const list = (data.data || []).map((row) => ({
+          id: row.id ?? "-",
+          date: row.date_reservation || "-",
+          room: row.room_name || "-",
+          type: row.room_type || "-",
+          status: row.status || "-",
+        }));
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const pagedData = filteredData.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+        setHistories(list);
+        // setTotalPages(data.totalPages || 1); // tambahkan setelah backend support pagination info
+        setTotalPages(1); // sementara paging dummy
+      } catch (e) {
+        setHistories([]);
+        setTotalPages(1);
+      }
+      setLoading(false);
+    };
+    fetchUserHistory();
+  }, [filters, currentPage, rowsPerPage]);
 
-  // --- Table/Event Handlers ---
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
@@ -109,7 +120,7 @@ export default function UserHistory() {
 
   const handleDownload = () => {
     const header = "Date,Room,Type,Status\n";
-    const content = filteredData
+    const content = histories
       .map((row) => `${row.date},${row.room},${row.type},${row.status}`)
       .join("\n");
     const blob = new Blob([header + content], { type: "text/plain" });
@@ -124,19 +135,20 @@ export default function UserHistory() {
   };
 
   const getStatusStyle = (status) => {
-    switch (status) {
-      case "Booked":
+    switch (status.toLowerCase()) {
+      case "booked":
         return "bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "Paid":
+      case "paid":
         return "bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "Cancel":
+      case "cancel":
         return "bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs font-bold";
+      case "pending":
+        return "bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold";
       default:
-        return "";
+        return "bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-xs font-bold";
     }
   };
 
-  // --- Modal Logic ---
   const openDetail = (row) => {
     setSelectedRow(row);
     setShowDetailModal(true);
@@ -146,15 +158,20 @@ export default function UserHistory() {
 
   const triggerPay = () => {
     setShowDetailModal(false);
-    setToast("Payment Success");
-    setTimeout(() => setToast(""), 2200);
+    toast.success("Payment Success");
   };
 
-  const handleConfirmCancel = () => {
-    setShowCancelModal(false);
-    setShowDetailModal(false);
-    setToast("Reservation Successfully Canceled");
-    setTimeout(() => setToast(""), 2200);
+  const handleConfirmCancel = async () => {
+    if (!selectedRow) return;
+    try {
+      await cancelReservation(selectedRow.id);
+      setShowCancelModal(false);
+      setShowDetailModal(false);
+      toast.success("Reservation Successfully Canceled");
+      setCurrentPage(1);
+    } catch (error) {
+      toast.error("Failed to cancel reservation. Please try again.");
+    }
   };
 
   const pageNumbers = [];
@@ -163,10 +180,11 @@ export default function UserHistory() {
   }
 
   return (
-    <div className="p-6 bg-[#F9FAFB] min-h-screen">
-      <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[114px] top-[100px] left-[100px] p-4 mb-1 flex gap-4 items-end justify-between">
-        <div className="flex gap-4 flex-1 items-end">
-          <div>
+    <div className="p-2 sm:p-6 bg-[#F9FAFB] min-h-screen">
+      <ToastContainer position="top-right" autoClose={2500} />
+      <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[68px] mx-auto p-4 mb-1 flex flex-col md:flex-row md:items-end md:gap-4 gap-4 justify-between">
+        <div className="flex flex-col md:flex-row flex-1 gap-4">
+          <div className="w-full md:w-[200px]">
             <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
               Start Date
             </label>
@@ -177,7 +195,7 @@ export default function UserHistory() {
               placeholder="Start date"
             />
           </div>
-          <div>
+          <div className="w-full md:w-[200px]">
             <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
               End Date
             </label>
@@ -188,7 +206,7 @@ export default function UserHistory() {
               placeholder="End date"
             />
           </div>
-          <div>
+          <div className="w-full md:w-[170px]">
             <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
               Room Type
             </label>
@@ -197,15 +215,17 @@ export default function UserHistory() {
               name="roomType"
               value={filters.roomType}
               onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-[327px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+              className="border border-gray-300 rounded-[10px] w-full h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
             >
               <option value="">Room Type</option>
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
+              {roomTypeOptions.map((rt) => (
+                <option value={rt.toLowerCase()} key={rt}>
+                  {rt}
+                </option>
+              ))}
             </select>
           </div>
-          <div>
+          <div className="w-full md:w-[150px]">
             <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
               Status
             </label>
@@ -214,16 +234,18 @@ export default function UserHistory() {
               name="status"
               value={filters.status}
               onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-[327px] h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
+              className="border border-gray-300 rounded-[10px] w-full h-[48px] px-[14px] text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
             >
               <option value="">Status</option>
-              <option value="Booked">Booked</option>
-              <option value="Paid">Paid</option>
-              <option value="Cancel">Cancel</option>
+              {statusOptions.map((st) => (
+                <option value={st.toLowerCase()} key={st}>
+                  {st.charAt(0).toUpperCase() + st.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-2 md:mt-0 md:mb-1">
           <button
             onClick={handleDownload}
             className="w-[48px] h-[48px] flex items-center justify-center border-2 !border-orange-500 rounded-xl bg-transparent transition group hover:border-orange-600 focus:outline-none"
@@ -234,8 +256,8 @@ export default function UserHistory() {
         </div>
       </div>
 
-      <div className="w-[1320px] h-[780px] top-[214px] left-[100px] bg-white rounded-xl shadow-md p-4">
-        <table className="w-[1280px] h-[660px] text-sm text-left border-collapse">
+      <div className="w-full max-w-[1320px] mx-auto bg-white rounded-xl shadow-md p-4 overflow-x-auto">
+        <table className="min-w-[600px] w-full text-sm text-left border-collapse">
           <thead>
             <tr className="border-b text-gray-600">
               <th className="p-3">Date Reservation</th>
@@ -246,28 +268,33 @@ export default function UserHistory() {
             </tr>
           </thead>
           <tbody>
-            {pagedData.map((row) => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{row.date}</td>
-                <td className="p-3">{row.room}</td>
-                <td className="p-3">{row.type}</td>
-                <td className="p-3">
-                  <span className={getStatusStyle(row.status)}>
-                    {row.status}
-                  </span>
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className="text-orange-500 hover:text-orange-600"
-                    title="Detail"
-                    onClick={() => openDetail(row)}
-                  >
-                    <FiCornerUpRight size={20} />
-                  </button>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="text-center text-gray-400 p-6">
+                  Loading...
                 </td>
               </tr>
-            ))}
-            {pagedData.length === 0 && (
+            ) : histories.length > 0 ? (
+              histories.map((row) => (
+                <tr key={row.id} className="border-b hover:bg-gray-50">
+                  <td className="p-3">{row.date}</td>
+                  <td className="p-3">{row.room}</td>
+                  <td className="p-3">{row.type}</td>
+                  <td className="p-3">
+                    <span className={getStatusStyle(row.status)}>{row.status}</span>
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      className="text-orange-500 hover:text-orange-600"
+                      title="Detail"
+                      onClick={() => openDetail(row)}
+                    >
+                      <FiCornerUpRight size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan={5} className="text-center text-gray-400 p-6">
                   No data found.
@@ -277,8 +304,8 @@ export default function UserHistory() {
           </tbody>
         </table>
 
-        <div className="flex flex-col md:flex-row items-center justify-between mt-3">
-          <div className="mb-2 md:mb-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3">
+          <div>
             <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">
               Show:
             </label>
@@ -336,7 +363,6 @@ export default function UserHistory() {
         </div>
       </div>
 
-      {/* --- MODALS --- */}
       {showDetailModal && (
         <ModalReportDetail
           open={showDetailModal}
@@ -352,13 +378,6 @@ export default function UserHistory() {
           onClose={() => setShowCancelModal(false)}
           onConfirm={handleConfirmCancel}
         />
-      )}
-
-      {/* --- TOAST --- */}
-      {!!toast && (
-        <div className="fixed top-45 right-20 z-[100] bg-green-50 text-green-700 border border-green-300 px-6 py-3 rounded-lg shadow-lg animate-fadeIn">
-          {toast}
-        </div>
       )}
     </div>
   );

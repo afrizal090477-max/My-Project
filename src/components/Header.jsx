@@ -7,15 +7,15 @@ import LogoutIcon from "../assets/logout.png";
 
 const Header = () => {
   const navigate = useNavigate();
-  const { token, role, logout } = useAuth(); // ambil role, token, logout dari AuthContext
+  const { token, role, handleLogout } = useAuth(); // ambil role, token, logout dari AuthContext
   const { pageTitle } = usePageTitle();
 
   // Username bisa ambil dari localStorage, atau tambah properti user di AuthContext sesuai response backend jika ada.
   const username = localStorage.getItem("username") || "Admin";
   const userRole = role === 'admin' ? 'Administrator' : 'User';
 
-  const handleLogout = () => {
-    logout();
+  const onLogout = () => {
+    handleLogout();
     navigate("/login", { replace: true });
   };
 

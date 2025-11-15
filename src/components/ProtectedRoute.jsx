@@ -1,11 +1,22 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute({ children }) {
-  const { token } = useAuth();
+const ProtectedRoute = ({ children, role: requiredRole }) => {
+  const { token, role } = useAuth();
+  const location = useLocation();
+
   if (!token) {
-    return <Navigate to="/login" replace />;
+    // Belum login, redirect login dengan status kembali ke halaman ini
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  return children ? children : <Outlet />;
-}
+
+  if (requiredRole && role !== requiredRole) {
+    // Role tidak sesuai, redirect page unauthorized atau login
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;

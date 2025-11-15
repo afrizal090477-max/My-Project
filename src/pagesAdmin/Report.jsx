@@ -1,9 +1,9 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, useEffect, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import ModalReportDetail from "../components/ModalReportDetail";
-
+import { fetchReportData, downloadReport } from "../API/reportAPI";
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
@@ -35,18 +35,6 @@ function DateInput({ id, selectedDate, onChange, placeholder }) {
   );
 }
 
-const DUMMY_DATA = [
-  { id: 1, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Booked" },
-  { id: 2, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
-  { id: 3, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Cancel" },
-  { id: 4, date: "01/10/2024", room: "Aster Room", type: "Small", status: "Paid" },
-  { id: 5, date: "02/10/2024", room: "Tulip Room", type: "Medium", status: "Booked" },
-  { id: 6, date: "03/15/2024", room: "Daisy", type: "Large", status: "Cancel" },
-  { id: 7, date: "04/01/2024", room: "Bluebell", type: "Small", status: "Paid" },
-  { id: 8, date: "04/10/2024", room: "Camellia", type: "Medium", status: "Paid" },
-  { id: 9, date: "05/01/2024", room: "Tulip Room", type: "Small", status: "Paid" },
-];
-
 export default function Report() {
   const [filters, setFilters] = useState({
     startDate: null,
@@ -58,29 +46,38 @@ export default function Report() {
   const [currentPage, setCurrentPage] = useState(1);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
-
-  // Untuk toast payment success
   const [showPayToast, setShowPayToast] = useState(false);
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const filteredData = DUMMY_DATA.filter((item) => {
-    let valid = true;
-    if (filters.startDate) {
-      const start = new Date(filters.startDate);
-      const d = new Date(item.date.split("/").reverse().join("-"));
-      valid = valid && d >= start;
-    }
-    if (filters.endDate) {
-      const end = new Date(filters.endDate);
-      const d = new Date(item.date.split("/").reverse().join("-"));
-      valid = valid && d <= end;
-    }
-    if (filters.roomType) valid = valid && item.type === filters.roomType;
-    if (filters.status) valid = valid && item.status === filters.status;
-    return valid;
-  });
+  // Fetch report data on filter or page change
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const queryParams = {
+          page: currentPage - 1,
+          limit: rowsPerPage,
+          roomType: filters.roomType,
+          status: filters.status,
+          startDate: filters.startDate ? filters.startDate.toISOString().slice(0, 10) : undefined,
+          endDate: filters.endDate ? filters.endDate.toISOString().slice(0, 10) : undefined,
+        };
+        const data = await fetchReportData(queryParams);
+        setReportData(data.data || []);
+      } catch (err) {
+        setError("Failed to fetch reports");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [filters, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const pagedData = filteredData.slice(
+  const totalPages = Math.ceil(reportData.length / rowsPerPage);
+  const pagedData = reportData.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
@@ -101,20 +98,38 @@ export default function Report() {
     setCurrentPage(1);
   };
 
-  const handleDownload = () => {
-    const header = "Date,Room,Type,Status\n";
-    const content = filteredData
-      .map((row) => `${row.date},${row.room},${row.type},${row.status}`)
-      .join("\n");
-    const blob = new Blob([header + content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Report.txt";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    try {
+      const blob = await downloadReport({
+        roomType: filters.roomType,
+        status: filters.status,
+        startDate: filters.startDate ? filters.startDate.toISOString().slice(0, 10) : undefined,
+        endDate: filters.endDate ? filters.endDate.toISOString().slice(0, 10) : undefined,
+      });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = "report.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch {
+      // fallback manual export
+      const header = "Date,Room,Type,Status\n";
+      const content = reportData
+        .map((row) => `${row.date},${row.room},${row.type},${row.status}`)
+        .join("\n");
+      const blob = new Blob([header + content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Report.txt";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const getStatusStyle = (status) => {
@@ -131,22 +146,16 @@ export default function Report() {
   };
 
   const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
+  for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
 
   const openDetail = (row) => {
     setDetailData(row);
     setDetailOpen(true);
   };
-
   const closeDetail = () => {
     setDetailData(null);
     setDetailOpen(false);
   };
-
-  // Handler payment: akan dipanggil dari modal detail
-  // Toastnya muncul di landing page, mirip workflow cancel
   const handlePay = () => {
     setDetailOpen(false);
     setShowPayToast(true);
@@ -155,7 +164,6 @@ export default function Report() {
 
   return (
     <div className="p-8 bg-[#F9FAFB] min-h-screen">
-      {/* Toast Payment Success di halamannya */}
       {showPayToast && (
         <div className="fixed w-[456px] h-[82px] top-[100px] left-[964px] right-4 bg-green-500 text-white px-20 py-4 rounded shadow z-50 flex items-center gap-2">
           <span className="text-xl">✔</span>
@@ -163,205 +171,165 @@ export default function Report() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-md max-w-[1320px] min-h-[114px] mx-auto p-6 mb-6">
-        <div className="flex gap-6 items-end">
-          <div className="flex flex-col w-[257px]">
-            <label
-              htmlFor="startDate"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Start Date
-            </label>
-            <DateInput
-              id="startDate"
-              selectedDate={filters.startDate}
-              onChange={(date) =>
-                setFilters((f) => ({ ...f, startDate: date }))
-              }
-              placeholder="Start date"
-            />
-          </div>
-          <div className="flex flex-col w-[257px]">
-            <label
-              htmlFor="endDate"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              End Date
-            </label>
-            <DateInput
-              id="endDate"
-              selectedDate={filters.endDate}
-              onChange={(date) => setFilters((f) => ({ ...f, endDate: date }))}
-              placeholder="End date"
-            />
-          </div>
-          <div className="flex flex-col w-[257px]">
-            <label
-              htmlFor="roomType"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Room Type
-            </label>
-            <select
-              id="roomType"
-              name="roomType"
-              value={filters.roomType}
-              onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-full h-[48px] px-[14px] text-gray-700"
-            >
-              <option value="">Type</option>
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
-            </select>
-          </div>
-          <div className="flex flex-col w-[257px]">
-            <label
-              htmlFor="status"
-              className="block text-sm text-gray-600 mb-1"
-            >
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={filters.status}
-              onChange={handleFilters}
-              className="border border-gray-300 rounded-[10px] w-full h-[48px] px-[14px] text-gray-700"
-            >
-              <option value="">Status</option>
-              <option value="Booked">Booked</option>
-              <option value="Paid">Paid</option>
-              <option value="Cancel">Cancel</option>
-            </select>
-          </div>
-          <div className="flex gap-2 items-end ml-2">
-            <button
-              onClick={handleDownload}
-              className="
-                w-[48px] h-[48px] flex items-center justify-center
-                border-2 !border-orange-500 rounded-xl
-                bg-transparent
-                transition
-                group
-                hover:border-orange-600
-                focus:outline-none"
-              title="Download"
-            >
-              <FiDownload className="w-7 h-7 text-orange-500 transition group-hover:text-orange-600" />
-            </button>
-          </div>
+      {/* Filter bar */}
+      <div className="bg-white rounded-xl p-5 mb-6 flex flex-wrap gap-5 items-center shadow border border-gray-200">
+        <div className="flex flex-col gap-2 w-[220px]">
+          <label className="font-medium text-gray-700 text-xs">Start Date</label>
+          <DateInput
+            id="startDate"
+            selectedDate={filters.startDate}
+            onChange={(date) =>
+              setFilters((prev) => ({ ...prev, startDate: date }))
+            }
+            placeholder="Select start date"
+          />
         </div>
+        <div className="flex flex-col gap-2 w-[220px]">
+          <label className="font-medium text-gray-700 text-xs">End Date</label>
+          <DateInput
+            id="endDate"
+            selectedDate={filters.endDate}
+            onChange={(date) => setFilters((prev) => ({ ...prev, endDate: date }))}
+            placeholder="Select end date"
+          />
+        </div>
+        <div className="flex flex-col gap-2 w-[220px]">
+          <label className="font-medium text-gray-700 text-xs">Room Type</label>
+          <select
+            name="roomType"
+            value={filters.roomType}
+            onChange={handleFilters}
+            className="w-full h-[48px] border border-gray-500 px-[14px] rounded-[10px] bg-white text-gray-700"
+          >
+            <option value="">All Types</option>
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-2 w-[220px]">
+          <label className="font-medium text-gray-700 text-xs">Status</label>
+          <select
+            name="status"
+            value={filters.status}
+            onChange={handleFilters}
+            className="w-full h-[48px] border border-gray-500 px-[14px] rounded-[10px] bg-white text-gray-700"
+          >
+            <option value="">All Status</option>
+            <option value="Booked">Booked</option>
+            <option value="Paid">Paid</option>
+            <option value="Cancel">Cancel</option>
+          </select>
+        </div>
+        <button
+          className="ml-auto bg-orange-600 text-white px-5 py-3 h-[48px] rounded-lg flex items-center gap-2 shadow hover:bg-orange-700"
+          onClick={handleDownload}
+        >
+          <FiDownload size={18} /> Download Report
+        </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-4 max-w-[1320px] mx-auto">
-        <table className="min-w-full text-sm text-left border-collapse">
-          <thead>
-            <tr className="border-b text-gray-600">
-              <th className="p-3">Date Reservation</th>
-              <th className="p-3">Room Name</th>
-              <th className="p-3">Room Type</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedData.map((row) => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{row.date}</td>
-                <td className="p-3">{row.room}</td>
-                <td className="p-3">{row.type}</td>
-                <td className="p-3">
-                  <span className={getStatusStyle(row.status)}>
-                    {row.status}
-                  </span>
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className="text-orange-500 hover:text-orange-600"
-                    title="Detail"
-                    onClick={() => openDetail(row)}
-                  >
-                    <FiCornerUpRight size={20} />
-                  </button>
-                </td>
+      {/* Table */}
+      <div className="bg-white rounded-xl shadow border border-gray-200">
+        {loading ? (
+          <div className="p-6 text-center text-gray-500">Loading...</div>
+        ) : error ? (
+          <div className="p-6 text-center text-red-500">{error}</div>
+        ) : (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">Date</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">Room</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">Type</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">Status</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left"></th>
               </tr>
-            ))}
-            {pagedData.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center text-gray-400 p-6">
-                  No data found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-
-        <div className="flex flex-col md:flex-row items-center justify-between mt-4">
-          <div className="mb-2 md:mb-0">
-            <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">
-              Show:
-            </label>
-            <select
-              id="rowsPerPageSelect"
-              value={rowsPerPage}
-              onChange={handleRowsPerPageChange}
-              className="border rounded px-2 py-1"
-            >
-              {[10, 25, 50, 100].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
+            </thead>
+            <tbody>
+              {pagedData.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-gray-400">
+                    No data available.
+                  </td>
+                </tr>
+              )}
+              {pagedData.map((row, idx) => (
+                <tr key={idx} className="border-t">
+                  <td className="p-4">{row.date}</td>
+                  <td className="p-4">{row.room}</td>
+                  <td className="p-4">{row.type}</td>
+                  <td className="p-4">
+                    <span className={getStatusStyle(row.status)}>{row.status}</span>
+                  </td>
+                  <td className="p-4">
+                    <button
+                      className="text-orange-600 hover:text-orange-800 flex gap-1 items-center"
+                      onClick={() => openDetail(row)}
+                    >
+                      <FiCornerUpRight size={17} /> Detail
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </select>
-            <span className="ml-2">Entries</span>
+            </tbody>
+          </table>
+        )}
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            <label>
+              Rows per page:
+              <select
+                value={rowsPerPage}
+                onChange={handleRowsPerPageChange}
+                className="ml-2 border border-gray-400 rounded px-2 py-1"
+              >
+                {[5, 10, 20, 50].map((val) => (
+                  <option key={val} value={val}>
+                    {val}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
-          {/* Pagination */}
-          <div className="flex items-center gap-2">
+          <div className="flex gap-1 items-center">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`p-2 rounded-full ${
-                currentPage === 1
-                  ? "bg-gray-200 text-gray-400"
-                  : "bg-white text-orange-500"
-              }`}
+              className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
-              {"<"}
+              Prev
             </button>
-            {pageNumbers.map((pageNum) => (
+            {pageNumbers.map((num) => (
               <button
-                key={pageNum}
-                onClick={() => handlePageChange(pageNum)}
-                className={`p-2 rounded-full w-8 h-8 ${
-                  currentPage === pageNum
-                    ? "bg-orange-400 text-white"
-                    : "bg-white text-orange-500"
+                key={num}
+                className={`px-3 py-1 rounded border ${
+                  currentPage === num ? "bg-orange-600 text-white" : ""
                 }`}
+                onClick={() => handlePageChange(num)}
+                disabled={currentPage === num}
               >
-                {pageNum}
+                {num}
               </button>
             ))}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-full ${
-                currentPage === totalPages
-                  ? "bg-gray-200 text-gray-400"
-                  : "bg-white text-orange-500"
-              }`}
+              className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
-              {">"}
+              Next
             </button>
           </div>
         </div>
       </div>
 
       <ModalReportDetail
-        open={detailOpen}
+        isOpen={detailOpen}
         onClose={closeDetail}
         data={detailData}
-        onPayClick={handlePay} // Button Pay logic
+        onPay={handlePay}
       />
     </div>
   );

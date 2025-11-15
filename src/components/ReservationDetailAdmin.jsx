@@ -1,7 +1,7 @@
 import { FiChevronLeft } from "react-icons/fi";
 
 export default function ReservationDetailAdmin({ onBack, data, onSubmit }) {
-  // Helper currency
+  // Helper currency (IDR)
   const toCurrency = (num) => "Rp " + num.toLocaleString("id-ID");
 
   // Hitung duration otomatis dari start-end time
@@ -9,16 +9,17 @@ export default function ReservationDetailAdmin({ onBack, data, onSubmit }) {
     const [sh, sm] = (data?.startTime || "00:00").split(":").map(Number);
     const [eh, em] = (data?.endTime || "00:00").split(":").map(Number);
     const diff = eh * 60 + em - (sh * 60 + sm);
-    return diff > 0 ? `${Math.floor(diff/60)} hours` : "-";
+    return diff > 0 ? `${Math.floor(diff / 60)} hours` : "-";
   };
 
-  // Hitung snack total
+  // Hitung harga snack total
   const snackQty = data?.participants || 0;
-  // Jika snackCategory format: "Lunch Package 1 - Rp 20.000/people", parse harga
-  const snackPrice = data?.snackCategory ? Number(String(data.snackCategory).replace(/[^\d]/g, "")) : 0;
+  const snackPrice = data?.snackCategory
+    ? Number(String(data.snackCategory).replace(/[^\d]/g, ""))
+    : 0;
   const snackTotal = snackQty * snackPrice;
 
-  // Room price raw sudah di-mapping dari ROOM_LIST (lewat stepper handleNext)
+  // Room price: pastikan ini raw number di field roomPriceRaw dari stepper/parent
   const roomTotal = data?.roomPriceRaw ?? 0;
   const grandTotal = roomTotal + snackTotal;
 

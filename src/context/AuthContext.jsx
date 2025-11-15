@@ -1,73 +1,81 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import axiosInstance from "../API/http"; // Pastikan path ini benar
-import { jwtDecode } from "jwt-decode";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { decodeToken } from "../utils/jwt";
+import { getToken, clearToken, setToken as saveToken } from "../utils/storage";
+import { login as loginApi } from "../API/http";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
+function mapRoleFromPayload(payload) {
+  if (!payload) return "user";
+  if (payload.is_admin === true) return "admin";
+  if (payload.role) return payload.role; // fallback ambil role dari payload langsung
+  if (payload.email === "admin@mail.com") return "admin";
+  if (payload.user_id === 1 || payload.user_id === "1") return "admin";
+  return "user";
+}
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setTokenState] = useState(getToken());
   const [role, setRole] = useState(null);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const loginUser = useCallback(async ({ username, password }) => {
+  useEffect(() => {
+    if (token) {
+      const payload = decodeToken(token);
+      const mappedRole = mapRoleFromPayload(payload);
+      setRole(mappedRole);
+      setUser({ token, role: mappedRole, ...payload });
+    } else {
+      setRole(null);
+      setUser(null);
+    }
+  }, [token]);
+
+  const handleLogin = async ({ username, password }) => {
+    setError("");
     setLoading(true);
-    setError(null);
     try {
-      const response = await axiosInstance.post("/login", { username: username.trim(), password: password.trim() });
-      const { token, role } = response.data.data;
+      const { token: newToken, role: mappedRole, payload } =
+        await loginApi(username, password);
 
-      if (!token) {
-        throw new Error("Token tidak ditemukan di response!");
-      }
+      if (!newToken) throw new Error("Token tidak ditemukan pada response API");
 
-      let decoded;
-      try {
-        decoded = jwtDecode(token);
-      } catch {
-        throw new Error("Token JWT tidak valid!");
-      }
-      const _role = role ? role : (decoded.role ? decoded.role : (decoded.is_admin ? "admin" : "user"));
-
-      setToken(token);
-      setRole(_role);
-
-      // SIMPAN di localStorage AGAR PERSIST
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", _role);
-      localStorage.setItem("user", JSON.stringify({ username, role: _role }));
+      saveToken(newToken);
+      setTokenState(newToken);
+      setRole(mappedRole || mapRoleFromPayload(payload));
+      setUser({ token: newToken, role: mappedRole || mapRoleFromPayload(payload), ...payload });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Login gagal");
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          "Login gagal"
+      );
+      clearToken();
+      setTokenState(null);
+      setRole(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const logout = useCallback(() => {
-    setToken(null);
+  const handleLogout = () => {
+    clearToken();
+    setTokenState(null);
     setRole(null);
-    setError(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
-  }, []);
+    setUser(null);
+  };
 
-  useEffect(() => {
-    // Restore session dari localStorage
-    const savedToken = localStorage.getItem("token");
-    const savedRole = localStorage.getItem("role");
-    if (savedToken && savedRole) {
-      setToken(savedToken);
-      setRole(savedRole);
-    }
-  }, []);
-
-  const value = useMemo(() => ({
-    token, role, error, loading, loginUser, logout
-  }), [token, role, error, loading, loginUser, logout]);
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  return (
+    <AuthContext.Provider value={{
+      user, token, role, error, loading,
+      handleLogin, handleLogout
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => useContext(AuthContext);

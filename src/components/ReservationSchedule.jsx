@@ -116,7 +116,7 @@ export default function ReservationSchedule({
               type="date"
               className="w-full h-[44px] border rounded px-3 pr-10 py-2"
               value={selectedDate}
-              onChange={e => {
+              onChange={(e) => {
                 setSelectedDate(e.target.value);
                 setClickStart(null);
                 setClickEnd(null);
@@ -139,9 +139,7 @@ export default function ReservationSchedule({
           <span className="text-orange-500">{getBookedRanges().length}</span>
         </div>
         <div className="bg-gray-50 rounded-lg flex-1 px-3 mx-3 py-3 mb-3 overflow-y-auto border">
-          <div className="text-center font-medium text-gray-700 pb-1">
-            {roomName}
-          </div>
+          <div className="text-center font-medium text-gray-700 pb-1">{roomName}</div>
           <div className="flex flex-col gap-1">
             {times.map((time, idx) => {
               let status = "";
@@ -153,9 +151,7 @@ export default function ReservationSchedule({
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => handleSlotClick(idx)}
                 >
-                  <span className="w-[44px] text-xs text-gray-400">
-                    {time.replace(":", ".")}
-                  </span>
+                  <span className="w-[44px] text-xs text-gray-400">{time.replace(":", ".")}</span>
                   {status === "booked" ? (
                     <div className="bg-orange-50 text-orange-400 font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] border border-orange-200">
                       Booked
@@ -191,6 +187,7 @@ export default function ReservationSchedule({
       </div>
     );
   }
+
   // STEP 2: Preview/all grid + Book Now
   if (step === 2) {
     return (
@@ -209,14 +206,13 @@ export default function ReservationSchedule({
           <span className="text-orange-500">{getBookedRanges().length}</span>
         </div>
         <div className="bg-gray-50 rounded-lg flex-1 px-3 mx-3 py-3 mb-3 overflow-y-auto border">
-          <div className="text-center font-medium text-gray-700 pb-1">
-            {roomName}
-          </div>
+          <div className="text-center font-medium text-gray-700 pb-1">{roomName}</div>
           {/* Render Overlay Block Booking & User Selection */}
           <div className="relative" style={{ height: times.length * rowHeight }}>
             {/* Garis setiap jam */}
             {times.map((time, idx) => (
-              <div key={time}
+              <div
+                key={time}
                 className="flex items-center gap-2 absolute left-0 right-0"
                 style={{ top: idx * rowHeight, height: rowHeight }}
               >

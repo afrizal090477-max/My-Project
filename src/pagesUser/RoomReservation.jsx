@@ -1,78 +1,72 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { FiSearch, FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
 import RoomCardUser from "../components/RoomCardUser";
 import ReservationForm from "../components/ReservationForm";
 import ReservationSchedule from "../components/ReservationSchedule";
 import ReservationDetails from "../components/ReservationDetails";
+import RoomDetailDemoUser from "../components/RoomDetailDemoUser";
+import { fetchRooms } from "../API/roomAPI";
+import { createReservation } from "../API/reservationAPI";
 
-// ------ Helper Function ------
 function getSnackPrice(snackCategory) {
-  const prices = {
-    coffee1: 20000, coffee2: 50000, lunch1: 20000, lunch2: 50000,
-  };
+  const prices = { coffee1: 20000, coffee2: 50000, lunch1: 20000, lunch2: 50000 };
   return prices[snackCategory] || 0;
 }
-function getDuration(start, end) {
-  if (!start || !end) return 1;
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  return Math.max(1, eh + em / 60 - sh - sm / 60);
-}
-const DUMMY_ROOMS_BASE = [
-  { id: 1, name: "Aster Room", type: "Small", capacity: 6, price: 200000, status: "Available" },
-  { id: 2, name: "Bluebell Room", type: "Medium", capacity: 10, price: 350000, status: "Booked" },
-  { id: 3, name: "Camellia Room", type: "Large", capacity: 8, price: 250000, status: "Available" },
-  { id: 4, name: "Daisy Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
-  { id: 5, name: "Edelweiss Room", type: "Medium", capacity: 10, price: 300000, status: "Available" },
-  { id: 6, name: "Freesia Room", type: "Large", capacity: 5, price: 200000, status: "Booked" },
-  { id: 7, name: "Gardenia Room", type: "Small", capacity: 6, price: 180000, status: "Available" },
-  { id: 8, name: "Hibiscus Room", type: "Medium", capacity: 8, price: 250000, status: "Booked" },
-  { id: 9, name: "Ivy Room", type: "Large", capacity: 12, price: 300000, status: "Available" },
-  { id: 10, name: "Jasmine Room", type: "Small", capacity: 5, price: 180000, status: "Booked" },
-  { id: 11, name: "Lily Room", type: "Medium", capacity: 10, price: 250000, status: "Available" },
-  { id: 12, name: "Magnolia Room", type: "Large", capacity: 8, price: 300000, status: "Booked" },
-  { id: 13, name: "Narcissus Room", type: "Small", capacity: 6, price: 180000, status: "Available" },
-  { id: 14, name: "Orchid Room", type: "Medium", capacity: 10, price: 250000, status: "Booked" },
-  { id: 15, name: "Peony Room", type: "Large", capacity: 5, price: 180000, status: "Available" },
-  { id: 16, name: "Rose Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
-  { id: 17, name: "Sunflower Room", type: "Medium", capacity: 8, price: 250000, status: "Available" },
-  { id: 18, name: "Tulip Room", type: "Large", capacity: 12, price: 300000, status: "Booked" },
-  { id: 19, name: "Violet Room", type: "Small", capacity: 5, price: 180000, status: "Available" },
-  { id: 20, name: "Wisteria Room", type: "Medium", capacity: 10, price: 250000, status: "Booked" }, 
-  { id: 21, name: "Yarrow Room", type: "Large", capacity: 8, price: 300000, status: "Available" },
-  { id: 22, name: "Zinnia Room", type: "Small", capacity: 6, price: 180000, status: "Booked" },
-  { id: 23, name: "Zinnia Room", type: "Medium", capacity: 10, price: 250000, status: "Available" },
-  { id: 24, name: "Zinnia Room", type: "Large", capacity: 5, price: 180000, status: "Booked" },
-];
-
 const ITEMS_PER_PAGE = 12;
-function getRoomDetailByName(roomName) {
-  return DUMMY_ROOMS_BASE.find((room) => room.name === roomName) || {};
-}
 
 export default function RoomReservation() {
-  const [rooms] = useState(DUMMY_ROOMS_BASE);
+  const [rooms, setRooms] = useState([]);
   const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
   const [currentPage, setCurrentPage] = useState(1);
-  const [step, setStep] = useState(""); // "", "SCHEDULE", "FORM", "DETAILS"
+  const [step, setStep] = useState("");
   const [reservationData, setReservationData] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      try {
+        const roomsFromAPI = await fetchRooms();
+        const mappedRooms = (roomsFromAPI || []).map((room) => ({
+          ...room,
+          name: typeof room.name === "string" && room.name.length > 0 ? room.name : "-",
+          type:
+            typeof room.type === "object"
+              ? room.type?.name || room.type?.label || "-"
+              : room.type || "-",
+          capacity: room.capacity ?? 0,
+          price: room.price ?? 0,
+          status: room.status || "Unknown",
+        }));
+        setRooms(mappedRooms);
+      } catch {
+        setRooms([]);
+      }
+    };
+    fetchRoomData();
+  }, []);
 
   const filteredRooms = useMemo(() => {
     const search = filters.search.toLowerCase();
     const type = filters.type;
     const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
     return rooms.filter((room) => {
-      const matchSearch = room.name.toLowerCase().includes(search);
+      const matchSearch = (room.name || "").toLowerCase().includes(search);
       const matchType = type ? room.type === type : true;
-      const matchCapacity = minCapacity !== null ? room.capacity >= minCapacity : true;
+      const matchCapacity = minCapacity !== null ? Number(room.capacity) >= minCapacity : true;
       return matchSearch && matchType && matchCapacity;
     });
   }, [rooms, filters]);
+
   const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
-  const roomsToDisplay = filteredRooms.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE
+
+  const safeRoomsToDisplay = filteredRooms.filter(
+    (room) => typeof room.name === "string" && room.name.length > 0
+  );
+
+  const roomsToDisplay = safeRoomsToDisplay.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -81,7 +75,8 @@ export default function RoomReservation() {
 
   const handleAddReservation = () => {
     if (!selectedRoom) {
-      alert("Pilih room terlebih dulu!"); return;
+      alert("Pilih room terlebih dulu!");
+      return;
     }
     setReservationData({
       room: selectedRoom.name,
@@ -94,14 +89,16 @@ export default function RoomReservation() {
   };
 
   const showSuccessToast = () => {
-    setShowSuccess(true); setTimeout(() => setShowSuccess(false), 3000);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  // -- Perhitungan detail
   let reservationDetailsData = { ...reservationData };
   if (step === "DETAILS") {
-    const masterRoom = getRoomDetailByName(reservationData.room || reservationData.roomName || "");
-    const roomPrice = masterRoom.price || 0;
+    const roomDetail = rooms.find(
+      (room) => room.name === (reservationData.room || reservationData.roomName)
+    ) || {};
+    const roomPrice = roomDetail.price || 0;
     let duration = 1;
     if (reservationData.startTime && reservationData.endTime) {
       const [sh, sm] = reservationData.startTime.split(":").map(Number);
@@ -110,15 +107,15 @@ export default function RoomReservation() {
     }
     const participants = parseInt(reservationData.participants || "1", 10);
     const snackUnitPrice = getSnackPrice(reservationData.snackCategory);
-    const detailRoomPrice = (reservationData.startTime && reservationData.endTime) ? duration * roomPrice : 0;
+    const detailRoomPrice = reservationData.startTime && reservationData.endTime ? duration * roomPrice : 0;
     const detailSnackPrice = reservationData.addSnack ? snackUnitPrice * participants : 0;
     const total = detailRoomPrice + detailSnackPrice;
     reservationDetailsData = {
       ...reservationDetailsData,
-      roomName: masterRoom.name || "-",
-      roomType: masterRoom.type || "-",
-      roomCapacity: masterRoom.capacity ? `${masterRoom.capacity} people` : "-",
-      roomPrice: masterRoom.price ? `Rp ${masterRoom.price.toLocaleString()}` : "-",
+      roomName: roomDetail.name || "-",
+      roomType: roomDetail.type || "-",
+      roomCapacity: roomDetail.capacity ? `${roomDetail.capacity} people` : "-",
+      roomPrice: roomDetail.price ? `Rp ${roomDetail.price.toLocaleString()}` : "-",
       detailRoomPrice,
       detailSnackPrice,
       total,
@@ -127,29 +124,26 @@ export default function RoomReservation() {
 
   return (
     <div className="p-2 sm:p-6 bg-gray-50 min-h-screen relative">
-      {/* ---- FILTER & ADD BUTTON ---- */}
+      {/* Render RoomDetailDemoUser hanya untuk internal, tidak tampil di UI */}
+      <div style={{ display: "none" }}>
+        <RoomDetailDemoUser />
+      </div>
+      {/* FILTER & ADD BUTTON */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-[1320px] mx-auto px-2 sm:px-6 py-4 flex flex-col md:flex-row flex-wrap md:items-center md:justify-between gap-3">
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 md:items-center flex-1">
           <div className="relative flex-1 min-w-[180px] sm:min-w-[240px] max-w-[362px]">
             <input
               type="text"
               placeholder="Search room..."
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, search: e.target.value }))
-              }
+              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
               className="w-full h-[44px] sm:h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
             />
-            <FiSearch
-              className="absolute left-3 top-2.5 text-gray-400"
-              size={18}
-            />
+            <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={18} />
           </div>
           <select
             value={filters.type}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, type: e.target.value }))
-            }
-            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[280px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
+            onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}
+            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Room Type</option>
             <option value="Small">Small</option>
@@ -158,10 +152,8 @@ export default function RoomReservation() {
           </select>
           <select
             value={filters.capacity}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, capacity: e.target.value }))
-            }
-            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[280px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
+            onChange={(e) => setFilters((f) => ({ ...f, capacity: e.target.value }))}
+            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Capacity</option>
             <option value="10">≤ 10 people</option>
@@ -171,14 +163,17 @@ export default function RoomReservation() {
         </div>
         <button
           onClick={handleAddReservation}
-          className={`bg-orange-600 hover:bg-orange-700 text-white font-medium min-w-[150px] w-full sm:w-[180px] h-[44px] sm:h-[48px] px-6 rounded-lg transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${!selectedRoom ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`bg-orange-600 hover:bg-orange-700 text-white font-medium min-w-[150px] w-full sm:w-[180px] h-[44px] sm:h-[48px] px-6 rounded-lg transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${
+            !selectedRoom ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           disabled={!selectedRoom}
         >
           <FiPlus size={20} />
           <span className="whitespace-nowrap">Add New Reservation</span>
         </button>
       </div>
-      {/* ---- Room Card GRID ---- */}
+
+      {/* Room Card GRID */}
       <div className="bg-white rounded-xl w-full max-w-[1320px] mx-auto shadow-sm border border-gray-200 px-2 sm:px-6 py-4 sm:py-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {roomsToDisplay.map((room) => (
@@ -190,16 +185,13 @@ export default function RoomReservation() {
             />
           ))}
         </div>
-        {/* ---- Pagination ---- */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-6 gap-3">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
               className={`p-2 rounded-md border ${
-                currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
+                currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronLeft />
@@ -211,9 +203,7 @@ export default function RoomReservation() {
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md border ${
-                currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
+                currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronRight />
@@ -221,7 +211,7 @@ export default function RoomReservation() {
           </div>
         )}
       </div>
-      {/* ---- MODAL STEP SCHEDULE ---- */}
+
       {step === "SCHEDULE" && (
         <ReservationSchedule
           isOpen
@@ -233,30 +223,36 @@ export default function RoomReservation() {
           }}
         />
       )}
-      {/* ---- FORM STEP ---- */}
       {step === "FORM" && (
         <ReservationForm
           isOpen
           data={reservationData}
           onClose={() => setStep("")}
-          onSubmit={(formData) => {
-            const masterRoom = getRoomDetailByName(
-              reservationData.room || formData.roomName || reservationData.roomName || ""
+          onSubmit={async (formData) => {
+            const masterRoom = rooms.find(
+              (room) =>
+                room.name === (reservationData.room || formData.roomName || reservationData.roomName || "")
             );
-            setReservationData((prev) => ({
-              ...prev,
+            const finalData = {
+              ...reservationData,
               ...formData,
               room: masterRoom.name,
               roomName: masterRoom.name,
               roomType: masterRoom.type,
               roomCapacity: masterRoom.capacity ? `${masterRoom.capacity} people` : "-",
               roomPrice: masterRoom.price ? `Rp ${masterRoom.price.toLocaleString()}` : "-",
-            }));
-            setStep("DETAILS");
+            };
+            try {
+              await createReservation(finalData);
+              setReservationData(finalData);
+              setStep("DETAILS");
+              showSuccessToast();
+            } catch {
+              alert("Failed to add reservation!");
+            }
           }}
         />
       )}
-      {/* ---- DETAILS STEP (NO BACKDROP) ---- */}
       {step === "DETAILS" && (
         <ReservationDetails
           isOpen
@@ -268,27 +264,15 @@ export default function RoomReservation() {
           }}
         />
       )}
-      {/* ---- Toast Success ---- */}
       {showSuccess && (
         <div className="fixed right-4 sm:right-10 top-20 sm:top-24 z-50">
           <div className="bg-white border border-green-400 text-green-600 px-4 sm:px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">
             <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
               <circle cx="11" cy="11" r="11" fill="#2ED477" />
-              <path
-                d="M6 11.8462L9.23077 15L16 8"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M6 11.8462L9.23077 15L16 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             New Reservation Successfully Added
-            <button
-              onClick={() => setShowSuccess(false)}
-              className="ml-2 text-gray-400 hover:text-green-700"
-            >
-              &times;
-            </button>
+            <button onClick={() => setShowSuccess(false)} className="ml-2 text-gray-400 hover:text-green-700">&times;</button>
           </div>
         </div>
       )}

@@ -29,7 +29,7 @@ export default function ReservationDetails({
   } = data;
 
   return (
-    // HAPUS BAGIAN backdrop! Modal langsung tampil
+    // TANPA backdrop — langsung modal tampil sesuai permintaanmu!
     <div className="fixed top-0 right-0 w-[456px] h-full z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
       <div className="flex items-center h-[56px] mb-4 sticky top-0 bg-white z-10">
         <button onClick={onClose} className="mr-3 p-0" aria-label="Back" type="button">

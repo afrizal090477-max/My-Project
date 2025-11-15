@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import Logo from "../components/Logo";
+import { resetPassword } from "../API/authAPI";
 
 export default function NewPassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -7,142 +9,118 @@ export default function NewPassword() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const validatePassword = (pass) => pass.length >= 6;
+  const query = new URLSearchParams(location.search);
+  const otp = query.get("otp");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
-
     if (!newPassword || !confirmPassword) {
       setMessage({ type: "error", text: "Semua field wajib diisi." });
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setMessage({
-        type: "error",
-        text: "Password dan konfirmasi harus sama.",
-      });
-      return;
-    }
-    if (!validatePassword(newPassword)) {
+    if (newPassword.length < 6) {
       setMessage({ type: "error", text: "Password minimal 6 karakter." });
       return;
     }
-
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: "error", text: "Password tidak cocok." });
+      return;
+    }
+    if (!otp) {
+      setMessage({ type: "error", text: "OTP tidak ditemukan di URL." });
+      return;
+    }
     setLoading(true);
-
     try {
-      setTimeout(() => {
-        setLoading(false);
-        setMessage({
-          type: "success",
-          text: "Password baru berhasil dibuat. Silakan login kembali!",
-        });
-        setTimeout(() => {
-          navigate("/login");
-        }, 1600);
-      }, 1200);
-    } catch (error) {
-      console.error(error);
+      const data = await resetPassword(otp, newPassword, confirmPassword);
+      setMessage({
+        type: "success",
+        text: data.message || "Password berhasil direset. Silakan login.",
+      });
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
       setMessage({
         type: "error",
-        text: "Gagal membuat password baru. Silakan coba lagi.",
+        text: err.response?.data?.message || "Gagal reset password.",
       });
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
-    <div className="relative min-h-screen w-full  overflow-hidden">
-      <img
-        src="/meeting.png"
-        alt="meeting"
-        className="absolute top-0 left-0 w-full h-full object-cover z-0"
-        style={{ minWidth: 1536, minHeight: 1024 }}
-      />
-      <div className="absolute inset-0 bg-black/40 z-10"></div>
-
-      <div className="relative z-20 min-h-screen w-full">
-        <form
-          onSubmit={handleSubmit}
-          className="absolute bg-white rounded-[20px] shadow-xl border border-gray-200 flex flex-col items-center"
-          style={{
-            left: 120,
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: 600,
-            height: 644,
-            maxWidth: "calc(100vw - 140px)",
-            maxHeight: "96vh",
-            padding: 48,
-          }}
-          autoComplete="off"
-        >
-          <div className="flex flex-col items-center justify-center w-full mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-[50px] h-[50px] rounded-full bg-gradient-to-r from-orange-500 to-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow">
-                E
-              </div>
-              <span className="text-[22px] font-bold bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent select-none">
-                E-Meeting
-              </span>
-            </div>
-            <h2 className="font-bold text-[32px] mb-2 text-center w-full">
-              Set New Password
-            </h2>
-            <p className="text-[13px] text-gray-500 text-center mb-2 w-full">
-              Please enter your new password and confirm
-            </p>
-          </div>
-
-          <div className="w-full max-w-[400px] flex flex-col items-start mb-4">
-            <label
-              htmlFor="newPassword"
-              className="text-sm font-medium text-gray-700 mb-1"
-            >
+    <div
+      className="min-h-screen w-full flex items-center justify-center"
+      style={{
+        backgroundImage: "url('/meeting.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        position: "relative",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/35" />
+      <div
+        className="relative bg-white rounded-[20px] shadow-2xl border-4 border-[#E7E7E7] flex flex-col items-center"
+        style={{
+          width: 600,
+          maxWidth: "96vw",
+          minHeight: 480,
+          zIndex: 10,
+          padding: 48,
+        }}
+      >
+        <Logo />
+        <h2 className="font-bold text-[32px] w-full text-center mt-3">
+          Set New Password
+        </h2>
+        <p className="text-gray-500 text-center text-base mb-7 w-full">
+          Please enter your new password and confirm
+        </p>
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="mb-3">
+            <label htmlFor="newPassword" className="block mb-2 text-gray-700 text-[15px] font-medium">
               New Password
             </label>
             <input
               type="password"
               id="newPassword"
-              placeholder="New password"
-              className="block w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50"
+              placeholder="New Password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={e => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              disabled={loading}
             />
           </div>
-
-          <div className="w-full max-w-[400px] flex flex-col items-start mb-4">
-            <label
-              htmlFor="confirmPassword"
-              className="text-sm font-medium text-gray-700 mb-1"
-            >
+          <div className="mb-2">
+            <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 text-[15px] font-medium">
               Confirm New Password
             </label>
             <input
               type="password"
               id="confirmPassword"
-              placeholder="Confirm new password"
-              className="block w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50"
+              placeholder="Confirm New Password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              disabled={loading}
             />
           </div>
-
           <button
             type="submit"
+            className="w-full h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg shadow-md transition text-base disabled:bg-gray-400 disabled:cursor-not-allowed mt-5"
             disabled={loading}
-            className="w-full max-w-[400px] h-[48px] bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold py-3 rounded-lg transition"
           >
             {loading ? "Memproses..." : "Reset Password"}
           </button>
           {message.text && (
             <div
-              className={`mt-3 text-center font-medium w-full ${
+              className={`w-full py-2 text-center text-sm font-medium ${
                 message.type === "success" ? "text-green-600" : "text-red-600"
               }`}
-              role={message.type === "success" ? "status" : "alert"}
             >
               {message.text}
             </div>

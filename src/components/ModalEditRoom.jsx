@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { FiX, FiUpload } from "react-icons/fi";
-import { ROOM_LIST } from "../data/roomData";
+import {
+  addRoom,
+  updateRoom,
+  fetchRoomTypes,
+  fetchCapacities
+} from "../API/roomAPI"; // Pastikan import fungsi API
 
 const INITIAL_STATE = {
   id: null,
   name: "",
-  type: "Medium",
+  type: "",
   price: 10000,
   capacity: 1,
   image: "",
@@ -15,13 +20,24 @@ const INITIAL_STATE = {
 export default function ModalEditRoom({
   isOpen,
   onClose,
-  onSubmit,
   roomData,
-  onShowDetail,
+  afterSubmit,
 }) {
   const [formData, setFormData] = useState(INITIAL_STATE);
   const [rawPrice, setRawPrice] = useState("");
+  const [roomTypes, setRoomTypes] = useState([]);
+  const [capacities, setCapacities] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const isEditMode = !!roomData;
+
+  useEffect(() => {
+    const loadDropdowns = async () => {
+      setRoomTypes(await fetchRoomTypes());
+      setCapacities(await fetchCapacities());
+    };
+    loadDropdowns();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,20 +59,14 @@ export default function ModalEditRoom({
       price: Number(value)
     }));
   };
-  const handlePriceBlur = () => {
-    setRawPrice(formData.price ? `${formData.price}` : "");
-  };
-  const handlePriceFocus = () => {
-    setRawPrice(formData.price ? `${formData.price}` : "");
-  };
+  const handlePriceBlur = () => setRawPrice(formData.price ? `${formData.price}` : "");
+  const handlePriceFocus = () => setRawPrice(formData.price ? `${formData.price}` : "");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "capacity"
-        ? Number(value)
-        : value,
+      [name]: name === "capacity" ? Number(value) : value,
     }));
   };
 
@@ -65,28 +75,32 @@ export default function ModalEditRoom({
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setFormData((prev) => ({ ...prev, image: imageUrl }));
+      // Untuk upload ke BE, silakan tambahkan logic FormData dan POST jika dibutuhkan
     }
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price || !formData.capacity) {
       alert("Mohon isi semua field yang wajib.");
       return;
     }
-    const selectedRoom = ROOM_LIST?.find?.((r) => r.name === formData.name);
-    const payload = {
-      ...formData,
-      roomName: selectedRoom?.name || formData.name,
-      roomType: selectedRoom?.type || formData.type,
-      roomCapacity: selectedRoom?.capacity
-        ? `${selectedRoom.capacity} people`
-        : `${formData.capacity} people`,
-      roomPrice: selectedRoom?.price
-        ? `Rp ${selectedRoom.price.toLocaleString()}`
-        : `Rp ${formData.price.toLocaleString()}`,
-    };
-    onSubmit(payload);
-    if (onShowDetail) onShowDetail(payload);
+    setLoading(true);
+    try {
+      if (isEditMode && formData.id) {
+        await updateRoom(formData.id, formData);
+        alert("Room updated successfully!");
+      } else {
+        await addRoom(formData);
+        alert("Room added successfully!");
+      }
+      if (afterSubmit) afterSubmit(formData);
+      onClose();
+    } catch (error) {
+      alert("Failed to save room!");
+      // log error detail jika needed
+    }
+    setLoading(false);
   };
 
   if (!isOpen) return null;
@@ -117,9 +131,7 @@ export default function ModalEditRoom({
                 />
                 <button
                   type="button"
-                  onClick={() =>
-                    document.getElementById("image-upload").click()
-                  }
+                  onClick={() => document.getElementById("image-upload").click()}
                   className="mt-2 text-sm text-blue-500 hover:text-blue-700"
                 >
                   Change Photo
@@ -163,13 +175,7 @@ export default function ModalEditRoom({
               placeholder="Room Name"
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
-              list="room-names"
             />
-            <datalist id="room-names">
-              {(ROOM_LIST || []).map((room) => (
-                <option key={room.name} value={room.name} />
-              ))}
-            </datalist>
           </div>
           <div>
             <label htmlFor="room-type" className="block text-sm font-medium text-gray-700">Room Type</label>
@@ -180,9 +186,11 @@ export default function ModalEditRoom({
               onChange={handleChange}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm bg-white"
             >
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
+              {(roomTypes || ["Small", "Medium", "Large"]).map((type) => (
+                <option key={type.value || type} value={type.value || type}>
+                  {type.label || type}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -196,7 +204,7 @@ export default function ModalEditRoom({
               onFocus={handlePriceFocus}
               onBlur={handlePriceBlur}
               min={0}
-              placeholder="Price" // <-- placeholder ganti, bisa kosong, '0', atau 'Price'
+              placeholder="Price"
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
               required
               inputMode="numeric"
@@ -204,24 +212,28 @@ export default function ModalEditRoom({
           </div>
           <div>
             <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity</label>
-            <input
-              type="number"
+            <select
               id="capacity"
               name="capacity"
               value={formData.capacity}
               onChange={handleChange}
-              min={1}
-              placeholder="Capacity"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm bg-white"
               required
-            />
+            >
+              {(capacities || [1, 2, 3, 4, 5]).map((cap) => (
+                <option key={cap.value || cap} value={cap.value || cap}>
+                  {cap.label || cap}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="pt-4">
             <button
               type="submit"
+              disabled={loading}
               className="w-full h-[48px] bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition"
             >
-              Save
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
@@ -233,7 +245,6 @@ export default function ModalEditRoom({
 ModalEditRoom.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
   roomData: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     name: PropTypes.string,
@@ -242,5 +253,5 @@ ModalEditRoom.propTypes = {
     capacity: PropTypes.number,
     image: PropTypes.string,
   }),
-  onShowDetail: PropTypes.func,
+  afterSubmit: PropTypes.func,
 };

@@ -4,28 +4,6 @@ import { FiCalendar } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const ROOM_LIST = [
-  "Aster Room",
-  "Tulip Room",
-  "Bluebell",
-  "Camellia",
-  "Daisy",
-  "Edelweiss",
-  "Freesia",
-  "Gardenia",
-  "Hibiscus",
-  "Ivy",
-  "Jasmine",
-  "Lily",
-];
-
-const SNACK_OPTIONS = [
-  { value: "coffee1", label: "Coffee Break Package 1 - Rp 20.000/people" },
-  { value: "coffee2", label: "Coffee Break Package 2 - Rp 50.000/people" },
-  { value: "lunch1", label: "Lunch Package 1 - Rp 20.000/people" },
-  { value: "lunch2", label: "Lunch Package 2 - Rp 50.000/people" },
-];
-
 const generateTimeOptions = () => {
   const arr = [];
   for (let h = 0; h < 24; h++) {
@@ -64,7 +42,13 @@ function ReservationForm({
   onSubmit,
   onAddReservation,
   data = {},
-  mode = "user"
+  mode = "user",
+  rooms = [],
+  snacks = [],
+  loadingRooms = false,
+  loadingSnacks = false,
+  errorRooms = null,
+  errorSnacks = null,
 }) {
   const [form, setForm] = useState({
     room: data?.room || "",
@@ -81,23 +65,19 @@ function ReservationForm({
   });
 
   const handleChange = (field, value) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
-    const mandatory =
-      mode === "admin"
-        ? [
-            "room", "name", "phone", "company", "date", "startTime", "endTime", "participants"
-          ]
-        : [
-            "room", "name", "phone", "company", "date", "startTime", "endTime", "participants"
-          ];
-    for (let f of mandatory)
+    const mandatory = [
+      "room", "name", "phone", "company", "date", "startTime", "endTime", "participants"
+    ];
+    for (let f of mandatory) {
       if (!form[f]) {
         alert("Please fill all required fields!");
         return;
       }
+    }
     if (form.addSnack && !form.snackCategory) {
       alert("Please select a snack category!");
       return;
@@ -110,18 +90,23 @@ function ReservationForm({
 
   return (
     <>
-      {/* BACKDROP TRANSPARAN */}
+      {/* BACKDROP LANDING PAGE (harus sama dengan desain Figma) */}
       <div
-        className="fixed inset-0 z-40 bg-[rgba(255,255,255,0.01)] pointer-events-auto"
+        className="fixed inset-0 z-40 bg-white"
         onClick={onClose}
+        aria-label="Backdrop"
+        data-testid="modal-backdrop"
       />
+      {/* MODAL FORM */}
       <div className="fixed top-0 right-0 w-[456px] h-full max-h-screen z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
         <div className="flex items-center h-[56px] mb-2 sticky top-0 bg-white z-10">
+          {/* Tombol close/back (PASTI memanggil onClose) */}
           <button
             onClick={onClose}
             className="mr-3 p-0"
             aria-label="Back"
             type="button"
+            data-testid="btn-close-form"
           >
             <svg width={28} height={28} fill="none" viewBox="0 0 28 28">
               <path
@@ -138,24 +123,31 @@ function ReservationForm({
           </span>
         </div>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit} autoComplete="off">
-          {/* Room Name */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Room Name
             </label>
-            <select
-              value={form.room}
-              onChange={e => handleChange("room", e.target.value)}
-              className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900 bg-white"
-              required
-            >
-              <option value="">Room Name</option>
-              {ROOM_LIST.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+            {loadingRooms ? (
+              <div className="py-3 text-center text-gray-500">Loading rooms...</div>
+            ) : errorRooms ? (
+              <div className="py-3 text-center text-red-500">{errorRooms}</div>
+            ) : (
+              <select
+                value={form.room}
+                onChange={e => handleChange("room", e.target.value)}
+                className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900 bg-white"
+                required
+              >
+                <option value="">Room Name</option>
+                {rooms.map(r => (
+                  <option key={r.id || r.name} value={r.name || r}>
+                    {r.name || r}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-          {/* Name */}
+          {/* Other input fields... */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Name
@@ -170,7 +162,6 @@ function ReservationForm({
               autoComplete="off"
             />
           </div>
-          {/* No. HP */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               No.Hp
@@ -184,7 +175,6 @@ function ReservationForm({
               required
             />
           </div>
-          {/* Company */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Company/Organization
@@ -198,7 +188,6 @@ function ReservationForm({
               required
             />
           </div>
-          {/* Date Reservation */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Date Reservation
@@ -213,7 +202,6 @@ function ReservationForm({
               showPopperArrow={false}
             />
           </div>
-          {/* Start & End Time */}
           <div className="flex gap-3">
             <div className="flex flex-col flex-1 gap-1">
               <label className="text-[15px] font-medium text-gray-700 mb-[2px]">Start Time</label>
@@ -244,7 +232,6 @@ function ReservationForm({
               </select>
             </div>
           </div>
-          {/* Total Participants */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Total Participants
@@ -260,7 +247,6 @@ function ReservationForm({
               autoComplete="off"
             />
           </div>
-          {/* Add Snack */}
           <div className="flex items-center mb-1 pt-1">
             <input
               id="snack"
@@ -278,22 +264,27 @@ function ReservationForm({
               <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
                 Snack Category
               </label>
-              <select
-                value={form.snackCategory}
-                onChange={e => handleChange("snackCategory", e.target.value)}
-                className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900"
-                required
-              >
-                <option value="">Snack Category</option>
-                {SNACK_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              {loadingSnacks ? (
+                <div className="py-3 text-center text-gray-500">Loading snacks...</div>
+              ) : errorSnacks ? (
+                <div className="py-3 text-center text-red-500">{errorSnacks}</div>
+              ) : (
+                <select
+                  value={form.snackCategory}
+                  onChange={e => handleChange("snackCategory", e.target.value)}
+                  className="w-full h-12 px-4 rounded-lg border border-gray-300 text-gray-900"
+                  required
+                >
+                  <option value="">Snack Category</option>
+                  {snacks.map(opt => (
+                    <option key={opt.id || opt.value || opt.name} value={opt.value || opt.name}>
+                      {opt.label || opt.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
-          {/* Note */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">Note</label>
             <textarea
@@ -321,9 +312,14 @@ ReservationForm.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func,
   onAddReservation: PropTypes.func,
-  roomData: PropTypes.object,
+  data: PropTypes.object,
+  mode: PropTypes.oneOf(["user", "admin"]),
   rooms: PropTypes.array,
-  mode: PropTypes.oneOf(["user", "admin"])
+  snacks: PropTypes.array,
+  loadingRooms: PropTypes.bool,
+  loadingSnacks: PropTypes.bool,
+  errorRooms: PropTypes.string,
+  errorSnacks: PropTypes.string,
 };
 
 export default ReservationForm;

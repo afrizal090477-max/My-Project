@@ -1,108 +1,123 @@
-// src/pagesAdmin/Reservation.jsx
-
-import React, { useMemo, useState } from "react";
-import { ROOM_LIST } from "../data/roomData";
+import React, { useMemo, useState, useEffect } from "react";
 import ReservationFormAdmin from "../components/ReservationFormAdmin";
 import ReservationDetailAdmin from "../components/ReservationDetailAdmin";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
+import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
+import { fetchRooms } from "../API/roomAPI";
+import {
+  fetchReservations,
+  createReservation,
+  searchReservationsByDate,
+} from "../API/reservationAPI";
 
 export default function Reservation() {
-  const DEFAULT_ROOMS = useMemo(() => [
-    {
-      name: "Aster Room",
-      events: [
-        { company: "PT Maju Jaya", start: "13:00", end: "15:00", status: "Done" },
-        { company: "Organisasi Muslim Pusat", start: "13:00", end: "15:00", status: "Up Coming" },
-      ],
-    },
-    {
-      name: "Bluebell Room",
-      events: [{ company: "PT XYZ Corp", start: "10:00", end: "11:00", status: "In Progress" }],
-    },
-    {
-      name: "Camellia Room",
-      events: [{ company: "Alisa Company", start: "14:00", end: "15:00", status: "Up Coming" }],
-    },
-    {
-      name: "Daisy Room",
-      events: [{ company: "PT Lestari", start: "15:00", end: "18:00", status: "Up Coming" }],
-    },
-  ], []);
-
-  const [roomsData, setRoomsData] = useState(DEFAULT_ROOMS);
+  const [roomsData, setRoomsData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
-
-  // Stepper state
-  const [step, setStep] = useState(1); // 1: form, 2: detail
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(null);
 
-  // Step 1: Ambil detail room dari ROOM_LIST (master)
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const rooms = await fetchRooms();
+      const reservations = await fetchReservations();
+      const mappedRooms = rooms.map((room) => ({
+        ...room,
+        events:
+          reservations
+            .filter((ev) => ev.roomName === room.name)
+            .map((ev) => ({
+              company: ev.company || ev.bookerName,
+              start: ev.startTime,
+              end: ev.endTime,
+              status: ev.status,
+            })) || [],
+      }));
+      setRoomsData(mappedRooms);
+    } catch {
+      setToast({
+        visible: true,
+        type: "error",
+        message: "Failed to load rooms or reservations",
+      });
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3500);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const handleNext = (data) => {
-    const foundRoom = ROOM_LIST.find(room => room.name === data.room);
+    const foundRoom = roomsData.find((room) => room.name === data.room);
     setFormData({
       ...data,
       roomType: foundRoom?.type || "-",
       capacity: foundRoom ? `${foundRoom.capacity} people` : "-",
-      roomPrice: foundRoom ? `Rp ${foundRoom.price.toLocaleString("id-ID")}` : "-",
+      roomPrice: foundRoom
+        ? `Rp ${foundRoom.price?.toLocaleString("id-ID")}`
+        : "-",
       roomPriceRaw: foundRoom?.price || 0,
     });
     setStep(2);
   };
 
-  // Submit reservation success (step 2)
-  const handleReservationSubmit = (finalData) => {
-    setRoomsData((prev) =>
-      prev.map((room) =>
-        room.name === finalData.room
-          ? {
-              ...room,
-              events: [
-                ...room.events,
-                {
-                  company: finalData.company || finalData.name,
-                  start: finalData.startTime,
-                  end: finalData.endTime,
-                  status: finalData.status || "Up Coming",
-                },
-              ],
-            }
-          : room
-      )
-    );
-
-    setToast({
-      visible: true,
-      type: "success",
-      message: "New Reservation Successfully added",
-    });
-    setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
-
+  const handleReservationSubmit = async (finalData) => {
+    try {
+      await createReservation(finalData);
+      setToast({ visible: true, type: "success", message: "Reservation added" });
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
+      loadData();
+    } catch {
+      setToast({ visible: true, type: "error", message: "Failed to add reservation" });
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
+    }
     setStep(1);
     setFormData(null);
     setShowForm(false);
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!startDate || !endDate) {
       setToast({
         visible: true,
         type: "error",
         message: "Pilih Start Date dan End Date terlebih dahulu!",
       });
-      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
       return;
     }
-    setToast({
-      visible: true,
-      type: "success",
-      message: "Data pencarian berhasil ditampilkan!",
-    });
-    setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3000);
+    setLoading(true);
+    try {
+      const reservations = await searchReservationsByDate(startDate, endDate);
+      const rooms = await fetchRooms();
+      const mappedRooms = rooms.map((room) => ({
+        ...room,
+        events:
+          reservations
+            .filter((ev) => ev.roomName === room.name)
+            .map((ev) => ({
+              company: ev.company || ev.bookerName,
+              start: ev.startTime,
+              end: ev.endTime,
+              status: ev.status,
+            })) || [],
+      }));
+      setRoomsData(mappedRooms);
+      setToast({ visible: true, type: "success", message: "Data berhasil difilter!" });
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
+    } catch {
+      setToast({ visible: true, type: "error", message: "Filter gagal!" });
+      setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
+    }
+    setLoading(false);
   };
 
   const today = new Date().toLocaleDateString("en-GB", {
@@ -136,6 +151,8 @@ export default function Reservation() {
 
   return (
     <div className="flex flex-col mb-1">
+      {/* Komponen demo admin */}
+      <RoomDetailDemoAdmin />
       {toast.visible && (
         <div
           className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm transition-all duration-300 ${toastBg}`}
@@ -144,7 +161,6 @@ export default function Reservation() {
         </div>
       )}
 
-      {/* Filter bar */}
       <section className="w-[1320px] bg-white flex justify-between items-center gap-2 border border-gray-200 rounded-xl px-5 py-4 shadow-sm mb-1">
         <div className="flex flex-wrap md:flex-nowrap gap-10 items-center">
           <p className="font-semibold text-gray-900">{today}</p>
@@ -170,25 +186,28 @@ export default function Reservation() {
           </div>
           <button
             onClick={handleSearch}
+            disabled={loading}
             className="border !border-orange-600 text-orange-600 w-[140px] h-[45px] rounded-md font-medium bg-transparent hover:bg-orange-50 transition duration-300"
           >
-            Search
+            {loading ? "Loading..." : "Search"}
           </button>
         </div>
         <button
-          onClick={() => { setShowForm(true); setStep(1); setFormData(null); }}
+          onClick={() => {
+            setShowForm(true);
+            setStep(1);
+            setFormData(null);
+          }}
           className="bg-[#FF7316] text-white px-5 py-2 w-[198px] h-[48px] rounded-md font-medium hover:bg-[#e76712] transition"
         >
           + Add New Reservation
         </button>
       </section>
 
-      {/* Timeline grid */}
       <div
         className="relative bg-white border border-gray-200 shadow-sm rounded-xl overflow-auto"
         style={{ width: "1320px", height: "770px", position: "relative" }}
       >
-        {/* Time rail */}
         <div
           className="absolute z-10 bg-white border-r border-dashed border-gray-200"
           style={{ top: 0, left: 0, width: "90px", height: "1440px" }}
@@ -210,7 +229,6 @@ export default function Reservation() {
           ))}
         </div>
 
-        {/* Rooms grid */}
         <div
           className="absolute left-[90px] top-0 border-l border-gray-200"
           style={{
@@ -234,9 +252,7 @@ export default function Reservation() {
                   return (
                     <div
                       key={`${room.name}-${ev.company}-${ev.start}-${idx}`}
-                      className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(
-                        ev.status
-                      )}`}
+                      className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(ev.status)}`}
                       style={{
                         top: `${(st / 60) * 60 + 40}px`,
                         height: `${((et - st) / 60) * 60}px`,
@@ -261,13 +277,16 @@ export default function Reservation() {
         </div>
       </div>
 
-      {/* Modal form: stepper */}
       {showForm && (
         <>
           {step === 1 && (
             <ReservationFormAdmin
               isOpen={showForm}
-              onClose={() => { setShowForm(false); setStep(1); setFormData(null); }}
+              onClose={() => {
+                setShowForm(false);
+                setStep(1);
+                setFormData(null);
+              }}
               onSubmit={handleNext}
               data={formData}
             />

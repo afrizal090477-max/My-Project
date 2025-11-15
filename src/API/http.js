@@ -1,54 +1,70 @@
-// src/API/http.js
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { getToken, setToken, clearToken } from "../utils/storage";
 
-// Instance untuk semua request lewat proxy Vite
-const http = axios.create({
-  baseURL: "/api/v1/auth",
+// Konfigurasi baseURL ke Swagger endpoint backend produksi/dev
+const apiHttp = axios.create({
+  baseURL: "https://emiting-be.vercel.app", // Pastikan ini sesuai alamat backend API Anda
 });
 
-// Inject Authorization token di setiap permintaan
-http.interceptors.request.use((config) => {
+// Interceptor: tambahkan token Authorization jika ada untuk semua request
+apiHttp.interceptors.request.use((config) => {
   const token = getToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Handle error global (misal token expired)
-http.interceptors.response.use(
+// Interceptor: jika response 401, hapus token dari storage (otomatis logout saat token invalid)
+apiHttp.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       clearToken();
-      // window.location = "/login"; jika ingin langsung logout
     }
     return Promise.reject(error);
   }
 );
 
-// Fungsi login sesuai spec swagger
-export const login = async (username, password, navigate) => {
-  const response = await http.post("/login", { username, password });
-  const { token, role } = response.data; // sesuaikan property dengan response backend
-  setToken(token);
-  if (role === "admin") {
-    navigate("/admin");
-  } else if (role === "user") {
-    navigate("/dashboard");
-  } else {
-    navigate("/"); // default fallback
+// Fungsi login
+export const login = async (username, password) => {
+  try {
+    const response = await apiHttp.post("/api/v1/auth/login", { username, password });
+
+    // Format hasil harus { status: "success", data: { token, user }, ... }
+    // Pastikan backend mengirimkan respons seperti ini
+    let token = null;
+
+    if (response.data?.data && response.data.data.token) {
+      token = response.data.data.token;
+    } else if (response.data?.token) {
+      // Fallback jika backend pakai data.token langsung di root response
+      token = response.data.token;
+    }
+
+    if (response.data?.status !== "success" || !token) {
+      throw new Error(response.data?.message || "Login gagal: token tidak valid dari backend");
+    }
+
+    setToken(token);
+    const payload = jwtDecode(token);
+
+    let role = "user";
+    if (payload.is_admin || payload.role === "admin") role = "admin";
+    if (payload.email === "admin@mail.com") role = "admin";
+    if (payload.user_id === 1 || payload.user_id === "1") role = "admin";
+
+    return { token, role, payload, user: response.data.data?.user || null };
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message || "Login error");
   }
-  return response.data; // kalau butuh data ke component
 };
 
+// Registrasi user ke endpoint backend
+export const register = async (data) =>
+  apiHttp.post("/api/v1/auth/register", data);
 
+// Forgot password (endpoint sesuai backend)
+export const forgotPassword = async (email) =>
+  apiHttp.post("/api/v1/auth/forgot-password", { email });
 
-
-// Fungsi lupa password (sesuai spec swagger)
-export const forgotPassword = async (email) => {
-  // Sesuaikan payload dengan backend (misal {email})
-  return http.post("/forgot-password", { email });
-};
-
-// Export default instance untuk kebutuhan custom
-export default http;
+export default apiHttp;

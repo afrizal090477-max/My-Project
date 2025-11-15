@@ -1,27 +1,39 @@
-// src/pages/Login.js
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
 
 export default function Login() {
-  const { loginUser, token, role, error, loading } = useAuth();
+  const { handleLogin, token, role, error, loading } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState("");
   const navigate = useNavigate();
 
-  // Redirect otomatis jika sudah login
+  // Redirect otomatis sesuai role, FE mapping dari JWT (AuthContext)
   useEffect(() => {
     if (token && role) {
+      console.log("Redirect berdasarkan role:", role);
       if (role === "admin") navigate("/dashboard", { replace: true });
-      if (role === "user")
-        navigate("/user/room-reservation", { replace: true });
+      else if (role === "user") navigate("/user/room-reservation", { replace: true });
+      else navigate("/user/room-reservation", { replace: true }); // fallback
     }
   }, [token, role, navigate]);
 
+  // Handle submit dengan validasi lokal
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await loginUser({ username, password });
+    setLocalError("");
+    if (!username || !password) {
+      setLocalError("Username & password wajib diisi");
+      return;
+    }
+    try {
+      await handleLogin({ username, password });
+      // Tidak perlu navigasi di sini, otomatis di useEffect di atas!
+    } catch (err) {
+      // Error context sudah otomatis dikirim ke 'error'
+    }
   };
 
   return (
@@ -99,10 +111,10 @@ export default function Login() {
                 {loading ? "Loading..." : "Login"}
               </button>
             </div>
-            {error && (
+            {(localError || error) && (
               <div className="w-full max-w-[380px] mx-auto">
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
-                  {String(error)}
+                  {localError ? localError : String(error)}
                 </div>
               </div>
             )}

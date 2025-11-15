@@ -6,9 +6,19 @@ import RoomsImage from "../assets/Rooms.png";
 function RoomCard({ room, onEdit, onDelete }) {
   // Format harga
   const formatRupiah = (number) =>
-    `Rp ${number.toLocaleString("id-ID")} / hour`;
+    `Rp ${number?.toLocaleString("id-ID") ?? "-"} / hour`;
 
   const imageUrl = room.image || RoomsImage;
+
+  // Handle type/room_type as object or string
+  let typeLabel = "";
+  if (room.type && typeof room.type === "object") {
+    typeLabel = room.type.name || room.type.label || "[object]";
+  } else if (room.room_type && typeof room.room_type === "object") {
+    typeLabel = room.room_type.name || room.room_type.label || "[object]";
+  } else {
+    typeLabel = room.type || room.room_type || "-";
+  }
 
   return (
     <article
@@ -51,13 +61,13 @@ function RoomCard({ room, onEdit, onDelete }) {
           <h3 className="text-lg font-bold text-gray-800 truncate">{room.name}</h3>
           <span className="flex items-center gap-2 text-sm text-gray-600 font-medium">
             <FiTag className="text-green-500" size={15} />
-            {room.type} Type
+            {typeLabel} Type
           </span>
         </div>
         <div className="flex justify-between items-center">
           <span className="flex items-center gap-2 text-sm text-gray-600">
             <FiUsers className="text-blue-500" size={15} />
-            {room.capacity} people
+            {room.capacity ?? '-'} people
           </span>
           <span className="text-sm font-bold text-orange-500 whitespace-nowrap">
             {formatRupiah(room.price)}
@@ -71,7 +81,22 @@ function RoomCard({ room, onEdit, onDelete }) {
 RoomCard.propTypes = {
   room: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    type: PropTypes.string,
+    type: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        id: PropTypes.any,
+        name: PropTypes.string,
+        label: PropTypes.string,
+      }),
+    ]),
+    room_type: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        id: PropTypes.any,
+        name: PropTypes.string,
+        label: PropTypes.string,
+      }),
+    ]),
     capacity: PropTypes.number,
     price: PropTypes.number,
     image: PropTypes.string,

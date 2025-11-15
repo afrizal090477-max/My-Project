@@ -17,6 +17,7 @@ import {
   updateRoom,
   deleteRoom,
 } from "../API/roomAPI";
+import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -39,13 +40,24 @@ export default function Room() {
 
   useEffect(() => {
     const loadFilters = async () => {
+      let types = [];
+      let caps = [];
       try {
-        const types = await fetchRoomTypes();
+        try {
+          types = await fetchRoomTypes();
+        } catch {
+          types = [];
+        }
         setRoomTypes(types);
-        const caps = await fetchCapacities();
+        try {
+          caps = await fetchCapacities();
+        } catch {
+          caps = [];
+        }
         setCapacities(caps);
-      } catch (err) {
-        console.error("Failed to load room filters", err);
+      } catch {
+        setRoomTypes([]);
+        setCapacities([]);
       }
     };
     loadFilters();
@@ -63,21 +75,14 @@ export default function Room() {
         };
         const data = await fetchRooms(params);
         let apiRooms = data.data || [];
-        console.log("DEBUG DATA ROOMS:", apiRooms);
-
-
-        // Defensive: flatten possible object for type/room_type
         apiRooms = apiRooms.map((room) => ({
           ...room,
-          // Pastikan hanya label string yang dikirim ke komponen
-          type:
-            (room.type && typeof room.type === "object"
-              ? room.type.name || room.type.label
-              : room.type) ??
-            (room.room_type && typeof room.room_type === "object"
-              ? room.room_type.name || room.room_type.label
-              : room.room_type) ??
-            "",
+          id: room.id,
+          name: room.room_name || room.name || "-",
+          type: room.room_type || room.type || "",
+          image: room.image || RoomsImage,
+          capacity: typeof room.capacity === "undefined" ? "-" : room.capacity,
+          price: room.price || 0,
         }));
 
         if (filters.search) {
@@ -116,8 +121,8 @@ export default function Room() {
         );
       } else {
         const roomToAdd = { ...formData, image: formData.image || RoomsImage };
-        await addRoom(roomToAdd);
-        setRooms((prev) => [roomToAdd, ...prev]);
+        const newRoom = await addRoom(roomToAdd);
+        setRooms((prev) => [newRoom, ...prev]);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
       }
@@ -163,6 +168,8 @@ export default function Room() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Internal Only, no UI */}
+      <RoomDetailDemoAdmin />
       {/* FILTER HEADER */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 max-w-[1320px] mx-auto p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-4 items-center flex-1">

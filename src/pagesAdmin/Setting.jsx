@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import defaultPhoto from "../assets/home.png";
-import { fetchUserProfile, updateUserProfile } from "../API/userProfileAPI";
+import { fetchProfile, updateProfile } from "../API/profileAPI";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -22,7 +22,7 @@ export default function UserSetting() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await fetchUserProfile();
+        const data = await fetchProfile();
         setFormData({
           email: data.email || "",
           username: data.username || "",
@@ -53,7 +53,7 @@ export default function UserSetting() {
     if (isEditing) {
       try {
         // Siapkan FormData: jika user upload foto baru, photoFile != null
-        await updateUserProfile({
+        await updateProfile({
           ...formData,
           password: formData.password === "********" ? "" : formData.password,
           photo: photoFile || undefined,

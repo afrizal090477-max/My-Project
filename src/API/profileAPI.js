@@ -1,18 +1,33 @@
 import apiHttp from "./http";
 
+// Gunakan endpoint Swagger
+const PROFILE_URL = "/api/v1/profile";
+
 /**
- * Ambil profile user yang sedang login (GET /profile)
+ * Ambil data profil user saat ini
+ * @returns {Object} data profile
  */
 export const fetchProfile = async () => {
-  const response = await apiHttp.get("/profile");
-  return response.data;
+  const response = await apiHttp.get(PROFILE_URL);
+  // response.data biasanya: { data: {...profile} }
+  return response.data.data;
 };
 
 /**
- * Update profile user (PUT /profile)
- * @param {Object} profileData - form data user
+ * Update profil: name, email, password (opsional), dan photo (opsional file)
+ * @param {Object} param0 { username, email, password, photo }
+ * photo = File browser/image (boleh kosong jika tidak update)
+ * @returns {Object} data profile yang sudah diupdate
  */
-export const updateProfile = async (profileData) => {
-  const response = await apiHttp.put("/profile", profileData);
-  return response.data;
+export const updateProfile = async ({ username, email, password, photo }) => {
+  const formData = new FormData();
+  if (username) formData.append("username", username);
+  if (email) formData.append("email", email);
+  if (password) formData.append("password", password); // Hanya jika user mengubah password
+  if (photo) formData.append("photo", photo);           // File image, jika ada
+
+  const response = await apiHttp.put(PROFILE_URL, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.data;
 };

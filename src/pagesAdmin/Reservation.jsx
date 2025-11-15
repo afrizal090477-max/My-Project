@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import ReservationFormAdmin from "../components/ReservationFormAdmin";
 import ReservationDetailAdmin from "../components/ReservationDetailAdmin";
 import DatePicker from "react-datepicker";
@@ -7,10 +7,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
 import { fetchRooms } from "../API/roomAPI";
 import {
-  fetchReservations,
-  createReservation,
-  searchReservationsByDate,
-} from "../API/reservationAPI";
+  fetchAdminReservations,
+  createAdminReservation,
+  filterAdminReservations,
+} from "../API/ReservationScheduleAdminAPI";
 
 export default function Reservation() {
   const [roomsData, setRoomsData] = useState([]);
@@ -22,22 +22,26 @@ export default function Reservation() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(null);
 
-  const loadData = async () => {
+  // mapping tanpa id, property yang tersedia: company, startTime, endTime, status
+  const mapEvents = useCallback((reservations, roomName) =>
+    reservations
+      .filter((ev) => ev.roomName === roomName)
+      .map((ev) => ({
+        company: ev.company || ev.bookerName,
+        startTime: ev.startTime,
+        endTime: ev.endTime,
+        status: ev.status,
+      })) || [], []
+  );
+
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const rooms = await fetchRooms();
-      const reservations = await fetchReservations();
+      const reservations = await fetchAdminReservations();
       const mappedRooms = rooms.map((room) => ({
         ...room,
-        events:
-          reservations
-            .filter((ev) => ev.roomName === room.name)
-            .map((ev) => ({
-              company: ev.company || ev.bookerName,
-              start: ev.startTime,
-              end: ev.endTime,
-              status: ev.status,
-            })) || [],
+        events: mapEvents(reservations, room.name),
       }));
       setRoomsData(mappedRooms);
     } catch {
@@ -49,11 +53,11 @@ export default function Reservation() {
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3500);
     }
     setLoading(false);
-  };
+  }, [mapEvents]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleNext = (data) => {
     const foundRoom = roomsData.find((room) => room.name === data.room);
@@ -71,7 +75,7 @@ export default function Reservation() {
 
   const handleReservationSubmit = async (finalData) => {
     try {
-      await createReservation(finalData);
+      await createAdminReservation(finalData);
       setToast({ visible: true, type: "success", message: "Reservation added" });
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
       loadData();
@@ -96,19 +100,11 @@ export default function Reservation() {
     }
     setLoading(true);
     try {
-      const reservations = await searchReservationsByDate(startDate, endDate);
+      const reservations = await filterAdminReservations(startDate, endDate);
       const rooms = await fetchRooms();
       const mappedRooms = rooms.map((room) => ({
         ...room,
-        events:
-          reservations
-            .filter((ev) => ev.roomName === room.name)
-            .map((ev) => ({
-              company: ev.company || ev.bookerName,
-              start: ev.startTime,
-              end: ev.endTime,
-              status: ev.status,
-            })) || [],
+        events: mapEvents(reservations, room.name),
       }));
       setRoomsData(mappedRooms);
       setToast({ visible: true, type: "success", message: "Data berhasil difilter!" });
@@ -151,8 +147,6 @@ export default function Reservation() {
 
   return (
     <div className="flex flex-col mb-1">
-      {/* Komponen demo admin */}
-      <RoomDetailDemoAdmin />
       {toast.visible && (
         <div
           className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm transition-all duration-300 ${toastBg}`}
@@ -245,13 +239,17 @@ export default function Reservation() {
               </h2>
               {Array.isArray(room.events) &&
                 room.events.map((ev, idx) => {
-                  const [sh, sm] = ev.start.split(":").map(Number);
-                  const [eh, em] = ev.end.split(":").map(Number);
+                  const startTime = typeof ev.startTime === "string" ? ev.startTime : "";
+                  const endTime = typeof ev.endTime === "string" ? ev.endTime : "";
+                  const [sh, sm] = startTime.includes(":") ? startTime.split(":").map(Number) : [0, 0];
+                  const [eh, em] = endTime.includes(":") ? endTime.split(":").map(Number) : [0, 0];
                   const st = sh * 60 + sm;
                   const et = eh * 60 + em;
+                  // Key fallback, gabungan semua property yang mungkin unik
+                  const keyUnique = `${room.name}-${ev.company}-${startTime}-${endTime}-${ev.status}-${idx}`;
                   return (
                     <div
-                      key={`${room.name}-${ev.company}-${ev.start}-${idx}`}
+                      key={keyUnique}
                       className={`absolute left-2 right-2 p-3 rounded-lg shadow-sm ${getEventClass(ev.status)}`}
                       style={{
                         top: `${(st / 60) * 60 + 40}px`,
@@ -260,12 +258,10 @@ export default function Reservation() {
                     >
                       <p className="font-medium">{ev.company}</p>
                       <p className="text-sm text-gray-500">
-                        {ev.start} - {ev.end} WIB
+                        {startTime} - {endTime} WIB
                       </p>
                       <span
-                        className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(
-                          ev.status
-                        )}`}
+                        className={`absolute right-2 top-2 text-xs px-2 py-[2px] rounded-full ${getBadgeClass(ev.status)}`}
                       >
                         {ev.status}
                       </span>

@@ -1,3 +1,4 @@
+// AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { decodeToken } from "../utils/jwt";
 import { getToken, clearToken, setToken as saveToken } from "../utils/storage";
@@ -8,7 +9,7 @@ export const AuthContext = createContext();
 function mapRoleFromPayload(payload) {
   if (!payload) return "user";
   if (payload.is_admin === true) return "admin";
-  if (payload.role) return payload.role; // fallback ambil role dari payload langsung
+  if (payload.role) return payload.role;
   if (payload.email === "admin@mail.com") return "admin";
   if (payload.user_id === 1 || payload.user_id === "1") return "admin";
   return "user";
@@ -37,8 +38,7 @@ export const AuthProvider = ({ children }) => {
     setError("");
     setLoading(true);
     try {
-      const { token: newToken, role: mappedRole, payload } =
-        await loginApi(username, password);
+      const { token: newToken, role: mappedRole, payload } = await loginApi(username, password);
 
       if (!newToken) throw new Error("Token tidak ditemukan pada response API");
 
@@ -47,11 +47,7 @@ export const AuthProvider = ({ children }) => {
       setRole(mappedRole || mapRoleFromPayload(payload));
       setUser({ token: newToken, role: mappedRole || mapRoleFromPayload(payload), ...payload });
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          err.message ||
-          "Login gagal"
-      );
+      setError(err?.response?.data?.message || err.message || "Login gagal");
       clearToken();
       setTokenState(null);
       setRole(null);
@@ -69,13 +65,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{
-      user, token, role, error, loading,
-      handleLogin, handleLogout
-    }}>
+    <AuthContext.Provider value={{ user, token, role, error, loading, handleLogin, handleLogout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+

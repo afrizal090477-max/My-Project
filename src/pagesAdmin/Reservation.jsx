@@ -4,7 +4,7 @@ import ReservationDetailAdmin from "../components/ReservationDetailAdmin";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
-import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
+import ReservationSchedule from "../components/ReservationSchedule";
 import { fetchRooms } from "../API/roomAPI";
 import {
   fetchAdminReservations,
@@ -22,26 +22,33 @@ export default function Reservation() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(null);
 
-  // mapping tanpa id, property yang tersedia: company, startTime, endTime, status
-  const mapEvents = useCallback((reservations, roomName) =>
+  // Modal Jadwal Booking 24 jam
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleRoom, setScheduleRoom] = useState("");
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState("");
+
+  // Mapping & Filtering
+  const mapRoomEvents = useCallback((reservations, room_name) =>
     reservations
-      .filter((ev) => ev.roomName === roomName)
+      .filter((ev) => ev.room_name === room_name)
       .map((ev) => ({
-        company: ev.company || ev.bookerName,
-        startTime: ev.startTime,
-        endTime: ev.endTime,
+        company: ev.company || ev.bookerName || ev.booker_name,
+        startTime: ev.start_time,
+        endTime: ev.end_time,
         status: ev.status,
-      })) || [], []
+        date: ev.dateReservation || ev.date_reservation,
+      })), []
   );
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const rooms = await fetchRooms();
+      const roomsRaw = await fetchRooms();
+      const rooms = Array.isArray(roomsRaw) ? roomsRaw : roomsRaw.data;
       const reservations = await fetchAdminReservations();
       const mappedRooms = rooms.map((room) => ({
         ...room,
-        events: mapEvents(reservations, room.name),
+        events: mapRoomEvents(reservations, room.room_name),
       }));
       setRoomsData(mappedRooms);
     } catch {
@@ -53,17 +60,17 @@ export default function Reservation() {
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3500);
     }
     setLoading(false);
-  }, [mapEvents]);
+  }, [mapRoomEvents]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const handleNext = (data) => {
-    const foundRoom = roomsData.find((room) => room.name === data.room);
+    const foundRoom = roomsData.find((room) => room.room_name === data.room);
     setFormData({
       ...data,
-      roomType: foundRoom?.type || "-",
+      roomType: foundRoom?.room_type || "-",
       capacity: foundRoom ? `${foundRoom.capacity} people` : "-",
       roomPrice: foundRoom
         ? `Rp ${foundRoom.price?.toLocaleString("id-ID")}`
@@ -71,16 +78,25 @@ export default function Reservation() {
       roomPriceRaw: foundRoom?.price || 0,
     });
     setStep(2);
+    setShowForm(true);
   };
 
   const handleReservationSubmit = async (finalData) => {
     try {
       await createAdminReservation(finalData);
-      setToast({ visible: true, type: "success", message: "Reservation added" });
+      setToast({
+        visible: true,
+        type: "success",
+        message: "Reservation added"
+      });
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
       loadData();
     } catch {
-      setToast({ visible: true, type: "error", message: "Failed to add reservation" });
+      setToast({
+        visible: true,
+        type: "error",
+        message: "Failed to add reservation"
+      });
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
     }
     setStep(1);
@@ -93,7 +109,7 @@ export default function Reservation() {
       setToast({
         visible: true,
         type: "error",
-        message: "Pilih Start Date dan End Date terlebih dahulu!",
+        message: "Pilih Start Date dan End Date terlebih dahulu!"
       });
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
       return;
@@ -101,10 +117,11 @@ export default function Reservation() {
     setLoading(true);
     try {
       const reservations = await filterAdminReservations(startDate, endDate);
-      const rooms = await fetchRooms();
+      const roomsRaw = await fetchRooms();
+      const rooms = Array.isArray(roomsRaw) ? roomsRaw : roomsRaw.data;
       const mappedRooms = rooms.map((room) => ({
         ...room,
-        events: mapEvents(reservations, room.name),
+        events: mapRoomEvents(reservations, room.room_name),
       }));
       setRoomsData(mappedRooms);
       setToast({ visible: true, type: "success", message: "Data berhasil difilter!" });
@@ -133,6 +150,7 @@ export default function Reservation() {
       Done: "bg-gray-100 border border-gray-300",
       "In Progress": "bg-green-50 border border-green-400",
       "Up Coming": "bg-orange-50 border border-orange-400",
+      Booked: "bg-orange-50 border border-orange-400"
     }[status] || "bg-white border border-gray-200");
 
   const getBadgeClass = (status) =>
@@ -140,16 +158,40 @@ export default function Reservation() {
       Done: "bg-gray-200 text-gray-600",
       "In Progress": "bg-green-100 text-green-700",
       "Up Coming": "bg-orange-100 text-orange-700",
+      Booked: "bg-orange-100 text-orange-700"
     }[status] || "bg-gray-50 text-gray-400");
 
-  const toastBg =
-    toast.type === "success" ? "bg-green-500" : toast.type === "error" ? "bg-red-500" : "bg-gray-500";
+  // Sekarang Room Name adalah tombol!
+  const handleRoomNameClick = (roomName) => {
+    setScheduleRoom(roomName);
+    setSelectedScheduleDate("");
+    setScheduleOpen(true);
+  };
+
+  // Mapping events per tanggal
+  const getBookedTimesForRoom = (roomName) => {
+    const bookedTimes = {};
+    const room = roomsData.find((r) => r.room_name === roomName);
+    if (!room || !room.events) return bookedTimes;
+    room.events.forEach((event) => {
+      if (!event.date) return;
+      if (!bookedTimes[event.date]) bookedTimes[event.date] = [];
+      bookedTimes[event.date].push([event.startTime, event.endTime]);
+    });
+    return bookedTimes;
+  };
 
   return (
     <div className="flex flex-col mb-1">
       {toast.visible && (
         <div
-          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm transition-all duration-300 ${toastBg}`}
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm transition-all duration-300 ${
+            toast.type === "success"
+              ? "bg-green-500"
+              : toast.type === "error"
+              ? "bg-red-500"
+              : "bg-gray-500"
+          }`}
         >
           {toast.message}
         </div>
@@ -202,6 +244,7 @@ export default function Reservation() {
         className="relative bg-white border border-gray-200 shadow-sm rounded-xl overflow-auto"
         style={{ width: "1320px", height: "770px", position: "relative" }}
       >
+        {/* Time row */}
         <div
           className="absolute z-10 bg-white border-r border-dashed border-gray-200"
           style={{ top: 0, left: 0, width: "90px", height: "1440px" }}
@@ -223,6 +266,7 @@ export default function Reservation() {
           ))}
         </div>
 
+        {/* Schedule grid */}
         <div
           className="absolute left-[90px] top-0 border-l border-gray-200"
           style={{
@@ -233,10 +277,19 @@ export default function Reservation() {
           }}
         >
           {roomsData.map((room) => (
-            <div key={room.name} className="relative border-r border-dashed border-gray-200">
-              <h2 className="font-semibold text-center py-3 border-b border-gray-200 text-gray-800">
-                {room.name}
-              </h2>
+            <div
+              key={room.room_name}
+              className="relative border-r border-dashed border-gray-200"
+            >
+              {/* ROOM NAME sekarang jadi tombol */}
+              <button
+                onClick={() => handleRoomNameClick(room.room_name)}
+                className="w-full text-center font-semibold text-orange-700 py-3 border-b border-gray-200 hover:bg-orange-50 rounded-t-xl"
+                style={{ fontSize: "18px", letterSpacing: "0.5px" }}
+              >
+                {room.room_name}
+              </button>
+              {/* Render events/booking slot */}
               {Array.isArray(room.events) &&
                 room.events.map((ev, idx) => {
                   const startTime = typeof ev.startTime === "string" ? ev.startTime : "";
@@ -245,8 +298,7 @@ export default function Reservation() {
                   const [eh, em] = endTime.includes(":") ? endTime.split(":").map(Number) : [0, 0];
                   const st = sh * 60 + sm;
                   const et = eh * 60 + em;
-                  // Key fallback, gabungan semua property yang mungkin unik
-                  const keyUnique = `${room.name}-${ev.company}-${startTime}-${endTime}-${ev.status}-${idx}`;
+                  const keyUnique = `${room.room_name}-${ev.company}-${startTime}-${endTime}-${ev.status}-${idx}`;
                   return (
                     <div
                       key={keyUnique}
@@ -273,6 +325,7 @@ export default function Reservation() {
         </div>
       </div>
 
+      {/* Pop up Form Admin / Detail */}
       {showForm && (
         <>
           {step === 1 && (
@@ -296,6 +349,26 @@ export default function Reservation() {
           )}
         </>
       )}
+
+      {/* Jadwal Booking 24 Jam MODAL, roomName auto terisi */}
+      <ReservationSchedule
+        isOpen={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        roomName={scheduleRoom}
+        bookedTimes={getBookedTimesForRoom(scheduleRoom)}
+        onNext={(data) => {
+          setFormData((prev) => ({
+            ...prev,
+            reservationDate: data.reservationDate,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            room: scheduleRoom,
+          }));
+          setStep(1);
+          setShowForm(true);
+          setScheduleOpen(false);
+        }}
+      />
     </div>
   );
 }

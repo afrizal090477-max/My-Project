@@ -1,38 +1,38 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { fetchRoomById, fetchFirstRoomDetail } from "../API/roomAPI";
+import React, { useEffect, useState } from "react";
+// Import API-nya dikondisikan, jangan dipakai jika endpoint belum siap
+// import { fetchRoomById, fetchFirstRoomDetail } from "../API/roomAPI";
 
-export default function RoomDetailDemoAdmin({ onRoomData }) {
+export default function RoomDetailDemoAdmin({ auto = false, onRoomData }) {
   const [room, setRoom] = useState(null);
-  const [autoRoom, setAutoRoom] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const demoId = "287a33c6-97ce-4958-9748-67b71c20cbfc";
-
-  // Bungkus dengan useCallback agar referensi stabil
-  const fetchManualRoom = useCallback(async () => {
-    try {
-      const res = await fetchRoomById(demoId);
-      setRoom(res);
-      if (onRoomData) onRoomData(res);
-    } catch {
-      setRoom(null);
-    }
-  }, [onRoomData]);
-
-  const fetchAutoRoom = useCallback(async () => {
-    try {
-      const res = await fetchFirstRoomDetail();
-      setAutoRoom(res);
-      if (onRoomData) onRoomData(res);
-    } catch {
-      setAutoRoom(null);
-    }
-  }, [onRoomData]);
+  // Demo hanya UI placeholder untuk masa depan. Nanti aktifkan kode bawah jika endpoint tersedia.
+  /*
+  useEffect(() => {
+    if (!auto) return;
+    setLoading(true);
+    fetchFirstRoomDetail()
+      .then((res) => {
+        setRoom(res);
+        if (onRoomData) onRoomData(res);
+      })
+      .catch(() => setRoom(null))
+      .finally(() => setLoading(false));
+  }, [auto, onRoomData]);
 
   useEffect(() => {
-    fetchManualRoom();
-    fetchAutoRoom();
-  }, [fetchManualRoom, fetchAutoRoom]); // Warning hilang
+    if (auto) return;
+    setLoading(true);
+    fetchRoomById(demoId)
+      .then((res) => {
+        setRoom(res);
+        if (onRoomData) onRoomData(res);
+      })
+      .catch(() => setRoom(null))
+      .finally(() => setLoading(false));
+  }, [auto, onRoomData]);
+  */
 
-  // Tidak merender UI apapun
+  // Tidak render apa-apa untuk sekarang
   return null;
 }

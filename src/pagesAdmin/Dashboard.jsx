@@ -68,7 +68,7 @@ const Dashboard = () => {
               onChange={(date) => { setStartDate(date); setError(""); }}
               placeholderText="Select start date"
               dateFormat="yyyy-MM-dd"
-              className="border border-gray-300 rounded-lg px-4 py-3 w-[180px] bg-white text-gray-900 cursor-pointer"
+              className="border border-gray-300 rounded-lg px-4 py-3 w-[515px] h-[48px] bg-white text-gray-900 cursor-pointer"
             />
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>
@@ -84,7 +84,7 @@ const Dashboard = () => {
               onChange={(date) => { setEndDate(date); setError(""); }}
               placeholderText="Select end date"
               dateFormat="yyyy-MM-dd"
-              className="border border-gray-300 rounded-lg px-4 py-3 w-[180px] bg-white text-gray-900 cursor-pointer"
+              className="border border-gray-300 rounded-lg px-4 py-3 w-[515px] h-[48px] bg-white text-gray-900 cursor-pointer"
             />
             <FaCalendarAlt className="absolute right-3 top-4 text-gray-400 pointer-events-none" />
           </div>
@@ -92,7 +92,7 @@ const Dashboard = () => {
         <button
           onClick={fetchDashboard}
           disabled={loading}
-          className="bg-orange-500 hover:bg-orange-600 text-white w-[130px] h-[48px] px-6 py-3 rounded-lg transition font-semibold"
+          className="bg-orange-500 hover:bg-orange-600 text-white w-[170px] h-[48px] px-6 py-3 rounded-lg transition font-semibold"
         >
           {loading ? "Loading..." : "Search"}
         </button>

@@ -2,45 +2,66 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import ModalConfirmCancel from "../components/ModalConfirmCancel";
 
-ModalReportDetail.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  data: PropTypes.shape({
-    date: PropTypes.string,
-    room: PropTypes.string,
-    type: PropTypes.string,
-    status: PropTypes.string,
-  }),
-  onPayClick: PropTypes.func,
-};
-
-export default function ModalReportDetail({ open, onClose, data, onPayClick }) {
+export default function ModalReportDetail({ open, onClose, data, onPay }) {
   const [modalCancelOpen, setModalCancelOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  if (!open) return null;
+  if (!open || !data) return null;
 
-  // Handler open confirm cancel modal
-  const handleCancelClick = () => {
-    setModalCancelOpen(true);
-  };
-
-  // Handler confirm cancel reservation
-  const handleCancelConfirm = () => {
-    setModalCancelOpen(false);
-    setShowToast(true);
-    // TODO: Tempat logika API cancel reservation
-    setTimeout(() => setShowToast(false), 2200);
-    onClose();
-  };
-
-  // Reusable report label-value row
+  // Helper row tampilan label dan value (selalu aman)
   const ReportRow = ({ label, value }) => (
     <div className="flex justify-between gap-4 py-1">
       <span className="text-gray-600 font-medium">{label}</span>
-      <span className="text-right text-gray-900">{value}</span>
+      <span className="text-right text-gray-900">{value === undefined || value === null || value === "" ? "-" : value}</span>
     </div>
   );
+
+  const handleCancelClick = () => setModalCancelOpen(true);
+
+  const handleCancelConfirm = () => {
+    setModalCancelOpen(false);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2200);
+    if (onClose) onClose();
+  };
+
+  // Data mapping: BE-mu pakai 'rooms' untuk relasi ruangan
+  const room = data.rooms || data.room || {};
+
+  // Format
+  const priceFmt =
+    room.price !== undefined && room.price !== null
+      ? `Rp ${Number(room.price).toLocaleString("id-ID")}`
+      : "-";
+
+  const capacityFmt =
+    room.capacity !== undefined && room.capacity !== null
+      ? String(room.capacity)
+      : "-";
+
+  const startDate =
+    data.date_reservation && data.start_time
+      ? `${data.date_reservation} ${data.start_time}`
+      : "-";
+  const endDate =
+    data.date_reservation && data.end_time
+      ? `${data.date_reservation} ${data.end_time}`
+      : "-";
+  const duration =
+    data.start_time && data.end_time
+      ? `${data.start_time} - ${data.end_time}`
+      : "-";
+
+  // Total price fields kalau BE sudah kirimkan di future
+  // const totalFmt =
+  //   data.total !== undefined && data.total !== null
+  //     ? `Rp ${Number(data.total).toLocaleString("id-ID")}`
+  //     : "-";
+
+  // const subtotalFmt =
+  //   room.subtotal !== undefined && room.subtotal !== null
+  //     ? `Rp ${Number(room.subtotal).toLocaleString("id-ID")}`
+  //     : "-";
 
   return (
     <>
@@ -57,65 +78,61 @@ export default function ModalReportDetail({ open, onClose, data, onPayClick }) {
               ×
             </button>
           </div>
-
           {/* Content */}
           <div className="p-6 space-y-6 text-sm">
-            {data ? (
-              <>
-                <div>
-                  <h3 className="font-semibold text-base mb-4">Room Details</h3>
-                  <ReportRow label="Room Name:" value={data.room} />
-                  <ReportRow label="Room Type:" value={data.type} />
-                  <ReportRow label="Capacity:" value="10 people" />
-                  <ReportRow label="Price/hour:" value="Rp 100.000" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base mb-4 mt-6">Personal Data</h3>
-                  <ReportRow label="Name:" value="Angela Thomas" />
-                  <ReportRow label="No. HP:" value="0851 2345 6789" />
-                  <ReportRow label="Company:" value="PT Maju Jaya" />
-                  <ReportRow label="Reservation Date:" value={data.date} />
-                  <ReportRow label="Duration:" value="2 hours" />
-                  <ReportRow label="Total Participants:" value="8" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base mb-4 mt-6">Snack Details</h3>
-                  <ReportRow label="Snack Category:" value="Lunch" />
-                  <ReportRow label="Package:" value="Lunch 1 - Rp 20.000/box" />
-                </div>
-                <div className="border-t pt-6 mt-4">
-                  <h3 className="font-semibold text-base mb-3">Total</h3>
-                  <ReportRow label={data.room} value="Rp 200.000" />
-                  <ReportRow label="Lunch Package:" value="Rp 160.000" />
-                  <ReportRow label="Total:" value="Rp 360.000" />
-                </div>
-                <div className="flex gap-4 mt-7">
-                  <button
-                    onClick={handleCancelClick}
-                    className="w-1/2 h-[40px] py-2 rounded-lg border border-orange-300 text-orange-600 font-semibold hover:bg-orange-100"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={onPayClick}
-                    className="w-1/2 h-[40px] py-2 rounded-lg bg-[#FF7316] text-white font-semibold hover:bg-[#e76712]"
-                  >
-                    Pay
-                  </button>
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-500">No data available.</p>
-            )}
-
+            <div>
+              <h3 className="font-semibold text-base mb-4">Room Details</h3>
+              <ReportRow label="Room Name:" value={room.room_name} />
+              <ReportRow label="Room Type:" value={room.room_type} />
+              <ReportRow label="Capacity:" value={capacityFmt} />
+              <ReportRow label="Price/hour:" value={priceFmt} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-4 mt-6">Personal Data</h3>
+              <ReportRow label="Name:" value={data.pemesan} />
+              <ReportRow label="No. HP:" value={data.no_hp} />
+              <ReportRow label="Company:" value={data.company_name} />
+              <ReportRow label="Reservation Date:" value={startDate} />
+              <ReportRow label="End Date:" value={endDate} />
+              <ReportRow label="Duration:" value={duration} />
+              <ReportRow label="Total Participants:" value={data.total_participant} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-4 mt-6">Snack Details</h3>
+              <ReportRow label="Snack Category:" value={data.snack} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-base mb-4 mt-6">Other Information</h3>
+              <ReportRow label="Note:" value={data.note} />
+            </div>
+            {/* Total, jika BE sudah return sesuai field */}
+            {/* 
+            <div className="border-t pt-6 mt-4">
+              <h3 className="font-semibold text-base mb-3">Total</h3>
+              <ReportRow label="Subtotal:" value={subtotalFmt} />
+              <ReportRow label="Total:" value={totalFmt} />
+            </div>
+            */}
+            <div className="flex gap-4 mt-7">
+              <button
+                onClick={handleCancelClick}
+                className="w-1/2 h-[40px] py-2 rounded-lg border border-orange-300 text-orange-600 font-semibold hover:bg-orange-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onPay}
+                className="w-1/2 h-[40px] py-2 rounded-lg bg-[#FF7316] text-white font-semibold hover:bg-[#e76712]"
+              >
+                Pay
+              </button>
+            </div>
             {/* Toast Success Cancel */}
             {showToast && (
               <div className="fixed top-10 right-10 bg-green-500 text-white px-8 py-3 rounded shadow-md z-50 animate-fadeIn">
                 Reservation successfully canceled.
               </div>
             )}
-
-            {/* Modal Confirm Cancel */}
             <ModalConfirmCancel
               open={modalCancelOpen}
               onClose={() => setModalCancelOpen(false)}
@@ -127,3 +144,10 @@ export default function ModalReportDetail({ open, onClose, data, onPayClick }) {
     </>
   );
 }
+
+ModalReportDetail.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  data: PropTypes.object,
+  onPay: PropTypes.func,
+};

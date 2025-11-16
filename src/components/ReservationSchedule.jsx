@@ -2,8 +2,9 @@ import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { FiCalendar } from "react-icons/fi";
 
-const SLOT_START = 8;
-const SLOT_END = 21;
+// Full 24 jam, bukan hanya jam kantor
+const SLOT_START = 0;
+const SLOT_END = 23;
 
 function generateTimes() {
   const arr = [];
@@ -32,12 +33,8 @@ export default function ReservationSchedule({
   const times = generateTimes();
   const rowHeight = 29;
 
-  const dummyBooked = {
-    "2024-10-01": [
-      ["08:00", "09:00"],
-      ["13:00", "15:00"],
-    ],
-  };
+  // Contoh data format: {"2025-11-16": [ ["13:00","15:00"], ["19:00","22:00"] ]}
+  const dummyBooked = {};
 
   const getBookedRanges = () =>
     bookedTimes[selectedDate] || dummyBooked[selectedDate] || [];
@@ -45,8 +42,8 @@ export default function ReservationSchedule({
   function isBooked(idx) {
     return getBookedRanges().some(
       ([start, end]) =>
-        idx >= parseHour(start) - SLOT_START &&
-        idx < parseHour(end) - SLOT_START
+        idx >= parseHour(start) &&
+        idx < parseHour(end)
     );
   }
 
@@ -224,8 +221,8 @@ export default function ReservationSchedule({
             ))}
             {/* Blok booking existing */}
             {getBookedRanges().map(([start, end], i) => {
-              const startIdx = parseHour(start) - SLOT_START;
-              const endIdx = parseHour(end) - SLOT_START;
+              const startIdx = parseHour(start);
+              const endIdx = parseHour(end);
               return (
                 <div
                   key={i}
@@ -285,5 +282,6 @@ ReservationSchedule.propTypes = {
   onClose: PropTypes.func,
   onNext: PropTypes.func,
   roomName: PropTypes.string,
-  bookedTimes: PropTypes.object,
+  bookedTimes: PropTypes.object, // Format: { "YYYY-MM-DD": [ [start, end], ... ]}
 };
+export { generateTimes };

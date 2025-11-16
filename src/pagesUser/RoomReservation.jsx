@@ -22,25 +22,26 @@ export default function RoomReservation() {
   const [reservationData, setReservationData] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchRoomData = async () => {
       try {
         const roomsFromAPI = await fetchRooms();
-        const mappedRooms = (roomsFromAPI || []).map((room) => ({
-          ...room,
-          name: typeof room.name === "string" && room.name.length > 0 ? room.name : "-",
-          type:
-            typeof room.type === "object"
-              ? room.type?.name || room.type?.label || "-"
-              : room.type || "-",
+        // Perbaikan: Menyesuaikan struktur data API agar property sesuai yang dibutuhkan UI
+        const mappedRooms = (roomsFromAPI?.data || roomsFromAPI || []).map((room) => ({
+          id: room.id,
+          name: room.room_name || room.name || "-",
+          type: room.room_type || room.type || "-",
           capacity: room.capacity ?? 0,
           price: room.price ?? 0,
           status: room.status || "Unknown",
+          image: room.image,
         }));
         setRooms(mappedRooms);
-      } catch {
+      } catch (err) {
         setRooms([]);
+        setError("Room data cannot be loaded");
       }
     };
     fetchRoomData();
@@ -52,7 +53,7 @@ export default function RoomReservation() {
     const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
     return rooms.filter((room) => {
       const matchSearch = (room.name || "").toLowerCase().includes(search);
-      const matchType = type ? room.type === type : true;
+      const matchType = type ? (room.type && room.type.toLowerCase() === type.toLowerCase()) : true;
       const matchCapacity = minCapacity !== null ? Number(room.capacity) >= minCapacity : true;
       return matchSearch && matchType && matchCapacity;
     });
@@ -146,9 +147,9 @@ export default function RoomReservation() {
             className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Room Type</option>
-            <option value="Small">Small</option>
-            <option value="Medium">Medium</option>
-            <option value="Large">Large</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
           </select>
           <select
             value={filters.capacity}
@@ -172,9 +173,11 @@ export default function RoomReservation() {
           <span className="whitespace-nowrap">Add New Reservation</span>
         </button>
       </div>
-
       {/* Room Card GRID */}
       <div className="bg-white rounded-xl w-full max-w-[1320px] mx-auto shadow-sm border border-gray-200 px-2 sm:px-6 py-4 sm:py-5">
+        {error && (
+          <div className="text-red-500 text-center mb-2">{error}</div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {roomsToDisplay.map((room) => (
             <RoomCardUser
@@ -191,7 +194,9 @@ export default function RoomReservation() {
               onClick={handlePrevPage}
               disabled={currentPage === 1}
               className={`p-2 rounded-md border ${
-                currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronLeft />
@@ -203,7 +208,9 @@ export default function RoomReservation() {
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md border ${
-                currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
               }`}
             >
               <FiChevronRight />
@@ -211,7 +218,6 @@ export default function RoomReservation() {
           </div>
         )}
       </div>
-
       {step === "SCHEDULE" && (
         <ReservationSchedule
           isOpen
@@ -231,7 +237,11 @@ export default function RoomReservation() {
           onSubmit={async (formData) => {
             const masterRoom = rooms.find(
               (room) =>
-                room.name === (reservationData.room || formData.roomName || reservationData.roomName || "")
+                room.name ===
+                (reservationData.room ||
+                  formData.roomName ||
+                  reservationData.roomName ||
+                  "")
             );
             const finalData = {
               ...reservationData,
@@ -269,10 +279,21 @@ export default function RoomReservation() {
           <div className="bg-white border border-green-400 text-green-600 px-4 sm:px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">
             <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
               <circle cx="11" cy="11" r="11" fill="#2ED477" />
-              <path d="M6 11.8462L9.23077 15L16 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M6 11.8462L9.23077 15L16 8"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             New Reservation Successfully Added
-            <button onClick={() => setShowSuccess(false)} className="ml-2 text-gray-400 hover:text-green-700">&times;</button>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="ml-2 text-gray-400 hover:text-green-700"
+            >
+              &times;
+            </button>
           </div>
         </div>
       )}

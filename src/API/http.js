@@ -4,7 +4,7 @@ import { getToken, setToken, clearToken } from "../utils/storage";
 
 // Konfigurasi baseURL ke Swagger endpoint backend produksi/dev
 const apiHttp = axios.create({
-  baseURL: "https://emiting-be.vercel.app", // Pastikan ini sesuai alamat backend API Anda
+  baseURL: "https://emiting-be.vercel.app", // Pastikan ini sesuai alamat backend API 
 });
 
 // Interceptor: tambahkan token Authorization jika ada untuk semua request

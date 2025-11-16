@@ -3,7 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import ModalReportDetail from "../components/ModalReportDetail";
-import { fetchReportData, downloadReport } from "../API/reportAPI";
+import { fetchReservations, downloadReport } from "../API/reportAPI";
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
@@ -50,24 +50,39 @@ export default function Report() {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 1,
+  });
 
-  // Fetch report data on filter or page change
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
       try {
         const queryParams = {
-          page: currentPage - 1,
+          page: currentPage,
           limit: rowsPerPage,
-          roomType: filters.roomType,
+          room_type: filters.roomType,
           status: filters.status,
-          startDate: filters.startDate ? filters.startDate.toISOString().slice(0, 10) : undefined,
-          endDate: filters.endDate ? filters.endDate.toISOString().slice(0, 10) : undefined,
+          startDate: filters.startDate
+            ? filters.startDate.toISOString().slice(0, 10)
+            : undefined,
+          endDate: filters.endDate
+            ? filters.endDate.toISOString().slice(0, 10)
+            : undefined,
         };
-        const data = await fetchReportData(queryParams);
-        setReportData(data.data || []);
-      } catch (err) {
+        const res = await fetchReservations(queryParams);
+        setReportData(res.data || []);
+        setPagination({
+          currentPage: res.pagination?.currentPage || 1,
+          pageSize: res.pagination?.pageSize || rowsPerPage,
+          totalItems: res.pagination?.totalItems || 0,
+          totalPages: res.pagination?.totalPages || 1,
+        });
+      } catch {
         setError("Failed to fetch reports");
       } finally {
         setLoading(false);
@@ -76,14 +91,8 @@ export default function Report() {
     loadData();
   }, [filters, currentPage, rowsPerPage]);
 
-  const totalPages = Math.ceil(reportData.length / rowsPerPage);
-  const pagedData = reportData.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
   const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > totalPages) return;
+    if (newPage < 1 || newPage > pagination.totalPages) return;
     setCurrentPage(newPage);
   };
 
@@ -101,10 +110,14 @@ export default function Report() {
   const handleDownload = async () => {
     try {
       const blob = await downloadReport({
-        roomType: filters.roomType,
+        room_type: filters.roomType,
         status: filters.status,
-        startDate: filters.startDate ? filters.startDate.toISOString().slice(0, 10) : undefined,
-        endDate: filters.endDate ? filters.endDate.toISOString().slice(0, 10) : undefined,
+        startDate: filters.startDate
+          ? filters.startDate.toISOString().slice(0, 10)
+          : undefined,
+        endDate: filters.endDate
+          ? filters.endDate.toISOString().slice(0, 10)
+          : undefined,
       });
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -115,10 +128,12 @@ export default function Report() {
       a.remove();
       window.URL.revokeObjectURL(downloadUrl);
     } catch {
-      // fallback manual export
-      const header = "Date,Room,Type,Status\n";
+      const header = "Start Date,End Date,Room,User,Type,Status\n";
       const content = reportData
-        .map((row) => `${row.date},${row.room},${row.type},${row.status}`)
+        .map(
+          (row) =>
+            `${row.date_reservation || "-"} ${row.start_time || ""},${row.date_reservation || "-"} ${row.end_time || ""},${row.rooms?.room_name || "-"},${row.pemesan || "-"},${row.rooms?.room_type || "-"},${row.status}`
+        )
         .join("\n");
       const blob = new Blob([header + content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
@@ -145,9 +160,6 @@ export default function Report() {
     }
   };
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
-
   const openDetail = (row) => {
     setDetailData(row);
     setDetailOpen(true);
@@ -170,7 +182,6 @@ export default function Report() {
           <span>Your Payment Successfully made</span>
         </div>
       )}
-
       {/* Filter bar */}
       <div className="bg-white rounded-xl p-5 mb-6 flex flex-wrap gap-5 items-center shadow border border-gray-200">
         <div className="flex flex-col gap-2 w-[220px]">
@@ -178,9 +189,7 @@ export default function Report() {
           <DateInput
             id="startDate"
             selectedDate={filters.startDate}
-            onChange={(date) =>
-              setFilters((prev) => ({ ...prev, startDate: date }))
-            }
+            onChange={(date) => setFilters((prev) => ({ ...prev, startDate: date }))}
             placeholder="Select start date"
           />
         </div>
@@ -228,7 +237,6 @@ export default function Report() {
           <FiDownload size={18} /> Download Report
         </button>
       </div>
-
       {/* Table */}
       <div className="bg-white rounded-xl shadow border border-gray-200">
         {loading ? (
@@ -239,26 +247,38 @@ export default function Report() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr className="bg-gray-50">
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">Date</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">Start Date</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">End Date</th>
                 <th className="p-4 text-xs font-bold text-gray-600 text-left">Room</th>
+                <th className="p-4 text-xs font-bold text-gray-600 text-left">User</th>
                 <th className="p-4 text-xs font-bold text-gray-600 text-left">Type</th>
                 <th className="p-4 text-xs font-bold text-gray-600 text-left">Status</th>
                 <th className="p-4 text-xs font-bold text-gray-600 text-left"></th>
               </tr>
             </thead>
             <tbody>
-              {pagedData.length === 0 && (
+              {reportData.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-gray-400">
+                  <td colSpan={7} className="p-6 text-center text-gray-400">
                     No data available.
                   </td>
                 </tr>
               )}
-              {pagedData.map((row, idx) => (
-                <tr key={idx} className="border-t">
-                  <td className="p-4">{row.date}</td>
-                  <td className="p-4">{row.room}</td>
-                  <td className="p-4">{row.type}</td>
+              {reportData.map((row, idx) => (
+                <tr key={row.id || idx} className="border-t">
+                  <td className="p-4">
+                    {row.date_reservation
+                      ? `${row.date_reservation}${row.start_time ? " " + row.start_time : ""}`
+                      : "-"}
+                  </td>
+                  <td className="p-4">
+                    {row.date_reservation
+                      ? `${row.date_reservation}${row.end_time ? " " + row.end_time : ""}`
+                      : "-"}
+                  </td>
+                  <td className="p-4">{row.rooms?.room_name || "-"}</td>
+                  <td className="p-4">{row.pemesan || "-"}</td>
+                  <td className="p-4">{row.rooms?.room_type || "-"}</td>
                   <td className="p-4">
                     <span className={getStatusStyle(row.status)}>{row.status}</span>
                   </td>
@@ -275,7 +295,6 @@ export default function Report() {
             </tbody>
           </table>
         )}
-
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3">
           <div>
@@ -296,27 +315,18 @@ export default function Report() {
           </div>
           <div className="flex gap-1 items-center">
             <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1}
               className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
               Prev
             </button>
-            {pageNumbers.map((num) => (
-              <button
-                key={num}
-                className={`px-3 py-1 rounded border ${
-                  currentPage === num ? "bg-orange-600 text-white" : ""
-                }`}
-                onClick={() => handlePageChange(num)}
-                disabled={currentPage === num}
-              >
-                {num}
-              </button>
-            ))}
+            <span>
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </span>
             <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages}
               className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
               Next
@@ -324,9 +334,8 @@ export default function Report() {
           </div>
         </div>
       </div>
-
       <ModalReportDetail
-        isOpen={detailOpen}
+        open={detailOpen}
         onClose={closeDetail}
         data={detailData}
         onPay={handlePay}

@@ -1,67 +1,37 @@
 import React, { useEffect, useState } from "react";
-import {
-  FiSearch,
-  FiPlus,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+import { FiSearch, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import RoomCard from "../components/RoomCard";
 import ModalEditRoom from "../components/ModalEditRoom";
 import ModalConfirmDeleteRoom from "../components/ModalConfirmDeleteRoom";
 import RoomsImage from "../assets/Rooms.png";
-import {
-  fetchRooms,
-  fetchRoomTypes,
-  fetchCapacities,
-  addRoom,
-  updateRoom,
-  deleteRoom,
-} from "../API/roomAPI";
+import { fetchRooms, addRoom, updateRoom, deleteRoom } from "../API/roomAPI";
 import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
 
 const ITEMS_PER_PAGE = 12;
 
+const STATIC_ROOM_TYPES = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+];
+const STATIC_CAPACITIES = [
+  { value: "4", label: "4 People" },
+  { value: "8", label: "8 People" },
+  { value: "12", label: "12 People" },
+  { value: "20", label: "20 People" },
+  { value: "30", label: "30 People" },
+];
+
 export default function Room() {
   const [rooms, setRooms] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    type: "",
-    capacity: "",
-  });
+  const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, room: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [roomTypes, setRoomTypes] = useState([]);
-  const [capacities, setCapacities] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const loadFilters = async () => {
-      let types = [];
-      let caps = [];
-      try {
-        try {
-          types = await fetchRoomTypes();
-        } catch {
-          types = [];
-        }
-        setRoomTypes(types);
-        try {
-          caps = await fetchCapacities();
-        } catch {
-          caps = [];
-        }
-        setCapacities(caps);
-      } catch {
-        setRoomTypes([]);
-        setCapacities([]);
-      }
-    };
-    loadFilters();
-  }, []);
 
   useEffect(() => {
     const loadRooms = async () => {
@@ -78,6 +48,7 @@ export default function Room() {
         apiRooms = apiRooms.map((room) => ({
           ...room,
           id: room.id,
+          // -------------- PERBAIKAN DISINI: mapping nama dari "room_name"
           name: room.room_name || room.name || "-",
           type: room.room_type || room.type || "",
           image: room.image || RoomsImage,
@@ -168,9 +139,7 @@ export default function Room() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Internal Only, no UI */}
       <RoomDetailDemoAdmin />
-      {/* FILTER HEADER */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 max-w-[1320px] mx-auto p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-4 items-center flex-1">
           <div className="relative flex-1 min-w-[280px] max-w-[362px]">
@@ -183,29 +152,27 @@ export default function Room() {
             />
             <FiSearch className="absolute left-3 top-3 text-gray-400" size={18} />
           </div>
-          {/* Dropdown type dinamis */}
           <select
             value={filters.type}
             onChange={(e) => handleFilterChange("type", e.target.value)}
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Room Type</option>
-            {roomTypes.map((type) => (
-              <option key={type.value || type} value={type.value || type}>
-                {type.label || type}
+            {STATIC_ROOM_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
               </option>
             ))}
           </select>
-          {/* Dropdown capacity dinamis */}
           <select
             value={filters.capacity}
             onChange={(e) => handleFilterChange("capacity", e.target.value)}
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Capacity</option>
-            {capacities.map((cap) => (
-              <option key={cap.value || cap} value={cap.value || cap}>
-                {cap.label || cap}
+            {STATIC_CAPACITIES.map((cap) => (
+              <option key={cap.value} value={cap.value}>
+                {cap.label}
               </option>
             ))}
           </select>
@@ -217,7 +184,6 @@ export default function Room() {
           <FiPlus size={18} /> Add New Room
         </button>
       </div>
-      {/* GRID */}
       <div className="bg-white rounded-xl max-w-[1320px] mx-auto shadow-sm border border-gray-200 p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {roomsToDisplay.map((room) => (
@@ -259,14 +225,13 @@ export default function Room() {
           </div>
         )}
       </div>
-      {/* MODALS */}
       <ModalEditRoom
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleFormSubmit}
         roomData={selectedRoom}
-        roomTypes={roomTypes}
-        capacities={capacities}
+        roomTypes={STATIC_ROOM_TYPES}
+        capacities={STATIC_CAPACITIES}
       />
       <ModalConfirmDeleteRoom
         isOpen={deleteModal.open}
@@ -274,7 +239,6 @@ export default function Room() {
         onCancel={() => setDeleteModal({ open: false, room: null })}
         onConfirm={handleDeleteConfirm}
       />
-      {/* TOAST */}
       {showSuccessToast && (
         <div className="fixed right-4 top-20 z-50">
           <div className="bg-white border border-green-400 text-green-600 px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">

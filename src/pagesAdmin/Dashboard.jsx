@@ -33,13 +33,13 @@ const Dashboard = () => {
         startDate.toISOString().substring(0, 10),
         endDate.toISOString().substring(0, 10)
       );
-      setRooms(apiData.rooms || []); // dari swagger: rooms/list data room
       setStatSummary({
-        totalOmzet: apiData.total_omset || 0,
-        totalReservation: apiData.total_reservation || 0,
-        totalVisitor: apiData.total_visitor || 0,
-        totalRooms: apiData.total_room || 0,
+        totalOmzet: apiData.totalMoney || 0,
+        totalReservation: apiData.totalReservations || 0,
+        totalVisitor: apiData.totalVisitors || 0,
+        totalRooms: apiData.totalRooms || 0,
       });
+      setRooms(apiData.rooms || []);
     } catch (err) {
       setError(err?.response?.data?.message || "Gagal fetch data dashboard / token expired");
       setRooms([]);
@@ -137,7 +137,7 @@ const Dashboard = () => {
               <div className="flex flex-col w-[145px] gap-[5px] mt-[20px] ml-[10px]">
                 <p className="text-[16px] font-semibold text-gray-900">{room.name}</p>
                 <p className="text-[12px] text-gray-400">Usage (%)</p>
-                <p className="text-[16px] font-bold text-gray-900">{room.percentage}%</p>
+                <p className="text-[16px] font-bold text-gray-900">{room.percentage ?? "-"}</p>
                 <p className="text-[12px] text-gray-400 mt-[4px]">Price per Hour</p>
                 <p className="text-[16px] font-semibold text-gray-900">
                   {`Rp ${room.price_hour?.toLocaleString?.() ?? room.price_hour ?? 0}`}

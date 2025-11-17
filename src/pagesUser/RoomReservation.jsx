@@ -7,11 +7,8 @@ import ReservationDetails from "../components/ReservationDetails";
 import RoomDetailDemoUser from "../components/RoomDetailDemoUser";
 import { fetchRooms } from "../API/roomAPI";
 import { createReservation } from "../API/reservationAPI";
+import { fetchSnacks } from "../API/snackAPI"; // Service snack harus tersedia dan return array snack {id, name, price}
 
-function getSnackPrice(snackCategory) {
-  const prices = { coffee1: 20000, coffee2: 50000, lunch1: 20000, lunch2: 50000 };
-  return prices[snackCategory] || 0;
-}
 const ITEMS_PER_PAGE = 12;
 
 export default function RoomReservation() {
@@ -24,11 +21,15 @@ export default function RoomReservation() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [error, setError] = useState("");
 
+  // snack dari endpoint
+  const [snacks, setSnacks] = useState([]);
+  const [loadingSnacks, setLoadingSnacks] = useState(false);
+  const [errorSnacks, setErrorSnacks] = useState(null);
+
   useEffect(() => {
     const fetchRoomData = async () => {
       try {
         const roomsFromAPI = await fetchRooms();
-        // Perbaikan: Menyesuaikan struktur data API agar property sesuai yang dibutuhkan UI
         const mappedRooms = (roomsFromAPI?.data || roomsFromAPI || []).map((room) => ({
           id: room.id,
           name: room.room_name || room.name || "-",
@@ -47,6 +48,15 @@ export default function RoomReservation() {
     fetchRoomData();
   }, []);
 
+  // fetch snack dari endpoint, tanpa dummy
+  useEffect(() => {
+    setLoadingSnacks(true);
+    fetchSnacks()
+      .then((data) => setSnacks(Array.isArray(data) ? data : (data?.data || [])))
+      .catch(() => setErrorSnacks("Failed to load snacks"))
+      .finally(() => setLoadingSnacks(false));
+  }, []);
+
   const filteredRooms = useMemo(() => {
     const search = filters.search.toLowerCase();
     const type = filters.type;
@@ -60,11 +70,9 @@ export default function RoomReservation() {
   }, [rooms, filters]);
 
   const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
-
   const safeRoomsToDisplay = filteredRooms.filter(
     (room) => typeof room.name === "string" && room.name.length > 0
   );
-
   const roomsToDisplay = safeRoomsToDisplay.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -94,6 +102,7 @@ export default function RoomReservation() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
+  //--- Kalkulasi detail, harga snack via snack endpoint API ---//
   let reservationDetailsData = { ...reservationData };
   if (step === "DETAILS") {
     const roomDetail = rooms.find(
@@ -107,7 +116,15 @@ export default function RoomReservation() {
       duration = Math.max(1, eh + em / 60 - sh - sm / 60);
     }
     const participants = parseInt(reservationData.participants || "1", 10);
-    const snackUnitPrice = getSnackPrice(reservationData.snackCategory);
+    
+    // Harga snack langsung dari snacks yang di-fetch endpoint
+    const snackInfo = snacks.find(opt => 
+      opt.id === reservationData.snackCategory ||
+      opt.value === reservationData.snackCategory ||
+      opt.name === reservationData.snackCategory
+    );
+    const snackUnitPrice = snackInfo ? Number(snackInfo.price) : 0;
+    
     const detailRoomPrice = reservationData.startTime && reservationData.endTime ? duration * roomPrice : 0;
     const detailSnackPrice = reservationData.addSnack ? snackUnitPrice * participants : 0;
     const total = detailRoomPrice + detailSnackPrice;
@@ -125,11 +142,9 @@ export default function RoomReservation() {
 
   return (
     <div className="p-2 sm:p-6 bg-gray-50 min-h-screen relative">
-      {/* Render RoomDetailDemoUser hanya untuk internal, tidak tampil di UI */}
       <div style={{ display: "none" }}>
         <RoomDetailDemoUser />
       </div>
-      {/* FILTER & ADD BUTTON */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-[1320px] mx-auto px-2 sm:px-6 py-4 flex flex-col md:flex-row flex-wrap md:items-center md:justify-between gap-3">
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 md:items-center flex-1">
           <div className="relative flex-1 min-w-[180px] sm:min-w-[240px] max-w-[362px]">
@@ -173,11 +188,8 @@ export default function RoomReservation() {
           <span className="whitespace-nowrap">Add New Reservation</span>
         </button>
       </div>
-      {/* Room Card GRID */}
       <div className="bg-white rounded-xl w-full max-w-[1320px] mx-auto shadow-sm border border-gray-200 px-2 sm:px-6 py-4 sm:py-5">
-        {error && (
-          <div className="text-red-500 text-center mb-2">{error}</div>
-        )}
+        {error && <div className="text-red-500 text-center mb-2">{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {roomsToDisplay.map((room) => (
             <RoomCardUser
@@ -224,7 +236,12 @@ export default function RoomReservation() {
           roomName={reservationData.roomName}
           onClose={() => setStep("")}
           onNext={(scheduleData) => {
-            setReservationData((prev) => ({ ...prev, ...scheduleData }));
+            setReservationData((prev) => ({
+              ...prev,
+              ...scheduleData,
+              room: reservationData.room,
+              roomName: reservationData.roomName,
+            }));
             setStep("FORM");
           }}
         />
@@ -233,16 +250,20 @@ export default function RoomReservation() {
         <ReservationForm
           isOpen
           data={reservationData}
+          snacks={snacks}
+          loadingSnacks={loadingSnacks}
+          errorSnacks={errorSnacks}
           onClose={() => setStep("")}
           onSubmit={async (formData) => {
-            const masterRoom = rooms.find(
-              (room) =>
-                room.name ===
-                (reservationData.room ||
-                  formData.roomName ||
-                  reservationData.roomName ||
-                  "")
-            );
+            const masterRoom =
+              rooms.find(
+                (room) =>
+                  room.name ===
+                  (reservationData.room ||
+                    formData.roomName ||
+                    reservationData.roomName ||
+                    "")
+              ) || {};
             const finalData = {
               ...reservationData,
               ...formData,

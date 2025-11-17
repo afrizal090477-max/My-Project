@@ -58,7 +58,7 @@ export default function Report() {
   });
 
   useEffect(() => {
-    const loadData = async () => {
+    async function loadData() {
       setLoading(true);
       setError(null);
       try {
@@ -75,7 +75,21 @@ export default function Report() {
             : undefined,
         };
         const res = await fetchReservations(queryParams);
-        setReportData(res.data || []);
+
+        // ===== Filter Data Unik Berdasarkan Beberapa Field Penting ====
+        setReportData(
+          (res.data || []).filter(
+            (v, i, arr) =>
+              arr.findIndex(x =>
+                x.id === v.id &&
+                x.date_reservation === v.date_reservation &&
+                x.start_time === v.start_time &&
+                x.end_time === v.end_time &&
+                x.pemesan === v.pemesan
+              ) === i
+          )
+        );
+
         setPagination({
           currentPage: res.pagination?.currentPage || 1,
           pageSize: res.pagination?.pageSize || rowsPerPage,
@@ -87,7 +101,7 @@ export default function Report() {
       } finally {
         setLoading(false);
       }
-    };
+    }
     loadData();
   }, [filters, currentPage, rowsPerPage]);
 

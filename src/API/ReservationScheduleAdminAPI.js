@@ -1,67 +1,86 @@
-// src/API/ReservationScheduleAdmin.js
-
 import apiHttp from "./http";
 
 /**
- * Ambil semua jadwal reservation (full filter admin)
- * @param {Object} params - query filter (startDate, endDate, roomId, userId, dsb)
- * @returns {Promise<Array>} List jadwal reservasi
+ * GET semua daftar reservation (optional, filter support)
  */
-export const fetchAdminReservations = async (params = {}) => {
+export const fetchReservations = async (params = {}) => {
   const response = await apiHttp.get("/api/v1/reservations", { params });
-  return response.data.data;
+  return Array.isArray(response.data.data) ? response.data.data : [];
 };
 
 /**
- * Ambil detail reservation by ID (admin)
- * @param {string|number} id
- * @returns {Promise<Object>}
+ * GET reservation by ID
  */
-export const fetchAdminReservationById = async (id) => {
+export const fetchReservationById = async (id) => {
   const response = await apiHttp.get(`/api/v1/reservations/${id}`);
   return response.data.data;
 };
 
 /**
- * Tambah reservation (admin)
- * @param {Object} reservationData - data reservasi yang ingin dibuat
- * @returns {Promise<Object>}
+ * POST create reservation - FIXED: clean, sesuai spec backend!
  */
-export const createAdminReservation = async (reservationData) => {
-  const response = await apiHttp.post("/api/v1/reservations", reservationData);
+export const createReservation = async (reservationData) => {
+  const payload = {
+    // WAJIB: room_id dari UUID room yang dipilih user, didapat dari array rooms di FE
+    room_id: reservationData.room_id || reservationData.roomId || "",
+    pemesan: reservationData.pemesan || reservationData.name || "",
+    no_hp: reservationData.no_hp || reservationData.phone || "",
+    company_name: reservationData.company_name || reservationData.company || "",
+    date_reservation: reservationData.date_reservation || reservationData.dateReservation || reservationData.dateStart || "",
+    start_time: reservationData.start_time || reservationData.startTime || "",
+    end_time: reservationData.end_time || reservationData.endTime || "",
+    total_participant: Number(reservationData.total_participant || reservationData.participants || 1),
+    snack: reservationData.snack || reservationData.snackCategory || "",
+    note: reservationData.note || "",
+    status: "pending"
+  };
+
+  // Validasi field WAJIB
+  for (const field of ["room_id","pemesan","no_hp","company_name","date_reservation","start_time","end_time"]) {
+    if (!payload[field]) throw new Error(`[RESERVATION] Field ${field} wajib diisi!`);
+  }
+
+  // Debug (hapus sebelum deploy)
+  // console.log("PAYLOAD to BE:", payload);
+
+  const response = await apiHttp.post("/api/v1/reservations", payload);
   return response.data.data;
 };
 
 /**
- * Edit reservation (admin)
- * @param {string|number} id
- * @param {Object} data - data yang diupdate
- * @returns {Promise<Object>}
+ * PUT update reservation
  */
-export const updateAdminReservation = async (id, data) => {
+export const updateReservation = async (id, data) => {
   const response = await apiHttp.put(`/api/v1/reservations/${id}`, data);
   return response.data.data;
 };
 
 /**
- * Delete reservation (admin)
- * @param {string|number} reservationId
- * @returns {Promise<Object>}
+ * DELETE reservation
  */
-export const deleteAdminReservation = async (reservationId) => {
+export const deleteReservation = async (reservationId) => {
   const response = await apiHttp.delete(`/api/v1/reservations/${reservationId}`);
   return response.data.data;
 };
 
 /**
- * Filtering/search range jadwal untuk admin (opsional, jika ingin lebih spesifik)
- * @param {string} startDate
- * @param {string} endDate
- * @param {Object} tambahanParam - param lain, misal roomId, status dll (opsional)
- * @returns {Promise<Array>}
+ * GET reservation dengan filter tanggal (search)
  */
-export const filterAdminReservations = async (startDate, endDate, tambahanParam = {}) => {
-  const params = { startDate, endDate, ...tambahanParam };
-  const response = await apiHttp.get("/api/v1/reservations", { params });
-  return response.data.data;
+export const searchReservationsByDate = async (startDate, endDate, params = {}) => {
+  const response = await apiHttp.get("/api/v1/reservations", {
+    params: {
+      startDate: typeof startDate === "string" ? startDate : startDate?.toISOString?.().slice(0, 10),
+      endDate: typeof endDate === "string" ? endDate : endDate?.toISOString?.().slice(0, 10),
+      ...params,
+    }
+  });
+  return Array.isArray(response.data.data) ? response.data.data : [];
 };
+
+// Alias export supaya mudah dipakai
+export const fetchAdminReservations = fetchReservations;
+export const fetchAdminReservationById = fetchReservationById;
+export const createAdminReservation = createReservation;
+export const updateAdminReservation = updateReservation;
+export const deleteAdminReservation = deleteReservation;
+export const filterAdminReservations = searchReservationsByDate;

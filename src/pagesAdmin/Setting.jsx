@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import defaultPhoto from "../assets/home.png";
 import { fetchProfile, updateProfile } from "../API/profileAPI";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useUserProfile } from "../context/UserProfileContext";
 
 export default function UserSetting() {
   const [isEditing, setIsEditing] = useState(false);
@@ -19,6 +18,9 @@ export default function UserSetting() {
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
 
+  // Ambil updater context, AGAR HEADER OTOMATIS UPDATE
+  const { updateProfilePhoto } = useUserProfile();
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -31,41 +33,45 @@ export default function UserSetting() {
           language: data.language || "",
           password: "********",
         });
-        setPhoto(data.photo || data.photoUrl || "");
+        setPhoto(data.photo_url || data.photo || "");
       } catch {
-        toast.error("Gagal memuat profil user");
+        alert("Gagal memuat profil user!");
       }
       setLoading(false);
     };
     loadProfile();
   }, []);
 
-  useEffect(() => {
-    if (photo) localStorage.setItem("userPhoto", photo);
-  }, [photo]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Patch penting: update context SETELAH update berhasil
   const handleToggleEdit = async () => {
     if (isEditing) {
       try {
-        // Siapkan FormData: jika user upload foto baru, photoFile != null
-        await updateProfile({
-          ...formData,
-          password: formData.password === "********" ? "" : formData.password,
-          photo: photoFile || undefined,
-        });
-        if (photoFile) {
-          // Jika user update foto, set ke URL baru (atau reload fetch jika backend return URL baru)
-          setPhoto(URL.createObjectURL(photoFile));
-          setPhotoFile(null); // clear temp file
+        const fd = new FormData();
+        fd.append("email", formData.email);
+        fd.append("username", formData.username);
+        fd.append("role", formData.role);
+        fd.append("status", formData.status);
+        fd.append("language", formData.language);
+        if (formData.password && formData.password !== "********") {
+          fd.append("password", formData.password);
         }
-        toast.success("✅ Changes saved successfully!");
+        if (photoFile) {
+          fd.append("photo", photoFile);
+        }
+        const updated = await updateProfile(fd);
+        if (updated?.photo_url) {
+          setPhoto(updated.photo_url);               // preview lokal di Setting
+          updateProfilePhoto(updated.photo_url);     // ini agar Header ikut berubah
+        }
+        setPhotoFile(null);
+        alert("Perubahan profil berhasil disimpan!");
       } catch {
-        toast.error("❌ Failed to update profile.");
+        alert("Gagal menyimpan perubahan profil.");
       }
     }
     setIsEditing((prev) => !prev);
@@ -77,7 +83,7 @@ export default function UserSetting() {
     const file = e.target.files[0];
     if (!file) return;
     setPhotoFile(file);
-    setPhoto(URL.createObjectURL(file)); // preview
+    setPhoto(URL.createObjectURL(file)); // preview segera
   };
 
   if (loading) {
@@ -90,23 +96,14 @@ export default function UserSetting() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <ToastContainer position="top-right" autoClose={2500} />
       <div className="w-full max-w-[1320px] mx-auto bg-white shadow-md p-8 rounded-xl">
         <h2 className="text-xl font-semibold text-gray-700 mb-2">My Account</h2>
         <div className="flex items-center gap-4 mb-8">
-          {photo ? (
-            <img
-              src={photo}
-              alt="User"
-              className="w-16 h-16 rounded-full object-cover"
-            />
-          ) : (
-            <img
-              src={defaultPhoto}
-              alt="User"
-              className="w-16 h-16 rounded-full object-cover"
-            />
-          )}
+          <img
+            src={photo || defaultPhoto}
+            alt="User"
+            className="w-16 h-16 rounded-full object-cover"
+          />
           {isEditing && (
             <>
               <button
@@ -129,10 +126,7 @@ export default function UserSetting() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
                 Email
               </label>
               <input
@@ -150,10 +144,7 @@ export default function UserSetting() {
               />
             </div>
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
+              <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-2">
                 Username
               </label>
               <input
@@ -171,10 +162,7 @@ export default function UserSetting() {
               />
             </div>
             <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
+              <label htmlFor="role" className="block text-sm font-medium text-gray-600 mb-2">
                 Role
               </label>
               {isEditing ? (
@@ -198,10 +186,7 @@ export default function UserSetting() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-              <label
-                htmlFor="status"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
+              <label htmlFor="status" className="block text-sm font-medium text-gray-600 mb-2">
                 Status
               </label>
               <input
@@ -219,10 +204,7 @@ export default function UserSetting() {
               />
             </div>
             <div>
-              <label
-                htmlFor="language"
-                className="block text-sm font-medium text-gray-600 mb-2"
-              >
+              <label htmlFor="language" className="block text-sm font-medium text-gray-600 mb-2">
                 Language
               </label>
               {isEditing ? (
@@ -245,10 +227,7 @@ export default function UserSetting() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-600 mb-2"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
               Password
             </label>
             <input

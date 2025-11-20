@@ -15,7 +15,8 @@ export default function Login() {
     if (token && role) {
       console.log("Redirect berdasarkan role:", role);
       if (role === "admin") navigate("/dashboard", { replace: true });
-      else if (role === "user") navigate("/user/room-reservation", { replace: true });
+      else if (role === "user")
+        navigate("/user/room-reservation", { replace: true });
       else navigate("/user/room-reservation", { replace: true }); // fallback
     }
   }, [token, role, navigate]);
@@ -37,13 +38,15 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden font-roboto">
-      <img
-        src="/meeting.png"
-        alt="Meeting"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/30" />
+    <div
+      className="min-h-screen w-full flex items-center left-[120px]"
+      style={{
+        backgroundImage: "url('/meeting.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        position: "relative",
+      }}
+    >
       <div className="relative z-20 min-h-screen w-full px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-[600px] h-[644px] left-[120px] top-[190px] bg-white rounded-[20px] shadow-xl border-4 border-[#E7E7E7] p-6 sm:p-8 md:p-12 my-8">
           <div className="flex flex-col items-center justify-center w-full mb-6 sm:mb-8">

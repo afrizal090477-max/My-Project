@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { FiX, FiUpload } from "react-icons/fi";
-import {
-  addRoom,
-  updateRoom,
-} from "../API/roomAPI"; // Hapus import fetchRoomTypes dan fetchCapacities karena static dropdown
-
+import { addRoom, updateRoom } from "../API/roomAPI";
 
 const INITIAL_STATE = {
   id: null,
@@ -13,9 +9,9 @@ const INITIAL_STATE = {
   type: "",
   price: 10000,
   capacity: 1,
-  image: "",
+  file: null,    // file binary (bukan image url lagi!)
+  imagePreview: null // preview lokal blob
 };
-
 
 export default function ModalEditRoom({
   isOpen,
@@ -25,7 +21,8 @@ export default function ModalEditRoom({
 }) {
   const [formData, setFormData] = useState(INITIAL_STATE);
   const [rawPrice, setRawPrice] = useState("");
-  // Gunakan static dropdown langsung di komponen ini
+  const [loading, setLoading] = useState(false);
+
   const roomTypes = [
     { value: "small", label: "Small" },
     { value: "medium", label: "Medium" },
@@ -38,13 +35,16 @@ export default function ModalEditRoom({
     { value: 20, label: "20 People" },
     { value: 30, label: "30 People" },
   ];
-  const [loading, setLoading] = useState(false);
-
   const isEditMode = !!roomData;
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(roomData || INITIAL_STATE);
+      setFormData(roomData ? ({
+        ...INITIAL_STATE,
+        ...roomData,
+        imagePreview: roomData.image || null,
+        file: null
+      }) : INITIAL_STATE);
       setRawPrice(roomData?.price ? `${roomData.price}` : "");
     } else {
       setFormData(INITIAL_STATE);
@@ -52,19 +52,22 @@ export default function ModalEditRoom({
     }
   }, [isOpen, roomData]);
 
-
-  const formatCurrency = (num) => (!num ? "" : Number(num).toLocaleString("id-ID"));
-  const stripCurrency = (value) => (!value ? "" : value.toString().replace(/\./g, "").replace(/\D/g, ""));
+  const formatCurrency = (num) =>
+    !num ? "" : Number(num).toLocaleString("id-ID");
+  const stripCurrency = (value) =>
+    !value ? "" : value.toString().replace(/\./g, "").replace(/\D/g, "");
   const handlePriceChange = (e) => {
     let value = stripCurrency(e.target.value);
     setRawPrice(value);
     setFormData((prev) => ({
       ...prev,
-      price: Number(value)
+      price: Number(value),
     }));
   };
-  const handlePriceBlur = () => setRawPrice(formData.price ? `${formData.price}` : "");
-  const handlePriceFocus = () => setRawPrice(formData.price ? `${formData.price}` : "");
+  const handlePriceBlur = () =>
+    setRawPrice(formData.price ? `${formData.price}` : "");
+  const handlePriceFocus = () =>
+    setRawPrice(formData.price ? `${formData.price}` : "");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -77,25 +80,42 @@ export default function ModalEditRoom({
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, image: imageUrl }));
-      // Untuk upload ke BE, silakan tambahkan logic FormData dan upload via API
+      setFormData((prev) => ({
+        ...prev,
+        file, // Simpan File asli untuk FormData (upload ke backend langsung)
+        imagePreview: URL.createObjectURL(file)
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.price || !formData.capacity) {
+    if (!formData.name || !formData.price || !formData.capacity || !formData.type) {
       alert("Mohon isi semua field yang wajib.");
+      return;
+    }
+    if (!formData.file && !formData.imagePreview) {
+      alert("Mohon upload gambar!");
       return;
     }
     setLoading(true);
     try {
+      // ------ FORM DATA ------
+      const dataToSend = new FormData();
+      dataToSend.append("room_name", formData.name);
+      dataToSend.append("room_type", formData.type);
+      dataToSend.append("price", formData.price);
+      dataToSend.append("capacity", formData.capacity);
+      // Jika upload file baru (tambah/edit dengan ganti foto)
+      if (formData.file) {
+        dataToSend.append("image", formData.file); // sesuai swagger, type: string($binary)
+      }
+
       if (isEditMode && formData.id) {
-        await updateRoom(formData.id, formData);
+        await updateRoom(formData.id, dataToSend, true);
         alert("Room updated successfully!");
       } else {
-        await addRoom(formData);
+        await addRoom(dataToSend, true);
         alert("Room added successfully!");
       }
       if (afterSubmit) afterSubmit(formData);
@@ -112,41 +132,73 @@ export default function ModalEditRoom({
     <div className="fixed right-0 top-0 h-full max-w-md w-full bg-white shadow-2xl z-50 overflow-y-auto border-l border-gray-200">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">{isEditMode ? "Edit Room" : "Add New Room"}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800" aria-label="Tutup Modal">
+          <h2 className="text-xl font-bold">
+            {isEditMode ? "Edit Room" : "Add New Room"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800"
+            aria-label="Tutup Modal"
+          >
             <FiX size={24} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            {formData.image ? (
+            {formData.imagePreview ? (
               <div className="relative">
-                <img src={formData.image} alt="Room Preview" className="w-full h-48 object-cover rounded-md" />
+                <img
+                  src={formData.imagePreview}
+                  alt="Room Preview"
+                  className="w-full h-48 object-cover rounded-md"
+                />
                 <button
                   type="button"
                   onClick={() => document.getElementById("image-upload").click()}
                   className="mt-2 text-sm text-blue-500 hover:text-blue-700"
+                  disabled={loading}
                 >
                   Change Photo
                 </button>
               </div>
             ) : (
               <div className="py-8">
-                <FiUpload size={32} className="mx-auto text-gray-400" aria-hidden="true" />
-                <p className="mt-2 text-sm text-gray-500">Drag and drop files here</p>
+                <FiUpload
+                  size={32}
+                  className="mx-auto text-gray-400"
+                  aria-hidden="true"
+                />
+                <p className="mt-2 text-sm text-gray-500">
+                  Drag and drop files here
+                </p>
                 <button
                   type="button"
-                  onClick={() => document.getElementById("image-upload").click()}
+                  onClick={() =>
+                    document.getElementById("image-upload").click()
+                  }
                   className="mt-2 text-sm text-orange-500 hover:text-orange-600 font-medium"
+                  disabled={loading}
                 >
                   Upload File
                 </button>
               </div>
             )}
-            <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={handleImageChange} />
+            <input
+              type="file"
+              id="image-upload"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={loading}
+            />
           </div>
           <div>
-            <label htmlFor="room-name" className="block text-sm font-medium text-gray-700">Room Name</label>
+            <label
+              htmlFor="room-name"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Room Name
+            </label>
             <input
               type="text"
               id="room-name"
@@ -159,7 +211,12 @@ export default function ModalEditRoom({
             />
           </div>
           <div>
-            <label htmlFor="room-type" className="block text-sm font-medium text-gray-700">Room Type</label>
+            <label
+              htmlFor="room-type"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Room Type
+            </label>
             <select
               id="room-type"
               name="type"
@@ -168,13 +225,21 @@ export default function ModalEditRoom({
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm bg-white"
               required
             >
+              <option value="">Select Type</option>
               {roomTypes.map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="price-hours" className="block text-sm font-medium text-gray-700">Price/Hours</label>
+            <label
+              htmlFor="price-hours"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Price/Hours
+            </label>
             <input
               type="text"
               id="price-hours"
@@ -191,7 +256,12 @@ export default function ModalEditRoom({
             />
           </div>
           <div>
-            <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">Capacity</label>
+            <label
+              htmlFor="capacity"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Capacity
+            </label>
             <select
               id="capacity"
               name="capacity"
@@ -200,8 +270,11 @@ export default function ModalEditRoom({
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm bg-white"
               required
             >
+              <option value="">Select Capacity</option>
               {capacities.map((cap) => (
-                <option key={cap.value} value={cap.value}>{cap.label}</option>
+                <option key={cap.value} value={cap.value}>
+                  {cap.label}
+                </option>
               ))}
             </select>
           </div>

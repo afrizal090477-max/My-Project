@@ -1,6 +1,6 @@
 import apiHttp from "./http";
 
-// Helper: Hapus param kosong/null/array kosong & validasi key filter yang diterima BE
+// Helper: Clean param kosong/invalid
 function cleanParams(params = {}, validKeys = null) {
   return Object.fromEntries(
     Object.entries(params)
@@ -15,9 +15,9 @@ function cleanParams(params = {}, validKeys = null) {
   );
 }
 
-// Semua kemungkinan key untuk filter/sort BE
+// Semua kemungkinan key utk filter/sort BE, KUNCI HARUS SESUAI API
 const validRoomKeys = [
-  "name", "room_type", "capacity", "status", "price", "page", "limit", "sort", "startDate", "endDate"
+  "room_name", "room_type", "capacity", "status", "price", "page", "limit", "sort", "startDate", "endDate"
 ];
 
 // GET: List rooms, search, filter, paginasi
@@ -27,34 +27,82 @@ export const fetchRooms = async (params = {}) => {
   reqParams.limit = reqParams.limit || 10;
   const filtered = cleanParams(reqParams, validRoomKeys);
   const res = await apiHttp.get("/api/v1/rooms", { params: filtered });
-  return res.data; // { data: [...], pagination: {...} }
+  return res.data;
 };
 
-// GET: Room detail by id
 export const fetchRoomById = async (id) => {
   const res = await apiHttp.get(`/api/v1/rooms/${id}`);
   return res.data?.data;
 };
 
-// POST: Add room baru
-export const addRoom = async (roomData) => {
-  const cleaned = cleanParams(roomData, [
-    "name", "room_type", "capacity", "status", "price", "image", "description"
-  ]);
-  const res = await apiHttp.post(`/api/v1/rooms`, cleaned);
-  return res.data?.data;
+// POST: Add ROOM baru (FormData upload ke BE file asli!)
+export const addRoom = async (roomData, isFormData = false) => {
+  let payload = roomData;
+
+  // Jika bukan FormData, mapping object fields agar cocok ke backend
+  if (!isFormData && !(roomData instanceof FormData)) {
+    payload = { ...roomData };
+    if (payload.name) {
+      payload.room_name = payload.name;
+      delete payload.name;
+    }
+    if (payload.type) {
+      payload.room_type = payload.type;
+      delete payload.type;
+    }
+    // Hapus jika image blob/url belum sesuai
+    if (payload.image && (payload.image.startsWith("blob:") || payload.image === "")) {
+      delete payload.image;
+    }
+    payload = cleanParams(payload, [
+      "room_name", "room_type", "capacity", "status", "price", "image", "description"
+    ]);
+  }
+
+  // FormData: langsung kirim sebagai multipart/form-data
+  if (isFormData || payload instanceof FormData) {
+    const res = await apiHttp.post(`/api/v1/rooms`, payload, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return res.data?.data;
+  } else {
+    const res = await apiHttp.post(`/api/v1/rooms`, payload);
+    return res.data?.data;
+  }
 };
 
-// PUT: Update data room by id
-export const updateRoom = async (roomId, roomData) => {
-  const cleaned = cleanParams(roomData, [
-    "name", "room_type", "capacity", "status", "price", "image", "description"
-  ]);
-  const res = await apiHttp.put(`/api/v1/rooms/${roomId}`, cleaned);
-  return res.data?.data;
+export const updateRoom = async (roomId, roomData, isFormData = false) => {
+  let payload = roomData;
+
+  if (!isFormData && !(roomData instanceof FormData)) {
+    payload = { ...roomData };
+    if (payload.name) {
+      payload.room_name = payload.name;
+      delete payload.name;
+    }
+    if (payload.type) {
+      payload.room_type = payload.type;
+      delete payload.type;
+    }
+    if (payload.image && (payload.image.startsWith("blob:") || payload.image === "")) {
+      delete payload.image;
+    }
+    payload = cleanParams(payload, [
+      "room_name", "room_type", "capacity", "status", "price", "image", "description"
+    ]);
+  }
+
+  if (isFormData || payload instanceof FormData) {
+    const res = await apiHttp.put(`/api/v1/rooms/${roomId}`, payload, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return res.data?.data;
+  } else {
+    const res = await apiHttp.put(`/api/v1/rooms/${roomId}`, payload);
+    return res.data?.data;
+  }
 };
 
-// DELETE: Hapus room by id
 export const deleteRoom = async (roomId) => {
   const res = await apiHttp.delete(`/api/v1/rooms/${roomId}`);
   return res.data?.data;
@@ -67,21 +115,3 @@ export const fetchFirstRoomDetail = async () => {
   if (!arr.length) throw new Error("No room found");
   return arr[0];
 };
-
-// SEARCH: Auto-complete search bar by name
-export const searchRoomNames = async (q) => {
-  const res = await apiHttp.get("/api/v1/rooms", {
-    params: cleanParams({ name: q, limit: 10 })
-  });
-  return Array.isArray(res.data?.data) ? res.data.data : [];
-};
-
-// (Opsional untuk ke depan) Bulk import, export, dsb bisa tinggal tambah di sini
-// export const importRooms = async (fileData) => {...}
-
-export function validateRoomData(roomData) {
-  if (!roomData.name || typeof roomData.name !== "string") return "Room name harus diisi";
-  if (!roomData.room_type) return "Room type wajib dipilih";
-  if (!roomData.capacity || Number.isNaN(Number(roomData.capacity))) return "Capacity harus angka";
-  return null;
-}

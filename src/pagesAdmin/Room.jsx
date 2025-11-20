@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import RoomCard from "../components/RoomCard";
+import ManageRoom from "../components/ManageRoom";
 import ModalEditRoom from "../components/ModalEditRoom";
-import ModalConfirmDeleteRoom from "../components/ModalConfirmDeleteRoom";
-import RoomsImage from "../assets/Rooms.png";
-import { fetchRooms, addRoom, updateRoom, deleteRoom } from "../API/roomAPI";
 import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
+import RoomsImage from "../assets/Rooms.png";
+import { fetchRooms, addRoom, updateRoom } from "../API/roomAPI";
 
 const ITEMS_PER_PAGE = 12;
-
 const STATIC_ROOM_TYPES = [
   { value: "small", label: "Small" },
   { value: "medium", label: "Medium" },
@@ -18,20 +16,23 @@ const STATIC_CAPACITIES = [
   { value: "4", label: "4 People" },
   { value: "8", label: "8 People" },
   { value: "12", label: "12 People" },
+  { value: "14", label: "14 People" },
   { value: "20", label: "20 People" },
-  { value: "30", label: "30 People" },
+  { value: "30", label: "30 People" }
 ];
 
 export default function Room() {
   const [rooms, setRooms] = useState([]);
   const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
+  const [capacities, setCapacities] = useState(STATIC_CAPACITIES);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ open: false, room: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => { setCapacities(STATIC_CAPACITIES); }, []);
 
   useEffect(() => {
     const loadRooms = async () => {
@@ -39,7 +40,6 @@ export default function Room() {
       try {
         const params = {
           room_type: filters.type,
-          capacity: filters.capacity,
           page: currentPage - 1,
           limit: ITEMS_PER_PAGE,
         };
@@ -48,7 +48,6 @@ export default function Room() {
         apiRooms = apiRooms.map((room) => ({
           ...room,
           id: room.id,
-          // -------------- PERBAIKAN DISINI: mapping nama dari "room_name"
           name: room.room_name || room.name || "-",
           type: room.room_type || room.type || "",
           image: room.image || RoomsImage,
@@ -56,6 +55,11 @@ export default function Room() {
           price: room.price || 0,
         }));
 
+        if (filters.capacity) {
+          apiRooms = apiRooms.filter(room =>
+            String(room.capacity) === String(filters.capacity)
+          );
+        }
         if (filters.search) {
           const src = filters.search.toLowerCase();
           apiRooms = apiRooms.filter((room) =>
@@ -78,48 +82,41 @@ export default function Room() {
   }
 
   function handleEditClick(room) {
-    setSelectedRoom(room);
+    setSelectedRoom({
+      ...room,
+      name: room.name,
+      type: room.type,
+    });
     setIsModalOpen(true);
   }
 
   async function handleFormSubmit(formData) {
     setLoading(true);
     try {
+      const payload = {
+        name: formData.name,
+        type: formData.type,
+        price: Number(formData.price),
+        capacity: Number(formData.capacity),
+        image: formData.image
+      };
       if (formData.id) {
-        await updateRoom(formData.id, formData);
+        await updateRoom(formData.id, payload);
         setRooms((prev) =>
-          prev.map((r) => (r.id === formData.id ? { ...formData } : r))
+          prev.map((r) => (r.id === formData.id ? { ...r, ...formData } : r))
         );
       } else {
-        const roomToAdd = { ...formData, image: formData.image || RoomsImage };
-        const newRoom = await addRoom(roomToAdd);
+        const newRoom = await addRoom(payload);
         setRooms((prev) => [newRoom, ...prev]);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
       }
     } catch (error) {
       console.error("Failed to save room", error);
+      alert("Failed to save room!");
     }
     setIsModalOpen(false);
     setLoading(false);
-  }
-
-  async function handleDeleteConfirm() {
-    setLoading(true);
-    try {
-      if (deleteModal.room?.id) {
-        await deleteRoom(deleteModal.room.id);
-        setRooms((prev) => prev.filter((r) => r.id !== deleteModal.room.id));
-      }
-    } catch (error) {
-      console.error("Failed to delete room", error);
-    }
-    setDeleteModal({ open: false, room: null });
-    setLoading(false);
-  }
-
-  function handleDeleteClick(room) {
-    setDeleteModal({ open: true, room });
   }
 
   function handleFilterChange(key, value) {
@@ -135,8 +132,7 @@ export default function Room() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   }
 
-  const roomsToDisplay = rooms;
-
+  // Pass all existing UI/search/filter/pagination as props to ManageRoom
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <RoomDetailDemoAdmin />
@@ -166,14 +162,12 @@ export default function Room() {
           </select>
           <select
             value={filters.capacity}
-            onChange={(e) => handleFilterChange("capacity", e.target.value)}
+            onChange={e => handleFilterChange("capacity", e.target.value)}
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Capacity</option>
-            {STATIC_CAPACITIES.map((cap) => (
-              <option key={cap.value} value={cap.value}>
-                {cap.label}
-              </option>
+            {capacities.map(cap => (
+              <option key={cap.value} value={cap.value}>{cap.label}</option>
             ))}
           </select>
         </div>
@@ -184,61 +178,27 @@ export default function Room() {
           <FiPlus size={18} /> Add New Room
         </button>
       </div>
-      <div className="bg-white rounded-xl max-w-[1320px] mx-auto shadow-sm border border-gray-200 p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {roomsToDisplay.map((room) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center mt-6 gap-3">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className={`p-2 rounded-md border ${
-                currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
-              }`}
-            >
-              <FiChevronLeft />
-            </button>
-            <span className="text-gray-700 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className={`p-2 rounded-md border ${
-                currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
-              }`}
-            >
-              <FiChevronRight />
-            </button>
-          </div>
-        )}
-      </div>
-      <ModalEditRoom
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleFormSubmit}
-        roomData={selectedRoom}
+
+      {/* Panggil ManageRoom, pass seluruh data dan event penting */}
+      <ManageRoom
+        rooms={rooms}
+        setRooms={setRooms}
+        onEdit={handleEditClick}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        handlePrevPage={handlePrevPage}
+        handleNextPage={handleNextPage}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedRoom={selectedRoom}
+        setSelectedRoom={setSelectedRoom}
+        handleFormSubmit={handleFormSubmit}
         roomTypes={STATIC_ROOM_TYPES}
-        capacities={STATIC_CAPACITIES}
+        capacities={capacities}
+        loading={loading}
       />
-      <ModalConfirmDeleteRoom
-        isOpen={deleteModal.open}
-        roomName={deleteModal.room?.name}
-        onCancel={() => setDeleteModal({ open: false, room: null })}
-        onConfirm={handleDeleteConfirm}
-      />
+
+      {/* Toast sukses masih di sini agar tidak berubah tampilan */}
       {showSuccessToast && (
         <div className="fixed right-4 top-20 z-50">
           <div className="bg-white border border-green-400 text-green-600 px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">

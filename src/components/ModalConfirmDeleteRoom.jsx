@@ -8,8 +8,6 @@ export default function ModalConfirmDeleteRoom({ isOpen, onCancel, onConfirm, ro
   return (
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
       <div className="bg-white w-full max-w-sm rounded-xl shadow-lg p-8 relative font-['Roboto'] flex flex-col items-center">
-        {/* Icon Warning */}
-        <div className="mb-4 text-5xl text-yellow-500">⚠️</div>
         {/* Tombol close */}
         <button
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-700"

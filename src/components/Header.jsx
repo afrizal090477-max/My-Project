@@ -2,17 +2,20 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { usePageTitle } from "../context/PageTitleContext";
+import { useUserProfile } from "../context/UserProfileContext";
 import AdminPhoto from "../assets/admin.png";
 import LogoutIcon from "../assets/logout.png";
 
 const Header = () => {
   const navigate = useNavigate();
-  const { token, role, handleLogout } = useAuth(); // ambil role, token, logout dari AuthContext
+  const { role, handleLogout } = useAuth();
   const { pageTitle } = usePageTitle();
+  const { profile } = useUserProfile(); // AMBIL PROFIL DARI CONTEXT
 
-  // Username bisa ambil dari localStorage, atau tambah properti user di AuthContext sesuai response backend jika ada.
-  const username = localStorage.getItem("username") || "Admin";
-  const userRole = role === 'admin' ? 'Administrator' : 'User';
+  // Username/role selalu ambil dari context profile
+  const username = profile.username || "Admin";
+  const userRole = profile.role === 'admin' ? 'Administrator' : 'User';
+  const userPhoto = profile.photo || AdminPhoto;
 
   const onLogout = () => {
     handleLogout();
@@ -25,12 +28,12 @@ const Header = () => {
         {pageTitle}
       </h1>
       <div className="flex items-center gap-4">
-        <img src={AdminPhoto} alt="Admin" className="w-10 h-10 rounded-full object-cover" />
+        <img src={userPhoto} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
         <div className="text-left">
           <p className="text-sm font-medium">{username}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{userRole}</p>
         </div>
-        <button onClick={handleLogout} className="ml-4 focus:outline-none" aria-label="Logout">
+        <button onClick={onLogout} className="ml-4 focus:outline-none" aria-label="Logout">
           <img src={LogoutIcon} alt="Logout" className="w-6 h-6 hover:opacity-70 transition" />
         </button>
       </div>

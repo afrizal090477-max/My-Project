@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { FiCalendar } from "react-icons/fi";
 
-// Full 24 jam, bukan hanya jam kantor
+// Full 24 jam
 const SLOT_START = 0;
 const SLOT_END = 23;
 
@@ -33,11 +33,8 @@ export default function ReservationSchedule({
   const times = generateTimes();
   const rowHeight = 29;
 
-  // Contoh data format: {"2025-11-16": [ ["13:00","15:00"], ["19:00","22:00"] ]}
-  const dummyBooked = {};
-
   const getBookedRanges = () =>
-    bookedTimes[selectedDate] || dummyBooked[selectedDate] || [];
+    bookedTimes[selectedDate] || [];
 
   function isBooked(idx) {
     return getBookedRanges().some(
@@ -62,7 +59,6 @@ export default function ReservationSchedule({
   function handleSlotClick(idx) {
     if (!selectedDate) return;
     if (isBooked(idx)) return;
-
     if (clickStart === null || (clickStart !== null && clickEnd !== null)) {
       setClickStart(idx);
       setClickEnd(null);
@@ -97,12 +93,9 @@ export default function ReservationSchedule({
   if (step === 1) {
     return (
       <div className="fixed top-0 right-0 w-full sm:w-[410px] h-full bg-white z-40 shadow-xl flex flex-col">
-        <div className="flex w-full h-[64px] items-center justify-between px-6 pt-6 pb-3">
+        <div className="flex w-full h-16 items-center justify-between px-6 pt-6 pb-3">
           <h2 className="text-lg font-semibold">Reservation Schedule</h2>
-          <button
-            onClick={onClose}
-            className="text-3xl leading-none hover:text-orange-500"
-          >
+          <button onClick={onClose} className="text-3xl leading-none hover:text-orange-500">
             &times;
           </button>
         </div>
@@ -111,7 +104,7 @@ export default function ReservationSchedule({
             <input
               ref={inputRef}
               type="date"
-              className="w-full h-[44px] border rounded px-3 pr-10 py-2"
+              className="w-full h-11 border rounded px-3 pr-10 py-2"
               value={selectedDate}
               onChange={(e) => {
                 setSelectedDate(e.target.value);
@@ -148,17 +141,17 @@ export default function ReservationSchedule({
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => handleSlotClick(idx)}
                 >
-                  <span className="w-[44px] text-xs text-gray-400">{time.replace(":", ".")}</span>
+                  <span className="w-11 text-xs text-gray-400">{time.replace(":", ".")}</span>
                   {status === "booked" ? (
-                    <div className="bg-orange-50 text-orange-400 font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] border border-orange-200">
+                    <div className="bg-orange-50 text-orange-400 font-bold text-xs py-1 px-2 rounded w-full flex items-center h-7 border border-orange-200">
                       Booked
                     </div>
                   ) : status === "yours" ? (
-                    <div className="bg-orange-500 text-white font-bold text-xs py-1 px-2 rounded w-full flex items-center h-[29px] shadow">
+                    <div className="bg-orange-500 text-white font-bold text-xs py-1 px-2 rounded w-full flex items-center h-7 shadow">
                       Your Booking
                     </div>
                   ) : (
-                    <div className="flex-1 h-[29px] border-b border-dashed border-gray-200 hover:bg-orange-50 transition"></div>
+                    <div className="flex-1 h-7 border-b border-dashed border-gray-200 hover:bg-orange-50 transition"></div>
                   )}
                 </div>
               );
@@ -168,11 +161,10 @@ export default function ReservationSchedule({
         <div className="px-6 pb-6">
           <button
             type="button"
-            className={`w-full h-[44px] ${
-              isFormValid()
-                ? "bg-[#FF7316] text-white hover:bg-orange-700"
-                : "bg-orange-100 text-gray-400 cursor-default"
-            } text-[16px] font-semibold rounded-lg mt-2 shadow-md transition`}
+            className={`w-full h-11 ${isFormValid()
+              ? "bg-[#FF7316] text-white hover:bg-orange-700"
+              : "bg-orange-100 text-gray-400 cursor-default"
+              } text-[16px] font-semibold rounded-lg mt-2 shadow-md transition`}
             disabled={!isFormValid()}
             onClick={() => {
               if (isFormValid()) setStep(2);
@@ -185,16 +177,14 @@ export default function ReservationSchedule({
     );
   }
 
+
   // STEP 2: Preview/all grid + Book Now
   if (step === 2) {
     return (
       <div className="fixed top-0 right-0 w-full sm:w-[410px] h-full bg-white z-40 shadow-xl flex flex-col">
-        <div className="flex w-full h-[64px] items-center justify-between px-6 pt-6 pb-3">
+        <div className="flex w-full h-16 items-center justify-between px-6 pt-6 pb-3">
           <h2 className="text-lg font-semibold">Reservation Schedule</h2>
-          <button
-            onClick={onClose}
-            className="text-3xl leading-none hover:text-orange-500"
-          >
+          <button onClick={onClose} className="text-3xl leading-none hover:text-orange-500">
             &times;
           </button>
         </div>
@@ -204,7 +194,6 @@ export default function ReservationSchedule({
         </div>
         <div className="bg-gray-50 rounded-lg flex-1 px-3 mx-3 py-3 mb-3 overflow-y-auto border">
           <div className="text-center font-medium text-gray-700 pb-1">{roomName}</div>
-          {/* Render Overlay Block Booking & User Selection */}
           <div className="relative" style={{ height: times.length * rowHeight }}>
             {/* Garis setiap jam */}
             {times.map((time, idx) => (
@@ -213,7 +202,7 @@ export default function ReservationSchedule({
                 className="flex items-center gap-2 absolute left-0 right-0"
                 style={{ top: idx * rowHeight, height: rowHeight }}
               >
-                <span className="w-[44px] text-xs text-gray-400">
+                <span className="w-11 text-xs text-gray-400">
                   {time.replace(":", ".")}
                 </span>
                 <div className="flex-1 h-[29px] border-b border-dashed border-gray-200"></div>
@@ -226,7 +215,7 @@ export default function ReservationSchedule({
               return (
                 <div
                   key={i}
-                  className="absolute left-[44px] right-2 bg-[#FFC29B] border border-[#FFC29B] rounded z-10 flex items-center text-xs font-bold text-[#d6771b]"
+                  className="absolute left-11 right-2 bg-[#FFC29B] border border-[#FFC29B] rounded z-10 flex items-center text-xs font-bold text-[#d6771b]"
                   style={{
                     top: startIdx * rowHeight,
                     height: (endIdx - startIdx) * rowHeight - 3,
@@ -242,7 +231,7 @@ export default function ReservationSchedule({
             {/* Blok booking pilihan user */}
             {clickStart !== null && clickEnd !== null && (
               <div
-                className="absolute left-[44px] right-2 bg-orange-500 rounded z-20 flex items-center text-xs font-bold text-white shadow"
+                className="absolute left-11 right-2 bg-orange-500 rounded z-20 flex items-center text-xs font-bold text-white shadow"
                 style={{
                   top: clickStart * rowHeight,
                   height: (clickEnd - clickStart) * rowHeight - 3,
@@ -259,7 +248,7 @@ export default function ReservationSchedule({
         <div className="px-6 pb-6">
           <button
             type="button"
-            className="w-full h-[44px] bg-[#FF7316] text-white text-[16px] font-semibold rounded-lg mt-2 shadow-md transition"
+            className="w-full h-11 bg-[#FF7316] text-white text-[16px] font-semibold rounded-lg mt-2 shadow-md transition"
             onClick={() => {
               onNext &&
                 onNext({
@@ -284,4 +273,5 @@ ReservationSchedule.propTypes = {
   roomName: PropTypes.string,
   bookedTimes: PropTypes.object, // Format: { "YYYY-MM-DD": [ [start, end], ... ]}
 };
+
 export { generateTimes };

@@ -66,7 +66,7 @@ export default function Register() {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center"
+      className="min-h-screen w-full flex items-center left-[120px]"
       style={{
         backgroundImage: "url('/meeting.png')",
         backgroundSize: "cover",
@@ -74,28 +74,28 @@ export default function Register() {
         position: "relative",
       }}
     >
-      <div className="absolute inset-0 bg-black/35" />
+      
       <div
         className="relative bg-white rounded-[20px] shadow-2xl border-4 border-[#E7E7E7] flex flex-col items-center w-[600px] max-w-full"
         style={{
-          minHeight: 815,
+          maxHeight: 815,
           zIndex: 10,
           padding: 48,
         }}
       >
-        <div className="flex flex-col items-center gap-3 mb-3 mt-5">
+        <div className="flex flex-col items-center gap-3  ">
           <Logo />
         </div>
         <h2 className="font-bold text-[32px] text-center w-full mt-1 mb-1">
           Welcome Back!
         </h2>
-        <p className="text-gray-500 text-center text-base mb-7 w-full">
+        <p className="text-gray-500 text-center text-base mb-4 w-full">
           Create your account here!
         </p>
 
-        <form onSubmit={handleSubmit} className="w-full">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center ">
           <div className="mb-3">
-            <label htmlFor="username" className="block mb-2 text-gray-700 text-[15px] font-medium">
+            <label htmlFor="username" className="block mb-1 text-gray-700 text-[15px] font-medium">
               Username
             </label>
             <input
@@ -105,12 +105,12 @@ export default function Register() {
               value={form.username}
               onChange={handleChange}
               autoComplete="username"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none "
               disabled={loading}
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="email" className="block mb-2 text-gray-700 text-[15px] font-medium">
+            <label htmlFor="email" className="block mb-1 text-gray-700 text-[15px] font-medium">
               Email
             </label>
             <input
@@ -120,12 +120,12 @@ export default function Register() {
               value={form.email}
               onChange={handleChange}
               autoComplete="email"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
               disabled={loading}
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="password" className="block mb-2 text-gray-700 text-[15px] font-medium">
+            <label htmlFor="password" className="block mb-1 text-gray-700 text-[15px] font-medium">
               Password
             </label>
             <input
@@ -135,12 +135,12 @@ export default function Register() {
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
               disabled={loading}
             />
           </div>
           <div className="mb-1">
-            <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 text-[15px] font-medium">
+            <label htmlFor="confirmPassword" className="block mb-1 text-gray-700 text-[15px] font-medium">
               Confirm Password
             </label>
             <input
@@ -150,13 +150,13 @@ export default function Register() {
               value={form.confirmPassword}
               onChange={handleChange}
               autoComplete="new-password"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
               disabled={loading}
             />
           </div>
           <button
             type="submit"
-            className="w-full h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white text-base font-semibold rounded-lg mt-5 mb-1 shadow-md transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-[380px] h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white text-base font-semibold rounded-lg mt-5 mb-1 shadow-md transition disabled:bg-gray-400 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? "Registering..." : "Create Account"}

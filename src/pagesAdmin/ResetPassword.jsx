@@ -24,7 +24,7 @@ export default function ResetPassword() {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center"
+      className="min-h-screen w-full flex items-center left-[120px]"
       style={{
         backgroundImage: "url('/meeting.png')",
         backgroundSize: "cover",
@@ -32,7 +32,7 @@ export default function ResetPassword() {
         position: "relative",
       }}
     >
-      <div className="absolute inset-0 bg-black/35" />
+      
       <div
         className="relative bg-white rounded-[20px] shadow-2xl border-4 border-[#E7E7E7] flex flex-col items-center"
         style={{
@@ -53,7 +53,7 @@ export default function ResetPassword() {
             Masukkan email terdaftar & OTP yang dikirim ke email kamu.
           </p>
         </div>
-        <form onSubmit={handleSubmit} className="w-full">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center ">
           <div className="mb-3">
             <label htmlFor="email" className="block mb-2 text-gray-700 text-[15px] font-medium">
               Email
@@ -65,7 +65,7 @@ export default function ResetPassword() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
               disabled={loading}
             />
           </div>
@@ -80,13 +80,13 @@ export default function ResetPassword() {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               autoComplete="one-time-code"
-              className="w-full h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
+              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
               disabled={loading}
             />
           </div>
           <button
             type="submit"
-            className="w-full h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg shadow-md transition text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-[380px] h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg shadow-md transition text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? "Memproses..." : "Submit OTP"}

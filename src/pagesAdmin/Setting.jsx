@@ -9,8 +9,8 @@ export default function UserSetting() {
     email: "",
     username: "",
     role: "",
-    status: "",
-    language: "",
+    status: "",      // tetap ada di state
+    language: "",    // tetap ada di state
     password: "",
   });
   const [photo, setPhoto] = useState("");
@@ -18,7 +18,6 @@ export default function UserSetting() {
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
 
-  // Ambil updater context, AGAR HEADER OTOMATIS UPDATE
   const { updateProfilePhoto } = useUserProfile();
 
   useEffect(() => {
@@ -29,8 +28,8 @@ export default function UserSetting() {
           email: data.email || "",
           username: data.username || "",
           role: data.role || "",
-          status: data.status || "",
-          language: data.language || "",
+          status: data.status || "",     // tetap ambil jika endpoint sudah support
+          language: data.language || "", // tetap ambil jika endpoint sudah support
           password: "********",
         });
         setPhoto(data.photo_url || data.photo || "");
@@ -47,7 +46,6 @@ export default function UserSetting() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Patch penting: update context SETELAH update berhasil
   const handleToggleEdit = async () => {
     if (isEditing) {
       try {
@@ -55,22 +53,24 @@ export default function UserSetting() {
         fd.append("email", formData.email);
         fd.append("username", formData.username);
         fd.append("role", formData.role);
-        fd.append("status", formData.status);
-        fd.append("language", formData.language);
-        if (formData.password && formData.password !== "********") {
+        // fd.append("status", formData.status);      // nonaktifkan sementara
+        // fd.append("language", formData.language);  // nonaktifkan sementara
+        if (photoFile) fd.append("photo", photoFile);
+        if (
+          formData.password &&
+          formData.password !== "********" &&
+          formData.password.trim() !== ""
+        ) {
           fd.append("password", formData.password);
-        }
-        if (photoFile) {
-          fd.append("photo", photoFile);
         }
         const updated = await updateProfile(fd);
         if (updated?.photo_url) {
-          setPhoto(updated.photo_url);               // preview lokal di Setting
-          updateProfilePhoto(updated.photo_url);     // ini agar Header ikut berubah
+          setPhoto(updated.photo_url);
+          updateProfilePhoto(updated.photo_url);
         }
         setPhotoFile(null);
         alert("Perubahan profil berhasil disimpan!");
-      } catch {
+      } catch (error) {
         alert("Gagal menyimpan perubahan profil.");
       }
     }
@@ -83,7 +83,7 @@ export default function UserSetting() {
     const file = e.target.files[0];
     if (!file) return;
     setPhotoFile(file);
-    setPhoto(URL.createObjectURL(file)); // preview segera
+    setPhoto(URL.createObjectURL(file)); // preview segera di UI
   };
 
   if (loading) {
@@ -173,8 +173,8 @@ export default function UserSetting() {
                   onChange={handleChange}
                   className="w-full h-[48px] border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                 >
-                  <option>User</option>
-                  <option>Admin</option>
+                  <option>user</option>
+                  <option>admin</option>
                 </select>
               ) : (
                 <div className="w-full h-[48px] border border-gray-300 rounded-lg px-3 py-2 flex items-center bg-gray-50 text-gray-600">

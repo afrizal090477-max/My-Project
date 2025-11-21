@@ -11,7 +11,7 @@ const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
     type="button"
     onClick={onClick}
     ref={ref}
-    className="flex items-center justify-between w-full h-[48px] border !border-gray-500 rounded-[10px] px-[14px] bg-white text-left focus:ring-2 focus:ring-orange-400"
+    className="flex items-center justify-between w-[257px] h-[48px] border !border-[#a1a2a5] rounded-[10px] px-[14px] bg-white text-left focus:ring-2 focus:ring-orange-400"
   >
     <span className={value ? "text-gray-700" : "text-gray-400"}>
       {value || placeholder}
@@ -35,7 +35,24 @@ function DateInput({ id, selectedDate, onChange, placeholder }) {
   );
 }
 
+// Status style helper
+function getStatusStyle(status) {
+  switch (status?.toLowerCase?.()) {
+    case "booked":
+    case "pending":
+      return "bg-orange-100 text-orange-600 border border-orange-300 px-3 py-1 rounded-[16px] text-xs font-bold";
+    case "success":
+    case "confirmed":
+      return "bg-green-100 text-green-600 border border-green-300 px-3 py-1 rounded-[16px] text-xs font-bold";
+    case "cancel":
+      return "bg-red-100 text-red-500 border border-red-300 px-3 py-1 rounded-[16px] text-xs font-bold";
+    default:
+      return "bg-gray-100 text-gray-500 px-3 py-1 rounded-[16px] text-xs";
+  }
+}
+
 export default function Report() {
+  // STATE
   const [filters, setFilters] = useState({
     startDate: null,
     endDate: null,
@@ -46,7 +63,7 @@ export default function Report() {
   const [currentPage, setCurrentPage] = useState(1);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
-  const [showPayToast, setShowPayToast] = useState(false);
+  const [showToast, setShowToast] = useState(false); // TOAST utk notifikasi aksi sukses
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -57,6 +74,7 @@ export default function Report() {
     totalPages: 1,
   });
 
+  // FETCH DATA
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -67,16 +85,10 @@ export default function Report() {
           limit: rowsPerPage,
           room_type: filters.roomType,
           status: filters.status,
-          startDate: filters.startDate
-            ? filters.startDate.toISOString().slice(0, 10)
-            : undefined,
-          endDate: filters.endDate
-            ? filters.endDate.toISOString().slice(0, 10)
-            : undefined,
+          startDate: filters.startDate?.toISOString().slice(0, 10),
+          endDate: filters.endDate?.toISOString().slice(0, 10),
         };
         const res = await fetchReservations(queryParams);
-
-        // ===== Filter Data Unik Berdasarkan Beberapa Field Penting ====
         setReportData(
           (res.data || []).filter(
             (v, i, arr) =>
@@ -89,7 +101,6 @@ export default function Report() {
               ) === i
           )
         );
-
         setPagination({
           currentPage: res.pagination?.currentPage || 1,
           pageSize: res.pagination?.pageSize || rowsPerPage,
@@ -103,49 +114,45 @@ export default function Report() {
       }
     }
     loadData();
+   
   }, [filters, currentPage, rowsPerPage]);
 
-  const handlePageChange = (newPage) => {
+  // HANDLER
+  const handlePageChange = newPage => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
     setCurrentPage(newPage);
   };
-
-  const handleRowsPerPageChange = (e) => {
+  const handleRowsPerPageChange = e => {
     setRowsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
-
-  const handleFilters = (e) => {
+  const handleFilters = e => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    setFilters(prev => ({ ...prev, [name]: value }));
     setCurrentPage(1);
   };
-
   const handleDownload = async () => {
     try {
       const blob = await downloadReport({
         room_type: filters.roomType,
         status: filters.status,
-        startDate: filters.startDate
-          ? filters.startDate.toISOString().slice(0, 10)
-          : undefined,
-        endDate: filters.endDate
-          ? filters.endDate.toISOString().slice(0, 10)
-          : undefined,
+        startDate: filters.startDate?.toISOString().slice(0, 10),
+        endDate: filters.endDate?.toISOString().slice(0, 10),
       });
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = downloadUrl;
+      a.href = url;
       a.download = "report.xlsx";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      window.URL.revokeObjectURL(url);
     } catch {
+      // fallback Download CSV
       const header = "Start Date,End Date,Room,User,Type,Status\n";
       const content = reportData
         .map(
-          (row) =>
+          row =>
             `${row.date_reservation || "-"} ${row.start_time || ""},${row.date_reservation || "-"} ${row.end_time || ""},${row.rooms?.room_name || "-"},${row.pemesan || "-"},${row.rooms?.room_type || "-"},${row.status}`
         )
         .join("\n");
@@ -161,98 +168,92 @@ export default function Report() {
     }
   };
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Booked":
-        return "bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "Paid":
-        return "bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "Cancel":
-        return "bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs font-bold";
-      default:
-        return "";
-    }
-  };
-
-  const openDetail = (row) => {
+  const openDetail = row => {
     setDetailData(row);
     setDetailOpen(true);
   };
-  const closeDetail = () => {
+
+  // Modal close [TRIGGER TOAST]
+  const closeDetail = (shouldShowToast) => {
     setDetailData(null);
     setDetailOpen(false);
-  };
-  const handlePay = () => {
-    setDetailOpen(false);
-    setShowPayToast(true);
-    setTimeout(() => setShowPayToast(false), 2200);
+    if (shouldShowToast) {
+      setFilters(prev => ({ ...prev })); // akan refresh data
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2200);
+    }
   };
 
+  // RENDER
   return (
     <div className="p-8 bg-[#F9FAFB] min-h-screen">
-      {showPayToast && (
-        <div className="fixed w-[456px] h-[82px] top-[100px] left-[964px] right-4 bg-green-500 text-white px-20 py-4 rounded shadow z-50 flex items-center gap-2">
-          <span className="text-xl">✔</span>
-          <span>Your Payment Successfully made</span>
-        </div>
-      )}
-      {/* Filter bar */}
-      <div className="bg-white rounded-xl p-5 mb-6 flex flex-wrap gap-5 items-center shadow border border-gray-200">
-        <div className="flex flex-col gap-2 w-[220px]">
-          <label className="font-medium text-gray-700 text-xs">Start Date</label>
+      {console.log("showToast state", showToast)}
+{showToast && (
+  <div style={{ position: "fixed", top: 40, right: 40, background: "lightgreen", padding: 16, zIndex: 9999 }}>
+    Action success.
+  </div>
+)}
+
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-xl p-5 mb-6 flex flex-wrap gap-6 items-end shadow border border-[#828385]">
+        <div className="flex flex-col gap-1 w-[257px]">
+          <label className="font-semibold text-gray-700 text-[15px]">Start Date</label>
           <DateInput
             id="startDate"
             selectedDate={filters.startDate}
-            onChange={(date) => setFilters((prev) => ({ ...prev, startDate: date }))}
+            onChange={date => setFilters(prev => ({ ...prev, startDate: date }))}
             placeholder="Select start date"
           />
         </div>
-        <div className="flex flex-col gap-2 w-[220px]">
-          <label className="font-medium text-gray-700 text-xs">End Date</label>
+        <div className="flex flex-col gap-1 w-[257px]">
+          <label className="font-semibold text-gray-700 text-[15px]">End Date</label>
           <DateInput
             id="endDate"
             selectedDate={filters.endDate}
-            onChange={(date) => setFilters((prev) => ({ ...prev, endDate: date }))}
+            onChange={date => setFilters(prev => ({ ...prev, endDate: date }))}
             placeholder="Select end date"
           />
         </div>
-        <div className="flex flex-col gap-2 w-[220px]">
-          <label className="font-medium text-gray-700 text-xs">Room Type</label>
+        <div className="flex flex-col gap-1 w-[257px]">
+          <label className="font-semibold text-gray-700 text-[15px]">Room Type</label>
           <select
             name="roomType"
             value={filters.roomType}
             onChange={handleFilters}
-            className="w-full h-[48px] border border-gray-500 px-[14px] rounded-[10px] bg-white text-gray-700"
+            className="w-full h-[48px] border border-[#CECECE] px-[14px] rounded-[10px] bg-white text-gray-700"
           >
             <option value="">All Types</option>
-            <option value="Small">Small</option>
-            <option value="Medium">Medium</option>
-            <option value="Large">Large</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
           </select>
         </div>
-        <div className="flex flex-col gap-2 w-[220px]">
-          <label className="font-medium text-gray-700 text-xs">Status</label>
+        <div className="flex flex-col gap-1 w-[257px]">
+          <label className="font-semibold text-gray-700 text-[15px]">Status</label>
           <select
             name="status"
             value={filters.status}
             onChange={handleFilters}
-            className="w-full h-[48px] border border-gray-500 px-[14px] rounded-[10px] bg-white text-gray-700"
+            className="w-full h-[48px] border border-[#CECECE] px-[14px] rounded-[10px] bg-white text-gray-700"
           >
             <option value="">All Status</option>
-            <option value="Booked">Booked</option>
-            <option value="Paid">Paid</option>
-            <option value="Cancel">Cancel</option>
+            <option value="booked">Booked</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancel">Cancel</option>
           </select>
         </div>
         <button
-          className="ml-auto bg-orange-600 text-white px-5 py-3 h-[48px] rounded-lg flex items-center gap-2 shadow hover:bg-orange-700"
-          onClick={handleDownload}
-        >
-          <FiDownload size={18} /> Download Report
-        </button>
+  className="ml-auto flex items-center justify-center w-[48px] h-[48px] bg-orange-600 text-white rounded-lg shadow hover:bg-orange-700 transition"
+  onClick={handleDownload}
+  style={{ padding: 0 }} // Hapus padding agar item tengah betul-betul centering
+>
+  <FiDownload size={22} />
+</button>
+
       </div>
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow border border-gray-200">
+      {/* TABLE */}
+      <div className="bg-white rounded-xl shadow border border-[#E5E7EB]">
         {loading ? (
           <div className="p-6 text-center text-gray-500">Loading...</div>
         ) : error ? (
@@ -260,14 +261,14 @@ export default function Report() {
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">Start Date</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">End Date</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">Room</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">User</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">Type</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left">Status</th>
-                <th className="p-4 text-xs font-bold text-gray-600 text-left"></th>
+              <tr className="bg-[#F7F7FB]">
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">Start Date</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">End Date</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">Room</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">User</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">Type</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">Status</th>
+                <th className="p-4 text-[15px] font-bold text-gray-700 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -279,26 +280,26 @@ export default function Report() {
                 </tr>
               )}
               {reportData.map((row, idx) => (
-                <tr key={row.id || idx} className="border-t">
-                  <td className="p-4">
+                <tr key={row.id || idx} className="border-t hover:bg-[#F4F8FB]">
+                  <td className="p-4 text-center whitespace-nowrap">
                     {row.date_reservation
                       ? `${row.date_reservation}${row.start_time ? " " + row.start_time : ""}`
                       : "-"}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 text-center whitespace-nowrap">
                     {row.date_reservation
                       ? `${row.date_reservation}${row.end_time ? " " + row.end_time : ""}`
                       : "-"}
                   </td>
-                  <td className="p-4">{row.rooms?.room_name || "-"}</td>
-                  <td className="p-4">{row.pemesan || "-"}</td>
-                  <td className="p-4">{row.rooms?.room_type || "-"}</td>
-                  <td className="p-4">
+                  <td className="p-4 text-center">{row.rooms?.room_name || "-"}</td>
+                  <td className="p-4 text-center">{row.pemesan || "-"}</td>
+                  <td className="p-4 text-center">{row.rooms?.room_type || "-"}</td>
+                  <td className="p-4 text-center">
                     <span className={getStatusStyle(row.status)}>{row.status}</span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 text-center">
                     <button
-                      className="text-orange-600 hover:text-orange-800 flex gap-1 items-center"
+                      className="text-orange-600 hover:text-orange-800 flex gap-1 justify-center items-center font-semibold"
                       onClick={() => openDetail(row)}
                     >
                       <FiCornerUpRight size={17} /> Detail
@@ -310,19 +311,17 @@ export default function Report() {
           </table>
         )}
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[#F1F1F3]">
           <div>
             <label>
-              Rows per page:
+              Rows/page:
               <select
                 value={rowsPerPage}
                 onChange={handleRowsPerPageChange}
                 className="ml-2 border border-gray-400 rounded px-2 py-1"
               >
-                {[5, 10, 20, 50].map((val) => (
-                  <option key={val} value={val}>
-                    {val}
-                  </option>
+                {[5, 10, 20, 50].map(val => (
+                  <option key={val} value={val}>{val}</option>
                 ))}
               </select>
             </label>
@@ -352,7 +351,6 @@ export default function Report() {
         open={detailOpen}
         onClose={closeDetail}
         data={detailData}
-        onPay={handlePay}
       />
     </div>
   );

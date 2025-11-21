@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import ModalConfirmCancel from "../components/ModalConfirmCancel";
+import ModalConfirmCancel from "./ModalConfirmCancel";
+import { patchReservationStatus, deleteReservation } from "../API/reportAPI";
 
-export default function ModalReportDetail({ open, onClose, data, onPay }) {
+export default function ModalReportDetail({ open, onClose, data }) {
   const [modalCancelOpen, setModalCancelOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   if (!open || !data) return null;
 
-  // Helper row tampilan label dan value (selalu aman)
   const ReportRow = ({ label, value }) => (
     <div className="flex justify-between gap-4 py-1">
       <span className="text-gray-600 font-medium">{label}</span>
@@ -16,69 +15,74 @@ export default function ModalReportDetail({ open, onClose, data, onPay }) {
     </div>
   );
 
-  const handleCancelClick = () => setModalCancelOpen(true);
+  // Payload builder for update (Pay)
+  const buildPayload = (status) => ({
+    room_id: data.room_id || data.rooms?.id,
+    pemesan: data.pemesan,
+    no_hp: data.no_hp,
+    company_name: data.company_name,
+    date_reservation: data.date_reservation,
+    start_time: data.start_time,
+    end_time: data.end_time,
+    total_participant: data.total_participant,
+    snack: data.snack,
+    note: data.note,
+    status // gunakan status valid BE
+  });
 
-  const handleCancelConfirm = () => {
-    setModalCancelOpen(false);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2200);
-    if (onClose) onClose();
+  const handleCancelConfirm = async () => {
+    try {
+      await deleteReservation(data.id); // CANCEL = DELETE
+      setModalCancelOpen(false);
+      if (onClose) onClose(true);
+    } catch (err) {
+      setModalCancelOpen(false);
+      if (onClose) onClose(false);
+      alert("Failed to cancel: " + (err?.response?.data?.message || err.toString()));
+    }
   };
 
-  // Data mapping: BE-mu pakai 'rooms' untuk relasi ruangan
+  const handlePay = async () => {
+    try {
+      await patchReservationStatus(data.id, buildPayload("confirmed")); // status allowed backend
+      if (onClose) onClose(true);
+    } catch (err) {
+      if (onClose) onClose(false);
+      alert("Failed to pay: " + (err?.response?.data?.message || err.toString()));
+    }
+  };
+
   const room = data.rooms || data.room || {};
-
-  // Format
-  const priceFmt =
-    room.price !== undefined && room.price !== null
-      ? `Rp ${Number(room.price).toLocaleString("id-ID")}`
-      : "-";
-
-  const capacityFmt =
-    room.capacity !== undefined && room.capacity !== null
-      ? String(room.capacity)
-      : "-";
-
-  const startDate =
-    data.date_reservation && data.start_time
-      ? `${data.date_reservation} ${data.start_time}`
-      : "-";
-  const endDate =
-    data.date_reservation && data.end_time
-      ? `${data.date_reservation} ${data.end_time}`
-      : "-";
-  const duration =
-    data.start_time && data.end_time
-      ? `${data.start_time} - ${data.end_time}`
-      : "-";
-
-  // Total price fields kalau BE sudah kirimkan di future
-  // const totalFmt =
-  //   data.total !== undefined && data.total !== null
-  //     ? `Rp ${Number(data.total).toLocaleString("id-ID")}`
-  //     : "-";
-
-  // const subtotalFmt =
-  //   room.subtotal !== undefined && room.subtotal !== null
-  //     ? `Rp ${Number(room.subtotal).toLocaleString("id-ID")}`
-  //     : "-";
+  const priceFmt = room.price !== undefined && room.price !== null
+    ? `Rp ${Number(room.price).toLocaleString("id-ID")}`
+    : "-";
+  const capacityFmt = room.capacity !== undefined && room.capacity !== null
+    ? String(room.capacity)
+    : "-";
+  const startDate = data.date_reservation && data.start_time
+    ? `${data.date_reservation} ${data.start_time}`
+    : "-";
+  const endDate = data.date_reservation && data.end_time
+    ? `${data.date_reservation} ${data.end_time}`
+    : "-";
+  const duration = data.start_time && data.end_time
+    ? `${data.start_time} - ${data.end_time}`
+    : "-";
 
   return (
     <>
       <div className="fixed inset-0 bg-black/30 flex items-center justify-end z-50">
         <div className="bg-white w-[450px] h-full shadow-2xl overflow-y-auto animate-slideInRight border-l-4 border-[#FF7316] relative">
-          {/* Header */}
           <div className="p-6 border-b flex justify-between items-center">
             <h2 className="font-semibold text-lg">Reservation Details</h2>
             <button
-              onClick={onClose}
+              onClick={() => onClose(false)}
               className="text-gray-500 hover:text-gray-800 text-xl"
               aria-label="Close modal"
             >
               ×
             </button>
           </div>
-          {/* Content */}
           <div className="p-6 space-y-6 text-sm">
             <div>
               <h3 className="font-semibold text-base mb-4">Room Details</h3>
@@ -105,34 +109,20 @@ export default function ModalReportDetail({ open, onClose, data, onPay }) {
               <h3 className="font-semibold text-base mb-4 mt-6">Other Information</h3>
               <ReportRow label="Note:" value={data.note} />
             </div>
-            {/* Total, jika BE sudah return sesuai field */}
-            {/* 
-            <div className="border-t pt-6 mt-4">
-              <h3 className="font-semibold text-base mb-3">Total</h3>
-              <ReportRow label="Subtotal:" value={subtotalFmt} />
-              <ReportRow label="Total:" value={totalFmt} />
-            </div>
-            */}
             <div className="flex gap-4 mt-7">
               <button
-                onClick={handleCancelClick}
-                className="w-1/2 h-[40px] py-2 rounded-lg border border-orange-300 text-orange-600 font-semibold hover:bg-orange-100"
+                onClick={() => setModalCancelOpen(true)}
+                className="w-1/2 h-[40px] py-2 rounded-lg border !border-orange-300 text-orange-600 font-semibold hover:bg-orange-100"
               >
                 Cancel
               </button>
               <button
-                onClick={onPay}
+                onClick={handlePay}
                 className="w-1/2 h-[40px] py-2 rounded-lg bg-[#FF7316] text-white font-semibold hover:bg-[#e76712]"
               >
                 Pay
               </button>
             </div>
-            {/* Toast Success Cancel */}
-            {showToast && (
-              <div className="fixed top-10 right-10 bg-green-500 text-white px-8 py-3 rounded shadow-md z-50 animate-fadeIn">
-                Reservation successfully canceled.
-              </div>
-            )}
             <ModalConfirmCancel
               open={modalCancelOpen}
               onClose={() => setModalCancelOpen(false)}
@@ -149,5 +139,4 @@ ModalReportDetail.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   data: PropTypes.object,
-  onPay: PropTypes.func,
 };

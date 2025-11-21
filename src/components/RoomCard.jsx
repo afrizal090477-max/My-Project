@@ -6,10 +6,9 @@ import RoomsImage from "../assets/Rooms.png";
 function RoomCard({ room, onEdit, onDelete }) {
   const formatRupiah = (number) =>
     `Rp ${number?.toLocaleString("id-ID") ?? "-"} / hour`;
-  
+
   const imageUrl = room.image || RoomsImage;
-  
-  // Handle type/room_type as object or string
+
   let typeLabel = "";
   if (room.type && typeof room.type === "object") {
     typeLabel = room.type.name || room.type.label || "[object]";
@@ -18,43 +17,38 @@ function RoomCard({ room, onEdit, onDelete }) {
   } else {
     typeLabel = room.type || room.room_type || "-";
   }
-  
+
   return (
-    <article 
-      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl font-['Roboto']" 
+    <article
+      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl font-['Roboto']"
       aria-label={`Kartu ruangan ${room.name}`}
     >
-      {/* Edit & Delete buttons */}
       <div className="absolute top-3 right-3 flex gap-2 z-10">
-        <button 
-          type="button" 
-          onClick={() => onDelete(room)} 
-          className="bg-white text-red-500 p-2 rounded-full shadow hover:bg-red-50 transition" 
+        <button
+          type="button"
+          onClick={() => onDelete(room)}
+          className="bg-white text-red-500 p-2 rounded-full shadow hover:bg-red-50 transition"
           title={`Delete ${room.name}`}
         >
           <FiTrash2 size={16} />
         </button>
-        <button 
-          type="button" 
-          onClick={() => onEdit(room)} 
-          className="bg-white text-orange-500 p-2 rounded-full shadow hover:bg-orange-50 transition" 
+        <button
+          type="button"
+          onClick={() => onEdit(room)}
+          className="bg-white text-orange-500 p-2 rounded-full shadow hover:bg-orange-50 transition"
           title={`Edit ${room.name}`}
         >
           <FiEdit2 size={16} />
         </button>
       </div>
-      
-      {/* Room image */}
       <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={`Foto ruangan ${room.name}`} 
-          className="w-full h-full object-cover transition group-hover:scale-105 duration-300" 
-          loading="lazy" 
+        <img
+          src={imageUrl}
+          alt={`Foto ruangan ${room.name}`}
+          className="w-full h-full object-cover transition group-hover:scale-105 duration-300"
+          loading="lazy"
         />
       </div>
-      
-      {/* Room info */}
       <div className="p-4 pb-5">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-lg font-bold text-gray-800 truncate">{room.name}</h3>

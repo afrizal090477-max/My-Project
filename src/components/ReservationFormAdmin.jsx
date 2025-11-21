@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 /**
- * ReservationFormAdmin dengan automapping ROOM_ID (UUID) dan field FE→BE.
+ * ReservationFormAdmin.jsx FINAL — REVISI TERBENAR!
  */
 export default function ReservationFormAdmin({
   isOpen,
@@ -18,8 +18,20 @@ export default function ReservationFormAdmin({
   errorSnacks = null,
   selectedRoomName = "",
 }) {
+  // State utamanya UUID untuk room
   const [participants, setParticipants] = useState(data?.participants ? String(data.participants) : "1");
-  const [room, setRoom] = useState(selectedRoomName || data?.room || "");
+  // Ambil UUID dari prop data/selectedRoomName jika ada
+  const [roomId, setRoomId] = useState(() => {
+    if (data?.room_id) return data.room_id;
+    if (selectedRoomName) {
+      const found = rooms.find(
+        r => r.room_name === selectedRoomName || r.code === selectedRoomName || r.name === selectedRoomName
+      );
+      return found?.id || found?.room_id || "";
+    }
+    return "";
+  });
+
   const [name, setName] = useState(data?.name || "");
   const [phone, setPhone] = useState(data?.phone || "");
   const [company, setCompany] = useState(data?.company || "");
@@ -35,33 +47,41 @@ export default function ReservationFormAdmin({
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (selectedRoomName) setRoom(selectedRoomName);
-  }, [selectedRoomName]);
+    // Jika user klik room di luar form/reservation autocomplete, syncron langsung roomId dengan UUID rooms master
+    if (selectedRoomName && rooms.length > 0) {
+      const found = rooms.find(
+        r =>
+          r.room_name === selectedRoomName ||
+          r.code === selectedRoomName ||
+          r.name === selectedRoomName
+      );
+      if (found?.id) setRoomId(found.id);
+    }
+  }, [selectedRoomName, rooms]);
 
   const [startDate] = dateRange;
   const hourOptions = [...Array(24).keys()].map(i => `${i.toString().padStart(2, "0")}:00`);
 
-  /**
-   * handleNext: mapping ke field Swagger BE saat submit
-   */
+  // Submit handler
   const handleNext = () => {
     setFormError("");
-    if (!room || !name || !phone || !company || !startDate || !startTime || !endTime) {
+    if (!roomId || !name || !phone || !company || !startDate || !startTime || !endTime) {
       setFormError("Field wajib harus diisi semua.");
       return;
     }
-    // mapping room_id (UUID) dari roomsData FE
+    // Cek benar-benar UUID dari room master
     const foundRoom = rooms.find(
-      r => r.room_name === room || r.name === room || r.id === room || r.room_id === room
+      r => String(r.id) === String(roomId) || String(r.room_id) === String(roomId)
     );
     if (!foundRoom?.id && !foundRoom?.room_id) {
-      setFormError("Room ID tidak valid/tidak ditemukan. Silakan periksa data ruangan!");
+      setFormError("Room ID tidak valid/tidak ditemukan. Periksa master ruangan!");
       return;
     }
-
-    // Siapkan field ke BE (spec Swagger, bukan FE)
+    // DEBUG waktu development:
+    // console.log("DEBUG UUID:", roomId, "foundRoom:", foundRoom);
+    // Submit field untuk backend:
     const reservationData = {
-      room_id: foundRoom?.id || foundRoom?.room_id,
+      room_id: foundRoom.id || foundRoom.room_id,
       pemesan: name,
       no_hp: phone,
       company_name: company,
@@ -73,13 +93,13 @@ export default function ReservationFormAdmin({
       note: note,
       status: "pending",
     };
-
     if (typeof onSubmit === "function") onSubmit(reservationData);
   };
 
   if (!isOpen) return null;
   const inputStyle = "h-[48px] border border-gray-300 rounded-lg px-4 text-[15px]";
   const labelStyle = "text-[15px] font-medium text-gray-700";
+console.log("ROOMS MASTER:", rooms);
 
   return (
     <div className="fixed top-0 right-0 z-50 w-[456px] h-full max-h-screen bg-white shadow-2xl flex flex-col px-8 pt-5 pb-6 overflow-y-auto">
@@ -94,12 +114,15 @@ export default function ReservationFormAdmin({
           <div className="py-2 px-3 bg-red-100 text-red-600 text-sm rounded mb-2">{formError}</div>
         )}
         <label className={labelStyle}>Room Name</label>
-        <select className={inputStyle} value={room} onChange={e => setRoom(e.target.value)}>
+        <select
+          className={inputStyle}
+          value={roomId}
+          onChange={e => setRoomId(e.target.value)}
+        >
           <option value="">Choose Room</option>
-          {rooms.map((r) => (
-            <option key={r.id || r.room_id || r.room_name || r.name}
-                    value={r.room_name || r.name || r.id || r.room_id || ""}>
-              {r.room_name || r.name || r.id}
+          {rooms.map(r => (
+            <option key={r.id || r.room_id} value={r.id || r.room_id}>
+              {r.room_name || r.code || r.name || r.id}
             </option>
           ))}
         </select>
@@ -111,7 +134,14 @@ export default function ReservationFormAdmin({
         <input type="text" className={inputStyle} value={company} onChange={e => setCompany(e.target.value)} />
         <label className={labelStyle}>Date Reservation</label>
         <div className="relative">
-          <DatePicker selectsStart selected={startDate} onChange={date => setDateRange([date, null])} dateFormat="dd/MM/yyyy" className={inputStyle + " bg-white"} placeholderText="Select date" />
+          <DatePicker
+            selectsStart
+            selected={startDate}
+            onChange={date => setDateRange([date, null])}
+            dateFormat="dd/MM/yyyy"
+            className={inputStyle + " bg-white"}
+            placeholderText="Select date"
+          />
           <FiCalendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={22} />
         </div>
         <div className="flex gap-2">
@@ -131,7 +161,13 @@ export default function ReservationFormAdmin({
           </div>
         </div>
         <label className={labelStyle}>Total Participants</label>
-        <input type="number" min={1} className={inputStyle} value={participants} onChange={e => { const val = e.target.value; if (/^\d*$/.test(val)) setParticipants(val); }} />
+        <input
+          type="number"
+          min={1}
+          className={inputStyle}
+          value={participants}
+          onChange={e => { const val = e.target.value; if (/^\d*$/.test(val)) setParticipants(val); }}
+        />
         <div className="flex items-center gap-2 min-h-[48px]">
           <input type="checkbox" className="w-5 h-5 accent-[#FF7316] rounded-md" checked={addSnack} onChange={() => setAddSnack(!addSnack)} id="snackbox" />
           <label htmlFor="snackbox" className="select-none text-[15px]">Add Snack</label>

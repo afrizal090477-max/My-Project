@@ -166,3 +166,21 @@ aside button svg, aside button .icon, aside nav button svg {
   outline: none !important;
 }
 
+/* Perkecil dan munculkan calendar DatePicker di atas grid/overflow */
+.react-datepicker-popper,
+.datepicker-popper-small {
+  transform: scale(0.8);
+  transform-origin: top left;
+  z-index: 9999 !important;
+}
+
+.react-datepicker,
+.datepicker-small {
+  font-size: 13px;
+  min-width: 180px;
+}
+
+/* Optional: tambah jarak biar turun sedikit ke bawah */
+.react-datepicker-popper {
+  margin-top: 8px;
+}

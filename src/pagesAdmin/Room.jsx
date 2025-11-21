@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FiSearch, FiPlus, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 import ManageRoom from "../components/ManageRoom";
 import ModalEditRoom from "../components/ModalEditRoom";
 import RoomDetailDemoAdmin from "../components/RoomDetailDemoAdmin";
@@ -40,7 +40,7 @@ export default function Room() {
       try {
         const params = {
           room_type: filters.type,
-          page: currentPage - 1,
+          page: currentPage,
           limit: ITEMS_PER_PAGE,
         };
         const data = await fetchRooms(params);
@@ -81,32 +81,30 @@ export default function Room() {
     setIsModalOpen(true);
   }
 
-  function handleEditClick(room) {
-    setSelectedRoom({
-      ...room,
-      name: room.name,
-      type: room.type,
-    });
+  // FIX: Handler edit untuk room, supaya modal edit terbuka
+  function handleEditRoom(room) {
+    setSelectedRoom(room);
     setIsModalOpen(true);
   }
 
   async function handleFormSubmit(formData) {
     setLoading(true);
     try {
-      const payload = {
-        name: formData.name,
-        type: formData.type,
-        price: Number(formData.price),
-        capacity: Number(formData.capacity),
-        image: formData.image
-      };
+      const dataToSend = new FormData();
+      dataToSend.append("room_name", formData.name);
+      dataToSend.append("room_type", formData.type);
+      dataToSend.append("price", formData.price);
+      dataToSend.append("capacity", formData.capacity);
+      if (formData.file) {
+        dataToSend.append("image", formData.file);
+      }
       if (formData.id) {
-        await updateRoom(formData.id, payload);
+        await updateRoom(formData.id, dataToSend, true);
         setRooms((prev) =>
           prev.map((r) => (r.id === formData.id ? { ...r, ...formData } : r))
         );
       } else {
-        const newRoom = await addRoom(payload);
+        const newRoom = await addRoom(dataToSend, true);
         setRooms((prev) => [newRoom, ...prev]);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -132,7 +130,6 @@ export default function Room() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   }
 
-  // Pass all existing UI/search/filter/pagination as props to ManageRoom
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <RoomDetailDemoAdmin />
@@ -179,26 +176,20 @@ export default function Room() {
         </button>
       </div>
 
-      {/* Panggil ManageRoom, pass seluruh data dan event penting */}
+      {/* FIX: ganti onEdit jadi onEditRoom */}
       <ManageRoom
         rooms={rooms}
-        setRooms={setRooms}
-        onEdit={handleEditClick}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        handlePrevPage={handlePrevPage}
-        handleNextPage={handleNextPage}
-        isModalOpen={isModalOpen}
-        setIsModalOpen={setIsModalOpen}
-        selectedRoom={selectedRoom}
-        setSelectedRoom={setSelectedRoom}
-        handleFormSubmit={handleFormSubmit}
-        roomTypes={STATIC_ROOM_TYPES}
-        capacities={capacities}
-        loading={loading}
+        fetchRooms={() => {}}
+        onEditRoom={handleEditRoom}
       />
 
-      {/* Toast sukses masih di sini agar tidak berubah tampilan */}
+      <ModalEditRoom
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        roomData={selectedRoom}
+        afterSubmit={handleFormSubmit}
+      />
+
       {showSuccessToast && (
         <div className="fixed right-4 top-20 z-50">
           <div className="bg-white border border-green-400 text-green-600 px-6 py-3 rounded-md shadow-lg text-base font-semibold flex items-center gap-2">

@@ -9,8 +9,8 @@ const INITIAL_STATE = {
   type: "",
   price: 10000,
   capacity: 1,
-  file: null,    // file binary (bukan image url lagi!)
-  imagePreview: null // preview lokal blob
+  file: null,
+  imagePreview: null
 };
 
 export default function ModalEditRoom({
@@ -56,6 +56,7 @@ export default function ModalEditRoom({
     !num ? "" : Number(num).toLocaleString("id-ID");
   const stripCurrency = (value) =>
     !value ? "" : value.toString().replace(/\./g, "").replace(/\D/g, "");
+
   const handlePriceChange = (e) => {
     let value = stripCurrency(e.target.value);
     setRawPrice(value);
@@ -82,7 +83,7 @@ export default function ModalEditRoom({
     if (file) {
       setFormData((prev) => ({
         ...prev,
-        file, // Simpan File asli untuk FormData (upload ke backend langsung)
+        file,
         imagePreview: URL.createObjectURL(file)
       }));
     }
@@ -100,17 +101,14 @@ export default function ModalEditRoom({
     }
     setLoading(true);
     try {
-      // ------ FORM DATA ------
       const dataToSend = new FormData();
       dataToSend.append("room_name", formData.name);
       dataToSend.append("room_type", formData.type);
       dataToSend.append("price", formData.price);
       dataToSend.append("capacity", formData.capacity);
-      // Jika upload file baru (tambah/edit dengan ganti foto)
       if (formData.file) {
-        dataToSend.append("image", formData.file); // sesuai swagger, type: string($binary)
+        dataToSend.append("image", formData.file);
       }
-
       if (isEditMode && formData.id) {
         await updateRoom(formData.id, dataToSend, true);
         alert("Room updated successfully!");

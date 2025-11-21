@@ -1,17 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import ReactDOM from "react-dom"; // Tambah ini!
+import ReactDOM from "react-dom";
 
 export default function ModalConfirmCancel({ open, onClose, onConfirm }) {
   if (!open) return null;
 
   return ReactDOM.createPortal(
     <>
-      {/* BACKDROP */}
       <div className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"></div>
-      {/* MODAL */}
       <div className="fixed z-[9999] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[374px] rounded-lg bg-white p-8 shadow-xl flex flex-col items-center">
-        {/* Icon/Warning */}
         <div className="mb-8 text-5xl text-yellow-500">⚠️</div>
         <h2 className="mb-2 text-lg font-semibold text-center text-gray-800">
           Are you sure you want to cancel this reservation?
@@ -37,7 +34,7 @@ export default function ModalConfirmCancel({ open, onClose, onConfirm }) {
         </div>
       </div>
     </>,
-    document.body // Pasti di root window!
+    document.body
   );
 }
 

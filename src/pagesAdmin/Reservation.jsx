@@ -15,10 +15,14 @@ import {
 
 const SLOT_START = 6;
 const SLOT_END = 18;
-const SLOT_ROW_HEIGHT = 56;
-const ROOM_COL_WIDTH = 389;
-const TIME_COL_WIDTH = 70;
+const SLOT_ROW_HEIGHT = 70;
+const ROOM_COL_WIDTH = 400;
+const TIME_COL_WIDTH = 74;
 const ROOMS_PER_PAGE = 3;
+const GRID_CONTAINER_WIDTH = TIME_COL_WIDTH + (ROOM_COL_WIDTH * ROOMS_PER_PAGE);
+const GRID_MAX_WIDTH = 1320;
+const GRID_SIDE_PAD = (GRID_MAX_WIDTH - GRID_CONTAINER_WIDTH) / 2;
+const GRID_HEADER_HEIGHT = 70;
 
 export default function Reservation() {
   const [roomsData, setRoomsData] = useState([]);
@@ -47,17 +51,16 @@ export default function Reservation() {
   }, []);
 
   const mapRoomEvents = useCallback(
-    (reservations, roomId) =>
-      Array.isArray(reservations)
-        ? reservations
-            .filter(ev => `${ev.room_id}` === `${roomId}`)
-            .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""))
-            .map(ev => ({
-              ...ev,
-              company: ev.company_name || ev.pemesan || "-",
-              status: ev.status || ((ev.date_reservation >= (new Date().toISOString().slice(0, 10))) ? "Pending" : "Done"),
-            }))
-        : [],
+    (reservations, room) =>
+      reservations
+        .filter(ev => String(ev.room_id) === String(room.id))
+        .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""))
+        .map(ev => ({
+          ...ev,
+          company: ev.company_name || ev.pemesan || "-",
+          status: ev.status ||
+            ((ev.date_reservation >= (new Date().toISOString().slice(0, 10))) ? "Pending" : "Done"),
+        })),
     []
   );
 
@@ -69,8 +72,8 @@ export default function Reservation() {
       const reservations = await fetchAdminReservations();
       const mappedRooms = rooms.map(room => ({
         ...room,
-        room_name: room.room_name || room.name || room.id || "-",
-        events: mapRoomEvents(reservations, room.id || room.room_id),
+        room_name: room.code || room.room_name || room.name || room.id || "-",
+        events: mapRoomEvents(reservations, room)
       }));
       setRoomsData(mappedRooms);
     } catch {
@@ -90,18 +93,20 @@ export default function Reservation() {
     `${(SLOT_START + i).toString().padStart(2, "0")}:00`
   );
 
-  // ===== FIX: Blok box presisi sesuai jam dan menit pesanan =====
   function getSlotPosition(ev) {
-  const [startH, startM] = (ev.start_time || "06:00").split(":").map(Number);
-  const [endH, endM] = (ev.end_time || "07:00").split(":").map(Number);
-  const startMinutes = (startH * 60 + startM) - (SLOT_START * 60);
-  const endMinutes = (endH * 60 + endM) - (SLOT_START * 60);
-  const top = 58 + (startMinutes / 60) * SLOT_ROW_HEIGHT;
-  const height = Math.max(28, ((endMinutes - startMinutes) / 60) * SLOT_ROW_HEIGHT) - 10;
-  return { top, height };
-}
+    const startIdx = times.findIndex(h => h === (ev.start_time || "06:00").slice(0,5));
+    const endIdx = times.findIndex(h => h === (ev.end_time || "07:00").slice(0,5));
+    const [startH, startM] = (ev.start_time || "06:00").split(":").map(Number);
+    const [endH, endM] = (ev.end_time || "07:00").split(":").map(Number);
 
+    const startOffset = (startM/60) * SLOT_ROW_HEIGHT;
+    const endOffset = (endM/60) * SLOT_ROW_HEIGHT;
+    const top = GRID_HEADER_HEIGHT + (startIdx * SLOT_ROW_HEIGHT) + startOffset;
+    const height = Math.max(28, ((endIdx - startIdx) * SLOT_ROW_HEIGHT) + endOffset - startOffset - 10);
+    return { top, height };
+  }
 
+  // Paging slider
   const barWidth = ROOM_COL_WIDTH * ROOMS_PER_PAGE;
   const sliderWidth = barWidth / totalPage;
   const handleRectDrag = e => {
@@ -134,24 +139,32 @@ export default function Reservation() {
 
   return (
     <>
-      {/* FILTER BAR */}
-      <section className="bg-white border border-gray-200 rounded-xl py-4 shadow-sm mb-3 w-full px-0" style={{ position: "relative", zIndex: 1 }}>
-        <div className="flex flex-row flex-wrap items-center gap-10 px-4 w-full">
-          <p className="font-semibold text-gray-900 min-w-max mr-1" style={{whiteSpace:"nowrap"}}>
+      {/* Action Bar */}
+      <section
+        style={{
+          maxWidth: `${GRID_MAX_WIDTH}px`,
+          minWidth: `${GRID_MAX_WIDTH}px`,
+          margin: "0 auto 22px auto",
+          padding: `0 ${GRID_SIDE_PAD}px`,
+          boxSizing: "border-box",
+          background: "#FFF",
+          borderRadius: 24,
+          height: "88px",
+          display: "flex", alignItems: "center"
+        }}>
+        <div className="flex flex-row items-center gap-10 w-full" style={{minWidth:`${GRID_CONTAINER_WIDTH}px`}}>
+          <p className="font-semibold text-gray-900 min-w-max mr-2" style={{whiteSpace:"nowrap"}}>
             {new Date().toLocaleDateString("en-GB", {
               weekday: "long", day: "numeric", month: "long", year: "numeric"
             })}
           </p>
-          {/* Start Date */}
           <div className="relative flex items-center"
             style={{
-              minWidth: "164px",
-              width: "274px",
+              width: "252px",
               height: "48px",
               border: "1px solid #D0D5DD",
               borderRadius: "8px",
-              background: "#fff",
-              zIndex: 10
+              background: "#fff"
             }}>
             <DatePicker
               selected={startDate}
@@ -161,7 +174,9 @@ export default function Reservation() {
               portalId="root"
               autoComplete="off"
               showPopperArrow={false}
-              popperPlacement="bottom"
+              popperClassName="datepicker-popper-small"
+              calendarClassName="datepicker-small"
+              popperPlacement="bottom-start"
               className="w-full h-full pl-4 pr-10 outline-none border-none bg-transparent text-[#344054] text-[16px] font-medium placeholder-[#98A2B3] focus:ring-0"
             />
             <FaCalendarAlt
@@ -170,16 +185,13 @@ export default function Reservation() {
               style={{ zIndex: 10 }}
             />
           </div>
-          {/* End Date */}
           <div className="relative flex items-center"
             style={{
-              minWidth: "164px",
-              width: "274px",
+              width: "252px",
               height: "48px",
               border: "1px solid #D0D5DD",
               borderRadius: "8px",
               background: "#fff",
-              zIndex: 10
             }}>
             <DatePicker
               selected={endDate}
@@ -216,8 +228,8 @@ export default function Reservation() {
                 const rooms = Array.isArray(roomsRaw) ? roomsRaw : roomsRaw?.data ?? [];
                 const mappedRooms = rooms.map(room => ({
                   ...room,
-                  room_name: room.room_name || room.name || room.id || "-",
-                  events: mapRoomEvents(reservations, room.id || room.room_id)
+                  room_name: room.code || room.room_name || room.name || room.id || "-",
+                  events: mapRoomEvents(reservations, room)
                 }));
                 setRoomsData(mappedRooms);
                 setToast({
@@ -237,7 +249,7 @@ export default function Reservation() {
               setLoading(false);
             }}
             disabled={loading}
-            className="h-[48px] w-[155px] border-2 !border-[#FF7316] text-[#FF7316] rounded-lg font-semibold bg-white hover:bg-[#FFF5EC] transition-all duration-200 flex items-center justify-center"
+            className="h-[48px] w-[150px] border-2 !border-[#FF7316] text-[#FF7316] rounded-lg font-semibold bg-white hover:bg-[#FFF5EC] transition-all duration-200 flex items-center justify-center "
           >
             {loading ? "Loading..." : "Search"}
           </button>
@@ -249,89 +261,150 @@ export default function Reservation() {
               setFormData(null);
               setSelectedRoomName("");
             }}
-            className="h-[48px] min-w-[188px] bg-[#FF7316] text-white rounded-lg font-semibold text-lg hover:bg-[#e76712] transition flex items-center justify-center ml-3"
+            className="h-[48px] min-w-[200px] bg-[#FF7316] text-white rounded-lg font-semibold text-lg hover:bg-[#e76712] transition flex items-center justify-center ml-3"
           >
             + Add New Reservation
           </button>
         </div>
       </section>
 
-      {/* JADWAL GRID */}
-      <div className="w-full px-0" style={{ position: "relative", zIndex: 0 }}>
+      {/* GRID SCHEDULE - Full Figma Style */}
+      <div
+        style={{
+          maxWidth: `${GRID_MAX_WIDTH}px`,
+          minWidth: `${GRID_MAX_WIDTH}px`,
+          margin: "0 auto",
+          padding: `0 ${GRID_SIDE_PAD}px 36px ${GRID_SIDE_PAD}px`,
+          background: "#FFF",
+          borderRadius: 24,
+          overflowX: "auto"
+        }}>
         <div
-          className="overflow-x-auto"
-          style={{ width: "100%" }}
-        >
+          style={{
+            width: `${GRID_CONTAINER_WIDTH}px`,
+            minWidth: `${GRID_CONTAINER_WIDTH}px`,
+            position: "relative",
+            margin: "0 auto"
+          }}>
+          {/* HEADER */}
           <div
-            className="relative"
             style={{
-              minWidth: TIME_COL_WIDTH + ROOM_COL_WIDTH * roomsPage.length,
-              overflow: "visible",
-              backgroundColor: "#FFF"
-            }}
-          >
-            {/* Header Rooms */}
-            <div className="flex bg-white"
-              style={{ height: 58, borderBottom: "1px solid #EBEBEB", position: "sticky", top: 0, zIndex: 2 }}>
-              <div style={{ width: TIME_COL_WIDTH }} />
-              {roomsPage.map((room, i) => (
-                <div key={i} style={{
-                  width: ROOM_COL_WIDTH,
-                  borderRight: "1px solid #EBEBEB",
-                  fontWeight: 700,
-                  fontSize: 18,
-                  color: "#12203A",
-                  textAlign: "center"
-                }}>
-                  {room.room_name}
-                </div>
+              height: GRID_HEADER_HEIGHT,
+              display: "flex",
+              minWidth: `${GRID_CONTAINER_WIDTH}px`,
+              borderBottom: "1px solid #EBEBEB"
+            }}>
+            <div style={{ width: TIME_COL_WIDTH, borderRight: "1px solid #EBEBEB" }} />
+            {roomsPage.map((room, i) => (
+              <div key={i} style={{
+                width: ROOM_COL_WIDTH,
+                borderRight: i < ROOMS_PER_PAGE - 1 ? "1px solid #EBEBEB" : "none",
+                fontWeight: 700,
+                fontSize: 18,
+                color: "#12203A",
+                textAlign: "center",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                height: "100%",
+                background: "#fff"
+              }}>{room.room_name}</div>
+            ))}
+          </div>
+          {/* VERTICAL GRIDLINES */}
+          {Array.from({ length: ROOMS_PER_PAGE + 1 }).map((_, i) => (
+            <div
+              key={`vgridline${i}`}
+              style={{
+                position: "absolute",
+                left: `${TIME_COL_WIDTH + i * ROOM_COL_WIDTH}px`,
+                top: GRID_HEADER_HEIGHT,
+                bottom: 0,
+                width: 0,
+                borderLeft: "1px dashed #EBEBEB",
+                zIndex: 1,
+                pointerEvents: "none"
+              }}
+            />
+          ))}
+          {/* ROWS JAMS + Horizontal GRIDLINE */}
+          {times.map((h, i) => (
+            <div key={h}
+              style={{
+                display: "flex", position: "relative",
+                height: SLOT_ROW_HEIGHT,
+                borderBottom: "1px dashed #EBEBEB",
+                background: "#FFF",
+                minWidth: `${GRID_CONTAINER_WIDTH}px`,
+                alignItems: "center"
+              }}>
+              <div style={{
+                width: TIME_COL_WIDTH,
+                borderRight: "1px solid #EBEBEB",
+                fontWeight: 600,
+                color: "#888",
+                fontSize: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                paddingRight: 8,
+                height: "100%"
+              }}>{h}</div>
+              {roomsPage.map((room, j) => (
+                <div key={j}
+                  style={{
+                    width: ROOM_COL_WIDTH,
+                    height: "100%",
+                    borderRight: j < ROOMS_PER_PAGE - 1 ? "1px solid #EBEBEB" : "none"
+                  }} />
               ))}
             </div>
-            {/* Time Slots */}
-            {times.map((h, i) => (
-              <div key={h} className="flex border-b border-dashed border-[#EBEBEB]" style={{ height: SLOT_ROW_HEIGHT, background: "#FFF" }}>
-                <div style={{
-                  width: TIME_COL_WIDTH, fontWeight: 600, color: "#888", fontSize: 15, display: "flex", alignItems: "center",
-                  justifyContent: "flex-end", paddingRight: 8, borderRight: '1px solid #EBEBEB',
-                }}>{h}</div>
-                {roomsPage.map((_, j) => (
-                  <div key={j} style={{ width: ROOM_COL_WIDTH, borderRight: "1px solid #EBEBEB", height: "100%" }} />
-                ))}
-              </div>
-            ))}
-            {/* Event Slots */}
-            {roomsPage.map((room, cidx) =>
-              Array.isArray(room.events) &&
-              room.events.map(ev => {
-                const { top, height } = getSlotPosition(ev);
-                return (
-                  <div key={ev.id}
-                    className="absolute rounded-xl bg-[#FFF5EC] border-2 border-[#FF9D3A] shadow flex flex-row items-start"
-                    style={{
-                      left: TIME_COL_WIDTH + cidx * ROOM_COL_WIDTH + 6,
-                      top, width: ROOM_COL_WIDTH - 17, height,
-                      zIndex: 3
-                    }}>
+          ))}
+          {/* EVENTS BLOK */}
+          {roomsPage.map((room, cidx) =>
+            Array.isArray(room.events) &&
+            room.events.map(ev => {
+              const { top, height } = getSlotPosition(ev);
+              return (
+                <div
+                  key={ev.id}
+                  className="absolute rounded-xl bg-[#FFF5EC] border-2 border-[#FF9D3A] shadow flex flex-row items-start"
+                  style={{
+                    left: TIME_COL_WIDTH + cidx * ROOM_COL_WIDTH + 7,
+                    top,
+                    width: ROOM_COL_WIDTH - 18,
+                    height,
+                    zIndex: 3,
+                    boxShadow: "0 4px 20px 0 rgba(83, 54, 32, 0.07)"
+                  }}>
+                  <div style={{
+                    width: 4, height: "100%",
+                    background: "#FF7316", borderRadius: "12px 0 0 12px"
+                  }} />
+                  <div style={{
+                    marginLeft: 14,
+                    padding: "9px 13px 9px 0",
+                    flex: 1, minWidth: 0, height: "100%"
+                  }}>
                     <div style={{
-                      width: 4, height: "100%",
-                      background: "#FF7316", borderRadius: "12px 0 0 12px"
-                    }} />
-                    <div style={{ marginLeft: 14, padding: "9px 13px 9px 0", flex: 1, minWidth: 0, height: "100%" }}>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 2 }}>{ev.company}</div>
-                      <div style={{ fontSize: 12, color: "#909090" }}>{ev.start_time} - {ev.end_time} WIB</div>
-                      <span style={{
-                        marginTop: 10, fontSize: 13, alignSelf: "flex-end", padding: "2px 10px",
-                        borderRadius: 8, background: "#FFE0BF", color: "#FF7316", fontWeight: 600, display: "inline-block"
-                      }}>{ev.status}</span>
+                      fontWeight: 700,
+                      fontSize: 15,
+                      color: "#111827",
+                      marginBottom: 2
+                    }}>{ev.company}</div>
+                    <div style={{ fontSize: 13, color: "#909090" }}>
+                      {ev.start_time} - {ev.end_time} WIB
                     </div>
+                    <span style={{
+                      marginTop: 10, fontSize: 13, alignSelf: "flex-end", padding: "2px 10px",
+                      borderRadius: 8, background: "#FFE0BF", color: "#FF7316", fontWeight: 600, display: "inline-block"
+                    }}>{ev.status}</span>
                   </div>
-                );
-              })
-            )}
-          </div>
+                </div>
+              );
+            })
+          )}
         </div>
-        {/* Pagination Slider */}
-        <div className="w-full flex justify-start items-center mt-3" style={{ height: 18 }}>
+        {/* Paging slider */}
+        <div className="w-full flex justify-start items-center mt-5" style={{ height: 18 }}>
           <div
             ref={dragRef}
             className="bg-[#C4C4C4] rounded-full"
@@ -339,8 +412,7 @@ export default function Reservation() {
               width: barWidth,
               height: 8,
               position: "relative",
-              cursor: "pointer",
-              marginLeft: 0
+              cursor: "pointer"
             }}
             onMouseDown={handleRectDrag}
             onTouchStart={handleRectDrag}
@@ -361,7 +433,7 @@ export default function Reservation() {
         </div>
       </div>
 
-      {/* Modals & Forms */}
+      {/* Modal, toast, dsb */}
       {showForm && (
         <>
           {step === 1 && (
@@ -372,6 +444,7 @@ export default function Reservation() {
                 const foundRoom = roomsData.find(room =>
                   room.room_name === data.room ||
                   room.name === data.room ||
+                  room.code === data.room ||
                   room.id === data.room ||
                   room.room_id === data.room
                 );
@@ -398,15 +471,23 @@ export default function Reservation() {
               onBack={() => setStep(1)}
               onSubmit={async (finalData) => {
                 try {
-                  await createAdminReservation(finalData);
+                  const response = await createAdminReservation(finalData);
                   setToast({ visible: true, type: "success", message: "Reservation added" });
-                  setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
+                  let dateBooking = finalData.date_reservation || response?.data?.date_reservation;
+                  if (dateBooking) {
+                    const bookingDate = new Date(dateBooking);
+                    setStartDate(bookingDate);
+                    setEndDate(bookingDate);
+                  }
                   await loadData();
                 } catch (e) {
                   setToast({ visible: true, type: "error", message: "Failed to add reservation" });
-                  setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
                 }
-                setStep(1); setFormData(null); setShowForm(false); setSelectedRoomName("");
+                setStep(1);
+                setFormData(null);
+                setShowForm(false);
+                setSelectedRoomName("");
+                setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
               }}
               rooms={roomsData}
             />
@@ -432,7 +513,6 @@ export default function Reservation() {
           setScheduleOpen(false);
         }}
       />
-      {/* Toast Notification */}
       {toast.visible && (
         <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm transition-all duration-300 ${
           toast.type === "success" ? "bg-green-500"

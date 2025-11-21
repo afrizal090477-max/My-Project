@@ -1,3 +1,5 @@
+// src/pagesUser/RoomReservation.jsx
+
 import React, { useMemo, useState, useEffect } from "react";
 import { FiSearch, FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
 import RoomCardUser from "../components/RoomCardUser";
@@ -6,8 +8,8 @@ import ReservationSchedule from "../components/ReservationSchedule";
 import ReservationDetails from "../components/ReservationDetails";
 import RoomDetailDemoUser from "../components/RoomDetailDemoUser";
 import { fetchRooms } from "../API/roomAPI";
-import { createReservation } from "../API/reservationAPI";
-import { fetchSnacks } from "../API/snackAPI"; // Service snack harus tersedia dan return array snack {id, name, price}
+import { fetchSnacks } from "../API/snackAPI";
+import { createReservation, mapReservationPayload } from "../API/roomReservationAPI";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -20,8 +22,6 @@ export default function RoomReservation() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [error, setError] = useState("");
-
-  // snack dari endpoint
   const [snacks, setSnacks] = useState([]);
   const [loadingSnacks, setLoadingSnacks] = useState(false);
   const [errorSnacks, setErrorSnacks] = useState(null);
@@ -33,7 +33,7 @@ export default function RoomReservation() {
         const mappedRooms = (roomsFromAPI?.data || roomsFromAPI || []).map((room) => ({
           id: room.id,
           name: room.room_name || room.name || "-",
-          type: room.room_type || room.type || "-",
+          type: room.room_type || "-",  // FIX: room_type dari backend pasti string
           capacity: room.capacity ?? 0,
           price: room.price ?? 0,
           status: room.status || "Unknown",
@@ -48,7 +48,6 @@ export default function RoomReservation() {
     fetchRoomData();
   }, []);
 
-  // fetch snack dari endpoint, tanpa dummy
   useEffect(() => {
     setLoadingSnacks(true);
     fetchSnacks()
@@ -88,7 +87,7 @@ export default function RoomReservation() {
       return;
     }
     setReservationData({
-      room: selectedRoom.name,
+      room: selectedRoom.id,
       roomName: selectedRoom.name,
       roomType: selectedRoom.type,
       roomCapacity: selectedRoom.capacity ? `${selectedRoom.capacity} people` : "-",
@@ -102,29 +101,29 @@ export default function RoomReservation() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  //--- Kalkulasi detail, harga snack via snack endpoint API ---//
   let reservationDetailsData = { ...reservationData };
   if (step === "DETAILS") {
     const roomDetail = rooms.find(
-      (room) => room.name === (reservationData.room || reservationData.roomName)
+      (room) =>
+        String(room.id) === String(reservationData.room) ||
+        room.name === (reservationData.room || reservationData.roomName)
     ) || {};
     const roomPrice = roomDetail.price || 0;
     let duration = 1;
     if (reservationData.startTime && reservationData.endTime) {
-      const [sh, sm] = reservationData.startTime.split(":").map(Number);
-      const [eh, em] = reservationData.endTime.split(":").map(Number);
+      const [sh, sm] = (reservationData.startTime || "").split(":").map(Number);
+      const [eh, em] = (reservationData.endTime || "").split(":").map(Number);
       duration = Math.max(1, eh + em / 60 - sh - sm / 60);
     }
     const participants = parseInt(reservationData.participants || "1", 10);
-    
-    // Harga snack langsung dari snacks yang di-fetch endpoint
-    const snackInfo = snacks.find(opt => 
+
+    const snackInfo = snacks.find(opt =>
       opt.id === reservationData.snackCategory ||
       opt.value === reservationData.snackCategory ||
       opt.name === reservationData.snackCategory
     );
     const snackUnitPrice = snackInfo ? Number(snackInfo.price) : 0;
-    
+
     const detailRoomPrice = reservationData.startTime && reservationData.endTime ? duration * roomPrice : 0;
     const detailSnackPrice = reservationData.addSnack ? snackUnitPrice * participants : 0;
     const total = detailRoomPrice + detailSnackPrice;
@@ -138,6 +137,18 @@ export default function RoomReservation() {
       detailSnackPrice,
       total,
     };
+  }
+
+  async function handleFormSubmit(formData) {
+    const payload = mapReservationPayload(formData);
+    try {
+      await createReservation(payload);
+      setReservationData({ ...reservationData, ...formData });
+      setStep("DETAILS");
+      showSuccessToast();
+    } catch (error) {
+      alert("Failed to add reservation!");
+    }
   }
 
   return (
@@ -172,8 +183,12 @@ export default function RoomReservation() {
             className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Capacity</option>
+            <option value="8">8 people</option>
             <option value="10">≤ 10 people</option>
+            <option value="12">12 people</option>
+            <option value="14">14 people</option>
             <option value="20">≤ 20 people</option>
+            <option value="24">24 people</option>
             <option value="50">≤ 50 people</option>
           </select>
         </div>
@@ -231,69 +246,47 @@ export default function RoomReservation() {
         )}
       </div>
       {step === "SCHEDULE" && (
-        <ReservationSchedule
-          isOpen
-          roomName={reservationData.roomName}
-          onClose={() => setStep("")}
-          onNext={(scheduleData) => {
-            setReservationData((prev) => ({
-              ...prev,
-              ...scheduleData,
-              room: reservationData.room,
-              roomName: reservationData.roomName,
-            }));
-            setStep("FORM");
-          }}
-        />
+        <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
+          <ReservationSchedule
+            isOpen
+            roomName={reservationData.roomName}
+            onClose={() => setStep("")}
+            onNext={(scheduleData) => {
+              setReservationData((prev) => ({
+                ...prev,
+                ...scheduleData,
+              }));
+              setStep("FORM");
+            }}
+          />
+        </div>
       )}
       {step === "FORM" && (
-        <ReservationForm
-          isOpen
-          data={reservationData}
-          snacks={snacks}
-          loadingSnacks={loadingSnacks}
-          errorSnacks={errorSnacks}
-          onClose={() => setStep("")}
-          onSubmit={async (formData) => {
-            const masterRoom =
-              rooms.find(
-                (room) =>
-                  room.name ===
-                  (reservationData.room ||
-                    formData.roomName ||
-                    reservationData.roomName ||
-                    "")
-              ) || {};
-            const finalData = {
-              ...reservationData,
-              ...formData,
-              room: masterRoom.name,
-              roomName: masterRoom.name,
-              roomType: masterRoom.type,
-              roomCapacity: masterRoom.capacity ? `${masterRoom.capacity} people` : "-",
-              roomPrice: masterRoom.price ? `Rp ${masterRoom.price.toLocaleString()}` : "-",
-            };
-            try {
-              await createReservation(finalData);
-              setReservationData(finalData);
-              setStep("DETAILS");
-              showSuccessToast();
-            } catch {
-              alert("Failed to add reservation!");
-            }
-          }}
-        />
+        <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
+          <ReservationForm
+            isOpen
+            data={reservationData}
+            rooms={rooms}
+            snacks={snacks}
+            loadingSnacks={loadingSnacks}
+            errorSnacks={errorSnacks}
+            onClose={() => setStep("")}
+            onSubmit={handleFormSubmit}
+          />
+        </div>
       )}
       {step === "DETAILS" && (
-        <ReservationDetails
-          isOpen
-          data={reservationDetailsData}
-          onClose={() => setStep("")}
-          onSubmit={() => {
-            setStep("");
-            showSuccessToast();
-          }}
-        />
+        <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
+          <ReservationDetails
+            isOpen
+            data={reservationDetailsData}
+            onClose={() => setStep("")}
+            onSubmit={() => {
+              setStep("");
+              showSuccessToast();
+            }}
+          />
+        </div>
       )}
       {showSuccess && (
         <div className="fixed right-4 sm:right-10 top-20 sm:top-24 z-50">

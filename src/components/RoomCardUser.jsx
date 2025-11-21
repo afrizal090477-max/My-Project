@@ -1,97 +1,77 @@
+// src/components/RoomCardUser.jsx
+
 import React from "react";
 import PropTypes from "prop-types";
-import { FiUsers, FiTag } from "react-icons/fi";
-import RoomsImage from "../assets/Rooms.png";
+import { FiUsers } from "react-icons/fi";
 
-// Default value pakai destructuring parameter, bukan defaultProps!
-function RoomCardUser({
-  room = {
-    name: "-",
-    type: "-",
-    capacity: 0,
-    price: 0,
-    status: "Unknown",
-    image: ""
-  },
-  onClick = () => {}
-}) {
-  const formatRupiah = (number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(number || 0);
-  };
-
-  let statusColor;
-  if (room.status === "Available") {
-    statusColor = "bg-green-500";
-  } else if (room.status === "Booked") {
-    statusColor = "bg-red-500";
-  } else {
-    statusColor = "bg-yellow-500";
-  }
-
-  const imageUrl = room.image || RoomsImage;
-  const name = room.name || "-";
-  const capacity = room.capacity ?? 0;
-  const type = room.type || "-";
-  const price = room.price ?? 0;
-  const status = room.status || "Unknown";
-
+export default function RoomCardUser({ room, onClick, isSelected }) {
   return (
-    <article
-      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 relative group transition-transform duration-300 hover:shadow-xl cursor-pointer"
-      aria-label={`Kartu ruangan ${name}`}
-      onClick={() => onClick && onClick(room)}
-      tabIndex={0}
-      role="button"
+    <div
+      className={`
+        relative bg-white rounded-[20px] border border-[#EBEBEB] shadow transition-all overflow-hidden
+        cursor-pointer group hover:shadow-lg ${isSelected ? "ring-2 ring-orange-600" : ""}
+      `}
+      style={{ width: 304, height: 262, minWidth: 304 }}
+      onClick={onClick}
     >
-      <div className="absolute top-2 right-2 z-10">
-        <span
-          className={`${statusColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
+      {/* Image Room */}
+      <div className="relative h-[130px] w-full bg-gray-200">
+        {room.image ? (
+          <img
+            src={room.image}
+            alt={room.name}
+            style={{
+              objectFit: "cover",
+              width: "100%",
+              height: "100%",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">no image</div>
+        )}
+        {/* BADGE, pojok kanan atas seperti di Figma */}
+        <div
+          className="absolute top-4 right-4 bg-orange-500 text-white rounded-full shadow px-4 py-[2px] font-bold text-sm tracking-wide"
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            lineHeight: 1.45,
+            letterSpacing: ".03em",
+            minWidth: 64,
+            textAlign: "center",
+            borderRadius: 50,
+            zIndex: 3,
+          }}
         >
-          {status}
-        </span>
-      </div>
-      <div className="w-full h-[174px] bg-gray-200 overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={`Foto ruangan ${name}`}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
-        />
-      </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
-          {name}
-        </h3>
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <FiUsers className="mr-2 text-blue-500" size={16} aria-hidden="true" />
-          <span>{capacity} people</span>
+          {room.type ? room.type.charAt(0).toUpperCase() + room.type.slice(1) : "Unknown"}
         </div>
-        <div className="flex items-center text-sm text-gray-600 mb-3">
-          <FiTag className="mr-2 text-green-500" size={16} aria-hidden="true" />
-          <span>{type} Type</span>
-        </div>
-        <p className="text-xl font-bold text-orange-500 mb-0">
-          {formatRupiah(price)} / hour
-        </p>
       </div>
-    </article>
+      {/* Info Card */}
+      <div className="px-5 pt-3 pb-4 flex flex-col gap-1">
+        <div className="font-semibold text-[20px] truncate mb-1">{room.name}</div>
+        <div className="flex flex-row items-center gap-2 text-[15px] text-gray-600 mb-1">
+          <FiUsers className="inline mr-1" />
+          {room.capacity > 0 ? `${room.capacity} people` : "-"}
+        </div>
+        <div className="flex flex-row items-center gap-2 text-[15px] font-medium text-orange-500 mt-2">
+          Rp {room.price?.toLocaleString("id-ID")} <span className="font-normal text-gray-400 ml-1">/ hour</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
 RoomCardUser.propTypes = {
   room: PropTypes.shape({
+    id: PropTypes.any,
     name: PropTypes.string,
     type: PropTypes.string,
     capacity: PropTypes.number,
     price: PropTypes.number,
-    status: PropTypes.string,
     image: PropTypes.string,
   }),
   onClick: PropTypes.func,
+  isSelected: PropTypes.bool,
 };
-
-export default React.memo(RoomCardUser);

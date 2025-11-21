@@ -4,6 +4,7 @@ import { FiCalendar } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+// === Helper ===
 const generateTimeOptions = () => {
   const arr = [];
   for (let h = 0; h < 24; h++) {
@@ -90,17 +91,16 @@ function ReservationForm({
 
   return (
     <>
-      {/* BACKDROP LANDING PAGE (harus sama dengan desain Figma) */}
+      {/* Modal overlay transparan/gelap */}
       <div
-        className="fixed inset-0 z-40 bg-white"
+        className="fixed inset-0 z-40 bg-black/20"
         onClick={onClose}
         aria-label="Backdrop"
         data-testid="modal-backdrop"
       />
-      {/* MODAL FORM */}
+      {/* FORM POPUP */}
       <div className="fixed top-0 right-0 w-[456px] h-full max-h-screen z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
         <div className="flex items-center h-[56px] mb-2 sticky top-0 bg-white z-10">
-          {/* Tombol close/back (PASTI memanggil onClose) */}
           <button
             onClick={onClose}
             className="mr-3 p-0"
@@ -123,6 +123,7 @@ function ReservationForm({
           </span>
         </div>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit} autoComplete="off">
+          {/* Room Name */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Room Name
@@ -140,14 +141,15 @@ function ReservationForm({
               >
                 <option value="">Room Name</option>
                 {rooms.map(r => (
-                  <option key={r.id || r.name} value={r.name || r}>
-                    {r.name || r}
+                  <option key={r.id} value={r.id}>
+                    {/* value pakai id! */}
+                    {r.name || r.room_name || r.code}
                   </option>
                 ))}
               </select>
             )}
           </div>
-          {/* Other input fields... */}
+          {/* Name */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Name
@@ -162,6 +164,7 @@ function ReservationForm({
               autoComplete="off"
             />
           </div>
+          {/* Phone */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               No.Hp
@@ -175,6 +178,7 @@ function ReservationForm({
               required
             />
           </div>
+          {/* Company */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Company/Organization
@@ -188,6 +192,7 @@ function ReservationForm({
               required
             />
           </div>
+          {/* Date */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Date Reservation
@@ -202,6 +207,7 @@ function ReservationForm({
               showPopperArrow={false}
             />
           </div>
+          {/* Time */}
           <div className="flex gap-3">
             <div className="flex flex-col flex-1 gap-1">
               <label className="text-[15px] font-medium text-gray-700 mb-[2px]">Start Time</label>
@@ -232,6 +238,7 @@ function ReservationForm({
               </select>
             </div>
           </div>
+          {/* Participants */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">
               Total Participants
@@ -247,6 +254,7 @@ function ReservationForm({
               autoComplete="off"
             />
           </div>
+          {/* Snack */}
           <div className="flex items-center mb-1 pt-1">
             <input
               id="snack"
@@ -277,14 +285,13 @@ function ReservationForm({
                 >
                   <option value="">Snack Category</option>
                   {snacks.map(opt => (
-                    <option key={opt.id || opt.value || opt.name} value={opt.value || opt.name}>
-                      {opt.label || opt.name}
-                    </option>
+                    <option key={opt.id || opt.value || opt.name} value={opt.value || opt.name}>{opt.label || opt.name}</option>
                   ))}
                 </select>
               )}
             </div>
           )}
+          {/* Note */}
           <div className="flex flex-col gap-1">
             <label className="text-[15px] font-medium text-gray-700 mb-[2px]">Note</label>
             <textarea

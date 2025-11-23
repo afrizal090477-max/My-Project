@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { fetchRoomById } from "../API/userRoomAPI"; // <- UBAH ke userRoomAPI jika untuk user!
+import { fetchRoomById } from "../API/userRoomAPI";
 
-export default function ReservationDetails({
-  isOpen,
-  data = {},
-  onClose,
-  onSubmit,
-}) {
+export default function ReservationDetails({ isOpen, data = {}, onClose, onSubmit }) {
   const [room, setRoom] = useState(null);
 
-  // Fetch Room detail berdasarkan room_id
   useEffect(() => {
     if (isOpen && data.room_id) {
       fetchRoomById(data.room_id)
@@ -23,7 +17,6 @@ export default function ReservationDetails({
 
   if (!isOpen) return null;
 
-  // PATCH: mapping -- pake field sesuai BE kamu!
   const roomName = room?.room_name || room?.name || "-";
   const roomType = room?.room_type || "-";
   const roomCapacity = room?.capacity !== undefined ? room.capacity : "-";
@@ -33,6 +26,7 @@ export default function ReservationDetails({
       : "-";
 
   const reservationDate = data.date_reservation || "-";
+  const endDate = data.end_date || "-";
   const duration =
     data.start_time && data.end_time
       ? `${data.start_time} - ${data.end_time}`
@@ -41,11 +35,9 @@ export default function ReservationDetails({
   const snackCategory = data.snack ?? "-";
   const snackPackages = data.snackPackages ?? "-";
   const note = data.note ?? "-";
-  const detailRoomPrice =
-    data.detailRoomPrice !== undefined ? data.detailRoomPrice : "-";
-  const detailSnackPrice =
-    data.detailSnackPrice !== undefined ? data.detailSnackPrice : "-";
-  const total = data.total !== undefined ? data.total : "-";
+  const detailRoomPrice = !isNaN(data.detailRoomPrice) ? Number(data.detailRoomPrice) : 0;
+  const detailSnackPrice = !isNaN(data.detailSnackPrice) ? Number(data.detailSnackPrice) : 0;
+  const total = !isNaN(data.total) ? Number(data.total) : 0;
 
   return (
     <div className="fixed top-0 right-0 w-[456px] h-full z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
@@ -109,6 +101,10 @@ export default function ReservationDetails({
               <span>{reservationDate}</span>
             </div>
             <div className="flex justify-between">
+              <span>End Date</span>
+              <span>{endDate}</span>
+            </div>
+            <div className="flex justify-between">
               <span>Duration</span>
               <span>{duration}</span>
             </div>
@@ -138,16 +134,16 @@ export default function ReservationDetails({
           <div className="text-sm text-gray-800 flex flex-col gap-0.5">
             <div className="flex justify-between">
               <span>{roomName}</span>
-              <span>{detailRoomPrice !== "-" ? detailRoomPrice.toLocaleString("id-ID") : "-"}</span>
+              <span>{detailRoomPrice ? detailRoomPrice.toLocaleString("id-ID") : "-"}</span>
             </div>
             <div className="flex justify-between">
               <span>{snackPackages || snackCategory}</span>
-              <span>{detailSnackPrice !== "-" ? detailSnackPrice.toLocaleString("id-ID") : "-"}</span>
+              <span>{detailSnackPrice ? detailSnackPrice.toLocaleString("id-ID") : "-"}</span>
             </div>
             <hr className="my-1" />
             <div className="flex justify-between text-xl font-bold">
               <span></span>
-              <span>Rp {total !== "-" ? total.toLocaleString("id-ID") : "-"}</span>
+              <span>Rp {total ? total.toLocaleString("id-ID") : "-"}</span>
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ function getStatusStyle(status) {
     case "booked":
     case "pending":
       return "bg-orange-100 text-orange-600 border border-orange-300 px-3 py-1 rounded-[16px] text-xs font-bold";
-    case "success":
+    
     case "confirmed":
       return "bg-green-100 text-green-600 border border-green-300 px-3 py-1 rounded-[16px] text-xs font-bold";
     case "cancel":

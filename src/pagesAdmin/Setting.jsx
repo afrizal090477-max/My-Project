@@ -2,15 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import defaultPhoto from "../assets/home.png";
 import { fetchProfile, updateProfile } from "../API/profileAPI";
 import { useUserProfile } from "../context/UserProfileContext";
+import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
-export default function UserSetting() {
+export default function AdminSetting() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     username: "",
     role: "",
-    status: "",      // tetap ada di state
-    language: "",    // tetap ada di state
+    status: "",
+    language: "",
     password: "",
   });
   const [photo, setPhoto] = useState("");
@@ -19,8 +21,10 @@ export default function UserSetting() {
   const fileInputRef = useRef(null);
 
   const { updateProfilePhoto } = useUserProfile();
+  const { token } = useAuth();
 
   useEffect(() => {
+    if (!token) return; // Hindari fetch tanpa token
     const loadProfile = async () => {
       try {
         const data = await fetchProfile();
@@ -28,18 +32,18 @@ export default function UserSetting() {
           email: data.email || "",
           username: data.username || "",
           role: data.role || "",
-          status: data.status || "",     // tetap ambil jika endpoint sudah support
-          language: data.language || "", // tetap ambil jika endpoint sudah support
+          status: data.status || "",
+          language: data.language || "",
           password: "********",
         });
         setPhoto(data.photo_url || data.photo || "");
       } catch {
-        alert("Gagal memuat profil user!");
+        toast.error("Gagal memuat profil admin!");
       }
       setLoading(false);
     };
     loadProfile();
-  }, []);
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,8 +57,9 @@ export default function UserSetting() {
         fd.append("email", formData.email);
         fd.append("username", formData.username);
         fd.append("role", formData.role);
-        // fd.append("status", formData.status);      // nonaktifkan sementara
-        // fd.append("language", formData.language);  // nonaktifkan sementara
+        // Jika field status/language sudah didukung endpoint, aktifkan baris di bawah:
+        // fd.append("status", formData.status);
+        // fd.append("language", formData.language);
         if (photoFile) fd.append("photo", photoFile);
         if (
           formData.password &&
@@ -66,12 +71,12 @@ export default function UserSetting() {
         const updated = await updateProfile(fd);
         if (updated?.photo_url) {
           setPhoto(updated.photo_url);
-          updateProfilePhoto(updated.photo_url);
+          updateProfilePhoto(updated.photo_url); // Sync photo header
         }
         setPhotoFile(null);
-        alert("Perubahan profil berhasil disimpan!");
+        toast.success("Perubahan profil berhasil disimpan!");
       } catch (error) {
-        alert("Gagal menyimpan perubahan profil.");
+        toast.error("Gagal menyimpan perubahan profil.");
       }
     }
     setIsEditing((prev) => !prev);
@@ -83,7 +88,7 @@ export default function UserSetting() {
     const file = e.target.files[0];
     if (!file) return;
     setPhotoFile(file);
-    setPhoto(URL.createObjectURL(file)); // preview segera di UI
+    setPhoto(URL.createObjectURL(file));
   };
 
   if (loading) {
@@ -97,7 +102,7 @@ export default function UserSetting() {
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="w-full max-w-[1320px] mx-auto bg-white shadow-md p-8 rounded-xl">
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">My Account</h2>
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Admin Account</h2>
         <div className="flex items-center gap-4 mb-8">
           <img
             src={photo || defaultPhoto}
@@ -173,8 +178,8 @@ export default function UserSetting() {
                   onChange={handleChange}
                   className="w-full h-[48px] border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                 >
-                  <option>user</option>
-                  <option>admin</option>
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
                 </select>
               ) : (
                 <div className="w-full h-[48px] border border-gray-300 rounded-lg px-3 py-2 flex items-center bg-gray-50 text-gray-600">
@@ -215,8 +220,8 @@ export default function UserSetting() {
                   onChange={handleChange}
                   className="w-full h-[48px] border border-orange-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                 >
-                  <option>English</option>
-                  <option>Indonesia</option>
+                  <option value="English">English</option>
+                  <option value="Indonesia">Indonesia</option>
                 </select>
               ) : (
                 <div className="w-full h-[48px] border border-gray-300 rounded-lg px-3 py-2 flex items-center bg-gray-50 text-gray-600">

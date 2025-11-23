@@ -6,6 +6,7 @@ import {
 } from "../API/userProfileAPI";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../context/AuthContext";
 
 export default function UserSetting() {
   const [isEditing, setIsEditing] = useState(false);
@@ -21,8 +22,10 @@ export default function UserSetting() {
   const [photoFile, setPhotoFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
+  const { token } = useAuth();
 
   useEffect(() => {
+    if (!token) return;
     const loadProfile = async () => {
       try {
         const data = await fetchUserProfile();
@@ -41,7 +44,7 @@ export default function UserSetting() {
       setLoading(false);
     };
     loadProfile();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (photo) localStorage.setItem("userPhoto", photo);

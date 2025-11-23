@@ -1,15 +1,15 @@
+// src/pagesUser/UserHistory.jsx
+
 import React, { useState, useEffect, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import "react-datepicker/dist/react-datepicker.css";
 import ModalReportDetail from "../components/ModalReportDetail";
 import ModalConfirmCancel from "../components/ModalConfirmCancel";
-import { cancelReservation } from "../API/historyAPI";
+import { fetchReservations } from "../API/reservationAPI";
+import { cancelReservation } from "../API/historyAPI"; // jika kamu punya endpoint cancel khusus
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const API_BASE = "https://emiting-be.vercel.app/api/v1";
-const getUserToken = () => localStorage.getItem("token");
 
 const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
   <button
@@ -63,36 +63,30 @@ export default function UserHistory() {
     const fetchUserHistory = async () => {
       setLoading(true);
       try {
-        let params = [];
-        if (filters.startDate)
-          params.push(`start_date=${filters.startDate.toISOString().slice(0, 10)}`);
-        if (filters.endDate)
-          params.push(`end_date=${filters.endDate.toISOString().slice(0, 10)}`);
-        if (filters.roomType) params.push(`room_type=${filters.roomType}`);
-        if (filters.status) params.push(`status=${filters.status}`);
-        params.push(`page=${currentPage}`);
-        params.push(`limit=${rowsPerPage}`);
-        const url = `${API_BASE}/reservations?${params.join("&")}`;
-        const res = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + getUserToken(),
-          },
-        });
-        const data = await res.json();
+        const params = {
+          startDate: filters.startDate?.toISOString().slice(0, 10),
+          endDate: filters.endDate?.toISOString().slice(0, 10),
+          room_type: filters.roomType,
+          status: filters.status,
+          page: currentPage,
+          limit: rowsPerPage,
+        };
+        // Buang param kosong biar URL clean
+        Object.keys(params).forEach(
+          k => (params[k] === "" || params[k] == null) && delete params[k]
+        );
 
-        // Fallback: some API returns "data", others "data.data"
-        const list = (data.data || []).map((row) => ({
+        const data = await fetchReservations(params);
+        const list = (data || []).map((row) => ({
           id: row.id ?? "-",
           date: row.date_reservation || "-",
-          room: row.room_name || "-",
-          type: row.room_type || "-",
+          room: row.room_name || row.room?.name || "-",
+          type: row.room_type || row.room?.room_type || "-",
           status: row.status || "-",
         }));
 
         setHistories(list);
-        // setTotalPages(data.totalPages || 1); // tambahkan setelah backend support pagination info
-        setTotalPages(1); // sementara paging dummy
+        setTotalPages(1); // Ganti jika backend mu return total page
       } catch (e) {
         setHistories([]);
         setTotalPages(1);
@@ -184,6 +178,7 @@ export default function UserHistory() {
       <ToastContainer position="top-right" autoClose={2500} />
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[68px] mx-auto p-4 mb-1 flex flex-col md:flex-row md:items-end md:gap-4 gap-4 justify-between">
         <div className="flex flex-col md:flex-row flex-1 gap-4">
+          {/* Start Date */}
           <div className="w-full md:w-[200px]">
             <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
               Start Date
@@ -195,6 +190,7 @@ export default function UserHistory() {
               placeholder="Start date"
             />
           </div>
+          {/* End Date */}
           <div className="w-full md:w-[200px]">
             <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
               End Date
@@ -206,6 +202,7 @@ export default function UserHistory() {
               placeholder="End date"
             />
           </div>
+          {/* Room Type */}
           <div className="w-full md:w-[170px]">
             <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
               Room Type
@@ -225,6 +222,7 @@ export default function UserHistory() {
               ))}
             </select>
           </div>
+          {/* Status */}
           <div className="w-full md:w-[150px]">
             <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
               Status
@@ -270,9 +268,7 @@ export default function UserHistory() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="text-center text-gray-400 p-6">
-                  Loading...
-                </td>
+                <td colSpan={5} className="text-center text-gray-400 p-6">Loading...</td>
               </tr>
             ) : histories.length > 0 ? (
               histories.map((row) => (
@@ -296,9 +292,7 @@ export default function UserHistory() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="text-center text-gray-400 p-6">
-                  No data found.
-                </td>
+                <td colSpan={5} className="text-center text-gray-400 p-6">No data found.</td>
               </tr>
             )}
           </tbody>
@@ -316,9 +310,7 @@ export default function UserHistory() {
               className="border rounded px-2 py-1"
             >
               {[10, 25, 50, 100].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
+                <option key={num} value={num}>{num}</option>
               ))}
             </select>
             <span className="ml-2">Entries</span>

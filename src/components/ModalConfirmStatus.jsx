@@ -3,12 +3,12 @@ import { updateReservationStatus } from "../API/reservationAPI";
 
 const STATUS_OPSI = [
   { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "canceled", label: "Canceled" },
 ];
 
 export default function ModalConfirmStatus({ open, reservationId, onClose, onSuccess }) {
-  const [status, setStatus] = useState("approved");
+  const [status, setStatus] = useState("confirmed");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

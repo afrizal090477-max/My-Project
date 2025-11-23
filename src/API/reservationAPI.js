@@ -2,30 +2,30 @@ import apiHttp from "./http";
 
 // GET /reservations (dengan filter params)
 export const fetchReservations = async (params = {}) => {
-  const response = await apiHttp.get("/reservations", { params });
+  const response = await apiHttp.get("/api/v1/reservations", { params });
   return response.data.data;
 };
 
 // GET /reservations/{id}
 export const fetchReservationById = async (id) => {
-  const response = await apiHttp.get(`/reservations/${id}`);
+  const response = await apiHttp.get(`/api/v1/reservations/${id}`);
   return response.data.data;
 };
 
 // POST /reservations
 export const createReservation = async (reservationData) => {
-  const response = await apiHttp.post("/reservations", reservationData);
+  const response = await apiHttp.post("/api/v1/reservations", reservationData);
   return response.data.data;
 };
 
 // PUT /reservations/{id}
 export const updateReservation = async (id, data) => {
-  const response = await apiHttp.put(`/reservations/${id}`, data);
+  const response = await apiHttp.put(`/api/v1/reservations/${id}`, data);
   return response.data.data;
 };
 
 // DELETE /reservations/{id}
 export const deleteReservation = async (reservationId) => {
-  const response = await apiHttp.delete(`/reservations/${reservationId}`);
+  const response = await apiHttp.delete(`/api/v1/reservations/${reservationId}`);
   return response.data.data;
 };

@@ -1,5 +1,3 @@
-// src/pagesUser/UserHistory.jsx
-
 import React, { useState, useEffect, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
@@ -7,7 +5,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import ModalReportDetail from "../components/ModalReportDetail";
 import ModalConfirmCancel from "../components/ModalConfirmCancel";
 import { fetchReservations } from "../API/reservationAPI";
-import { cancelReservation } from "../API/historyAPI"; // jika kamu punya endpoint cancel khusus
+import { fetchRoomById } from "../API/userRoomAPI";
+import { cancelReservation } from "../API/historyAPI";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -48,7 +47,7 @@ export default function UserHistory() {
     status: "",
   });
   const [roomTypeOptions] = useState(["Small", "Medium", "Large"]);
-  const [statusOptions] = useState(["pending", "booked", "paid", "cancel"]);
+  const [statusOptions] = useState(["pending", "confirmed", "canceled"]);
   const [histories, setHistories] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -71,22 +70,39 @@ export default function UserHistory() {
           page: currentPage,
           limit: rowsPerPage,
         };
-        // Buang param kosong biar URL clean
         Object.keys(params).forEach(
           k => (params[k] === "" || params[k] == null) && delete params[k]
         );
 
         const data = await fetchReservations(params);
-        const list = (data || []).map((row) => ({
-          id: row.id ?? "-",
-          date: row.date_reservation || "-",
-          room: row.room_name || row.room?.name || "-",
-          type: row.room_type || row.room?.room_type || "-",
-          status: row.status || "-",
-        }));
+        const rows = data || [];
+
+        // Ambil semua unique room_id
+        const uniqueRoomIds = [...new Set(rows.map(row => row.room_id).filter(Boolean))];
+        // Ambil semua detail room batch
+        const roomDict = {};
+        await Promise.all(
+          uniqueRoomIds.map(async (id) => {
+            const room = await fetchRoomById(id);
+            roomDict[id] = room;
+          })
+        );
+
+        // Inject data room ke rows (mapping field API BE-mu)
+        const list = rows.map(row => {
+          const room = roomDict[row.room_id] || {};
+          return {
+            ...row,
+            room: room.room_name || room.name || room.title || "-", // Room Name
+            type: room.room_type || "-",                          // Room Type
+            capacity: room.capacity !== undefined && room.capacity !== null ? String(room.capacity) : "-",
+            price: room.price !== undefined && room.price !== null ? `Rp ${Number(room.price).toLocaleString("id-ID")}` : "-",
+            rooms: room // inject objek room lengkap untuk keperluan detail modal
+          };
+        });
 
         setHistories(list);
-        setTotalPages(1); // Ganti jika backend mu return total page
+        setTotalPages(1); // (optional, jika backend support pagination)
       } catch (e) {
         setHistories([]);
         setTotalPages(1);
@@ -115,7 +131,7 @@ export default function UserHistory() {
   const handleDownload = () => {
     const header = "Date,Room,Type,Status\n";
     const content = histories
-      .map((row) => `${row.date},${row.room},${row.type},${row.status}`)
+      .map((row) => `${row.date_reservation},${row.room},${row.type},${row.status}`)
       .join("\n");
     const blob = new Blob([header + content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -130,11 +146,9 @@ export default function UserHistory() {
 
   const getStatusStyle = (status) => {
     switch (status.toLowerCase()) {
-      case "booked":
-        return "bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "paid":
+      case "confirmed":
         return "bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold";
-      case "cancel":
+      case "canceled":
         return "bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs font-bold";
       case "pending":
         return "bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold";
@@ -179,7 +193,7 @@ export default function UserHistory() {
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[68px] mx-auto p-4 mb-1 flex flex-col md:flex-row md:items-end md:gap-4 gap-4 justify-between">
         <div className="flex flex-col md:flex-row flex-1 gap-4">
           {/* Start Date */}
-          <div className="w-full md:w-[200px]">
+          <div className="w-full md:w-[257px]">
             <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
               Start Date
             </label>
@@ -191,7 +205,7 @@ export default function UserHistory() {
             />
           </div>
           {/* End Date */}
-          <div className="w-full md:w-[200px]">
+          <div className="w-full md:w-[257px]">
             <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
               End Date
             </label>
@@ -203,7 +217,7 @@ export default function UserHistory() {
             />
           </div>
           {/* Room Type */}
-          <div className="w-full md:w-[170px]">
+          <div className="w-full md:w-[257px]">
             <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
               Room Type
             </label>
@@ -223,7 +237,7 @@ export default function UserHistory() {
             </select>
           </div>
           {/* Status */}
-          <div className="w-full md:w-[150px]">
+          <div className="w-full md:w-[257px]">
             <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
               Status
             </label>
@@ -273,7 +287,7 @@ export default function UserHistory() {
             ) : histories.length > 0 ? (
               histories.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{row.date}</td>
+                  <td className="p-3">{row.date_reservation || row.date || "-"}</td>
                   <td className="p-3">{row.room}</td>
                   <td className="p-3">{row.type}</td>
                   <td className="p-3">
@@ -360,8 +374,6 @@ export default function UserHistory() {
           open={showDetailModal}
           data={selectedRow}
           onClose={() => setShowDetailModal(false)}
-          onCancelClick={triggerCancel}
-          onPayClick={triggerPay}
         />
       )}
       {showCancelModal && (

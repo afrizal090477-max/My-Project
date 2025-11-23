@@ -170,7 +170,7 @@ export default function RoomReservation() {
           <select
             value={filters.type}
             onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}
-            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
+            className="border border-gray-300 rounded-lg w-full sm:w-[257px] md:w-[257px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Room Type</option>
             <option value="small">Small</option>
@@ -180,7 +180,7 @@ export default function RoomReservation() {
           <select
             value={filters.capacity}
             onChange={(e) => setFilters((f) => ({ ...f, capacity: e.target.value }))}
-            className="border border-gray-300 rounded-lg w-full sm:w-[180px] md:w-[180px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
+            className="border border-gray-300 rounded-lg w-full sm:w-[257px] md:w-[257px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Capacity</option>
             <option value="8">8 people</option>

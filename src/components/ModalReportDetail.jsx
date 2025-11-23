@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import ModalConfirmCancel from "./ModalConfirmCancel";
 import { patchReservationStatus, deleteReservation } from "../API/reportAPI";
+import { toast } from "react-toastify";
 
 export default function ModalReportDetail({ open, onClose, data }) {
   const [modalCancelOpen, setModalCancelOpen] = useState(false);
@@ -33,22 +34,24 @@ export default function ModalReportDetail({ open, onClose, data }) {
   const handleCancelConfirm = async () => {
     try {
       await deleteReservation(data.id); // CANCEL = DELETE
+      toast.success("Reservation canceled successfully!");
       setModalCancelOpen(false);
       if (onClose) onClose(true);
     } catch (err) {
       setModalCancelOpen(false);
+      toast.error("Failed to cancel: " + (err?.response?.data?.message || err.toString()));
       if (onClose) onClose(false);
-      alert("Failed to cancel: " + (err?.response?.data?.message || err.toString()));
     }
   };
 
   const handlePay = async () => {
     try {
       await patchReservationStatus(data.id, buildPayload("confirmed")); // status allowed backend
+      toast.success("Payment Success!");
       if (onClose) onClose(true);
     } catch (err) {
+      toast.error("Failed to pay: " + (err?.response?.data?.message || err.toString()));
       if (onClose) onClose(false);
-      alert("Failed to pay: " + (err?.response?.data?.message || err.toString()));
     }
   };
 

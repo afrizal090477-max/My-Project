@@ -49,11 +49,10 @@ export default function UserHistory() {
   const [roomTypeOptions] = useState(["Small", "Medium", "Large"]);
   const [statusOptions] = useState(["pending", "confirmed", "canceled"]);
   const [histories, setHistories] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-
+  const [filteredData, setFilteredData] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -62,24 +61,9 @@ export default function UserHistory() {
     const fetchUserHistory = async () => {
       setLoading(true);
       try {
-        const params = {
-          startDate: filters.startDate?.toISOString().slice(0, 10),
-          endDate: filters.endDate?.toISOString().slice(0, 10),
-          room_type: filters.roomType,
-          status: filters.status,
-          page: currentPage,
-          limit: rowsPerPage,
-        };
-        Object.keys(params).forEach(
-          k => (params[k] === "" || params[k] == null) && delete params[k]
-        );
-
-        const data = await fetchReservations(params);
-        const rows = data || [];
-
-        // Ambil semua unique room_id
+        const data = await fetchReservations({});
+        let rows = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
         const uniqueRoomIds = [...new Set(rows.map(row => row.room_id).filter(Boolean))];
-        // Ambil semua detail room batch
         const roomDict = {};
         await Promise.all(
           uniqueRoomIds.map(async (id) => {
@@ -87,33 +71,53 @@ export default function UserHistory() {
             roomDict[id] = room;
           })
         );
-
-        // Inject data room ke rows (mapping field API BE-mu)
-        const list = rows.map(row => {
+        rows = rows.map(row => {
           const room = roomDict[row.room_id] || {};
           return {
             ...row,
-            room: room.room_name || room.name || room.title || "-", // Room Name
-            type: room.room_type || "-",                          // Room Type
-            capacity: room.capacity !== undefined && room.capacity !== null ? String(room.capacity) : "-",
+            room: room.room_name || room.name || room.title || "-",
+            type: room.room_type || "-",
+            capacity: row.capacity !== undefined && row.capacity !== null ? String(row.capacity) : "-",
             price: room.price !== undefined && room.price !== null ? `Rp ${Number(room.price).toLocaleString("id-ID")}` : "-",
-            rooms: room // inject objek room lengkap untuk keperluan detail modal
+            rooms: room
           };
         });
-
-        setHistories(list);
-        setTotalPages(1); // (optional, jika backend support pagination)
+        setHistories(rows);
       } catch (e) {
         setHistories([]);
-        setTotalPages(1);
       }
       setLoading(false);
     };
     fetchUserHistory();
-  }, [filters, currentPage, rowsPerPage]);
+  }, []);
+
+  useEffect(() => {
+    let data = [...histories];
+    if (filters.roomType) data = data.filter(d => (d.type || "").toLowerCase() === filters.roomType);
+    if (filters.status) data = data.filter(d => (d.status || "").toLowerCase() === filters.status);
+    if (filters.startDate) data = data.filter(
+      d => new Date(d.date_reservation || d.date) >= filters.startDate
+    );
+    if (filters.endDate) data = data.filter(
+      d => new Date(d.date_reservation || d.date) <= filters.endDate
+    );
+    setFilteredData(data);
+    if ((currentPage - 1) * rowsPerPage >= data.length && currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line
+  }, [histories, filters, rowsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+  const pagedHistories = filteredData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > totalPages) return;
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
     setCurrentPage(newPage);
   };
 
@@ -162,13 +166,6 @@ export default function UserHistory() {
     setShowDetailModal(true);
   };
 
-  const triggerCancel = () => setShowCancelModal(true);
-
-  const triggerPay = () => {
-    setShowDetailModal(false);
-    toast.success("Payment Success");
-  };
-
   const handleConfirmCancel = async () => {
     if (!selectedRow) return;
     try {
@@ -182,21 +179,13 @@ export default function UserHistory() {
     }
   };
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
   return (
     <div className="p-2 sm:p-6 bg-[#F9FAFB] min-h-screen">
       <ToastContainer position="top-right" autoClose={2500} />
       <div className="bg-white rounded-xl shadow-md w-full max-w-[1320px] min-h-[68px] mx-auto p-4 mb-1 flex flex-col md:flex-row md:items-end md:gap-4 gap-4 justify-between">
         <div className="flex flex-col md:flex-row flex-1 gap-4">
-          {/* Start Date */}
           <div className="w-full md:w-[257px]">
-            <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">
-              Start Date
-            </label>
+            <label htmlFor="startDate" className="block text-sm text-gray-600 mb-1">Start Date</label>
             <DateInput
               id="startDate"
               selectedDate={filters.startDate}
@@ -204,11 +193,8 @@ export default function UserHistory() {
               placeholder="Start date"
             />
           </div>
-          {/* End Date */}
           <div className="w-full md:w-[257px]">
-            <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">
-              End Date
-            </label>
+            <label htmlFor="endDate" className="block text-sm text-gray-600 mb-1">End Date</label>
             <DateInput
               id="endDate"
               selectedDate={filters.endDate}
@@ -216,11 +202,8 @@ export default function UserHistory() {
               placeholder="End date"
             />
           </div>
-          {/* Room Type */}
           <div className="w-full md:w-[257px]">
-            <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">
-              Room Type
-            </label>
+            <label htmlFor="roomType" className="block text-sm text-gray-600 mb-1">Room Type</label>
             <select
               id="roomType"
               name="roomType"
@@ -236,11 +219,8 @@ export default function UserHistory() {
               ))}
             </select>
           </div>
-          {/* Status */}
           <div className="w-full md:w-[257px]">
-            <label htmlFor="status" className="block text-sm text-gray-600 mb-1">
-              Status
-            </label>
+            <label htmlFor="status" className="block text-sm text-gray-600 mb-1">Status</label>
             <select
               id="status"
               name="status"
@@ -284,8 +264,8 @@ export default function UserHistory() {
               <tr>
                 <td colSpan={5} className="text-center text-gray-400 p-6">Loading...</td>
               </tr>
-            ) : histories.length > 0 ? (
-              histories.map((row) => (
+            ) : pagedHistories.length > 0 ? (
+              pagedHistories.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-gray-50">
                   <td className="p-3">{row.date_reservation || row.date || "-"}</td>
                   <td className="p-3">{row.room}</td>
@@ -312,11 +292,9 @@ export default function UserHistory() {
           </tbody>
         </table>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3">
+        <div className="flex flex-row justify-between items-center mt-6 gap-3 w-full">
           <div>
-            <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">
-              Show:
-            </label>
+            <label htmlFor="rowsPerPageSelect" className="text-sm mr-2">Show:</label>
             <select
               id="rowsPerPageSelect"
               value={rowsPerPage}
@@ -329,42 +307,34 @@ export default function UserHistory() {
             </select>
             <span className="ml-2">Entries</span>
           </div>
-          <div className="flex items-center gap-2">
+          {/* PAGINATION BAR SELALU TAMPIL */}
+          <div className="flex items-center gap-1 select-none">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`p-2 rounded-full ${
-                currentPage === 1
-                  ? "bg-gray-200 text-gray-400"
-                  : "bg-white text-orange-500"
-              }`}
-            >
-              {"<"}
-            </button>
-            {pageNumbers.map((pageNum) => (
+              className="px-[18px] py-[7px] rounded-l-lg bg-white border border-[#D0D5DD] text-[#98A2B3] font-semibold hover:bg-[#FFF5EC] disabled:opacity-50"
+              style={{ marginRight: 2, borderRight: "none" }}
+            >&#8592; Prev</button>
+            {pageNumbers.map((num) => (
               <button
-                key={pageNum}
-                onClick={() => handlePageChange(pageNum)}
-                className={`p-2 rounded-full w-8 h-8 ${
-                  currentPage === pageNum
-                    ? "bg-orange-400 text-white"
-                    : "bg-white text-orange-500"
-                }`}
-              >
-                {pageNum}
-              </button>
+                key={num}
+                onClick={() => handlePageChange(num)}
+                disabled={currentPage === num}
+                className={`px-[15px] py-[7px] border border-[#D0D5DD] font-semibold text-base
+                  ${currentPage === num ? "bg-[#FF7316] text-white" : "bg-white text-[#344054] hover:bg-[#FFF5EC]"}`}
+                style={{
+                  borderLeft: num === 1 ? "none" : "1px solid #D0D5DD",
+                  borderRight: num === totalPages ? "none" : "1px solid #D0D5DD",
+                  borderRadius: num === 1 ? "0 0 0 0" : num === totalPages ? "0 0 0 0" : "0"
+                }}
+              >{num}</button>
             ))}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={`p-2 rounded-full ${
-                currentPage === totalPages
-                  ? "bg-gray-200 text-gray-400"
-                  : "bg-white text-orange-500"
-              }`}
-            >
-              {">"}
-            </button>
+              disabled={currentPage >= totalPages}
+              className="px-[18px] py-[7px] rounded-r-lg bg-white border border-[#D0D5DD] text-[#98A2B3] font-semibold hover:bg-[#FFF5EC] disabled:opacity-50"
+              style={{ marginLeft: 2, borderLeft: "none" }}
+            >Next &#8594;</button>
           </div>
         </div>
       </div>

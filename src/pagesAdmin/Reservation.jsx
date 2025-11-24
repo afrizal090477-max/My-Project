@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import { FaCalendarAlt } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
@@ -40,7 +40,6 @@ export default function Reservation() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleRoom, setScheduleRoom] = useState("");
   const [page, setPage] = useState(0);
-  const dragRef = useRef(null);
 
   useEffect(() => {
     setLoadingSnacks(true);
@@ -76,6 +75,7 @@ export default function Reservation() {
         events: mapRoomEvents(reservations, room)
       }));
       setRoomsData(mappedRooms);
+      setPage(0);
     } catch {
       setToast({ visible: true, type: "error", message: "Failed to load rooms or reservations" });
       setTimeout(() => setToast({ visible: false, type: "", message: "" }), 3500);
@@ -94,48 +94,17 @@ export default function Reservation() {
   );
 
   function getSlotPosition(ev) {
-    const startIdx = times.findIndex(h => h === (ev.start_time || "06:00").slice(0,5));
-    const endIdx = times.findIndex(h => h === (ev.end_time || "07:00").slice(0,5));
+    const startIdx = times.findIndex(h => h === (ev.start_time || "06:00").slice(0, 5));
+    const endIdx = times.findIndex(h => h === (ev.end_time || "07:00").slice(0, 5));
     const [startH, startM] = (ev.start_time || "06:00").split(":").map(Number);
     const [endH, endM] = (ev.end_time || "07:00").split(":").map(Number);
 
-    const startOffset = (startM/60) * SLOT_ROW_HEIGHT;
-    const endOffset = (endM/60) * SLOT_ROW_HEIGHT;
+    const startOffset = (startM / 60) * SLOT_ROW_HEIGHT;
+    const endOffset = (endM / 60) * SLOT_ROW_HEIGHT;
     const top = GRID_HEADER_HEIGHT + (startIdx * SLOT_ROW_HEIGHT) + startOffset;
     const height = Math.max(28, ((endIdx - startIdx) * SLOT_ROW_HEIGHT) + endOffset - startOffset - 10);
     return { top, height };
   }
-
-  // Paging slider
-  const barWidth = ROOM_COL_WIDTH * ROOMS_PER_PAGE;
-  const sliderWidth = barWidth / totalPage;
-  const handleRectDrag = e => {
-    const bar = dragRef.current.getBoundingClientRect();
-    const onMove = me => {
-      const x = (me.type === "touchmove" ? me.touches[0].clientX : me.clientX) - bar.left;
-      let percent = (x - sliderWidth/2) / (bar.width - sliderWidth);
-      percent = Math.max(0, Math.min(1, percent));
-      setPage(Math.round(percent * (totalPage - 1)));
-    };
-    const up = () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("mouseup", up);
-      window.removeEventListener("touchend", up);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("touchmove", onMove);
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchend", up);
-    e.preventDefault();
-  };
-  const handleRectClick = e => {
-    const bar = dragRef.current.getBoundingClientRect();
-    const x = (e.type === "touchstart" ? e.touches[0].clientX : e.clientX) - bar.left;
-    let percent = (x - sliderWidth/2) / (bar.width - sliderWidth);
-    percent = Math.max(0, Math.min(1, percent));
-    setPage(Math.round(percent * (totalPage - 1)));
-  };
 
   return (
     <>
@@ -152,8 +121,8 @@ export default function Reservation() {
           height: "88px",
           display: "flex", alignItems: "center"
         }}>
-        <div className="flex flex-row items-center gap-10 w-full" style={{minWidth:`${GRID_CONTAINER_WIDTH}px`}}>
-          <p className="font-semibold text-gray-900 min-w-max mr-2" style={{whiteSpace:"nowrap"}}>
+        <div className="flex flex-row items-center gap-10 w-full" style={{ minWidth: `${GRID_CONTAINER_WIDTH}px` }}>
+          <p className="font-semibold text-gray-900 min-w-max mr-2" style={{ whiteSpace: "nowrap" }}>
             {new Date().toLocaleDateString("en-GB", {
               weekday: "long", day: "numeric", month: "long", year: "numeric"
             })}
@@ -232,6 +201,7 @@ export default function Reservation() {
                   events: mapRoomEvents(reservations, room)
                 }));
                 setRoomsData(mappedRooms);
+                setPage(0);
                 setToast({
                   visible: true,
                   type: "success",
@@ -403,34 +373,50 @@ export default function Reservation() {
             })
           )}
         </div>
-        {/* Paging slider */}
-        <div className="w-full flex justify-start items-center mt-5" style={{ height: 18 }}>
-          <div
-            ref={dragRef}
-            className="bg-[#C4C4C4] rounded-full"
-            style={{
-              width: barWidth,
-              height: 8,
-              position: "relative",
-              cursor: "pointer"
-            }}
-            onMouseDown={handleRectDrag}
-            onTouchStart={handleRectDrag}
-            onClick={handleRectClick}
-            onTouchEnd={e => e.stopPropagation()}
-          >
-            <div style={{
-              position: "absolute",
-              left: `${page * sliderWidth}px`,
-              top: 0,
-              width: sliderWidth,
-              height: 8,
-              borderRadius: 8,
-              background: "#FF7316",
-              transition: "left 0.23s cubic-bezier(.62,0,.51,1)"
-            }} />
+
+        {/* Pagination - Professional Style like Figma */}
+        {totalPage > 1 && (
+          <div className="w-full flex justify-center items-center mt-8 gap-2 select-none" style={{ minHeight: 40 }}>
+            {/* Prev Button */}
+            <button
+              onClick={() => setPage(page > 0 ? page - 1 : 0)}
+              disabled={page === 0}
+              className="px-4 py-2 rounded-l-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              style={{ marginRight: 4 }}
+            >
+              ← Prev
+            </button>
+
+            {/* Page Numbers */}
+            {Array.from({ length: totalPage }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setPage(idx)}
+                className={`px-3 py-2 border border-[#D0D5DD] font-semibold text-sm transition-all
+                  ${page === idx
+                    ? "bg-[#FF7316] text-white border-[#FF7316]"
+                    : "bg-white text-[#344054] hover:bg-[#FFF5EC]"
+                  }`}
+                style={{
+                  borderLeftWidth: idx > 0 ? "1px" : "1px",
+                  borderRadius: 0
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+
+            {/* Next Button */}
+            <button
+              onClick={() => setPage(page < totalPage - 1 ? page + 1 : page)}
+              disabled={page >= totalPage - 1}
+              className="px-4 py-2 rounded-r-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              style={{ marginLeft: 4 }}
+            >
+              Next →
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modal, toast, dsb */}

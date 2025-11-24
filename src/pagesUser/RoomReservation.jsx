@@ -1,5 +1,3 @@
-// src/pagesUser/RoomReservation.jsx
-
 import React, { useMemo, useState, useEffect } from "react";
 import { FiSearch, FiChevronLeft, FiChevronRight, FiPlus } from "react-icons/fi";
 import RoomCardUser from "../components/RoomCardUser";
@@ -9,7 +7,11 @@ import ReservationDetails from "../components/ReservationDetails";
 import RoomDetailDemoUser from "../components/RoomDetailDemoUser";
 import { fetchRooms } from "../API/roomAPI";
 import { fetchSnacks } from "../API/snackAPI";
-import { createReservation, mapReservationPayload } from "../API/roomReservationAPI";
+import {
+  createReservation,
+  mapReservationPayload,
+  fetchReservationById,
+} from "../API/roomReservationAPI";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -25,6 +27,7 @@ export default function RoomReservation() {
   const [snacks, setSnacks] = useState([]);
   const [loadingSnacks, setLoadingSnacks] = useState(false);
   const [errorSnacks, setErrorSnacks] = useState(null);
+  const [reservationDetailsData, setReservationDetailsData] = useState(null);
 
   useEffect(() => {
     const fetchRoomData = async () => {
@@ -33,7 +36,7 @@ export default function RoomReservation() {
         const mappedRooms = (roomsFromAPI?.data || roomsFromAPI || []).map((room) => ({
           id: room.id,
           name: room.room_name || room.name || "-",
-          type: room.room_type || "-",  // FIX: room_type dari backend pasti string
+          type: room.room_type || "-",
           capacity: room.capacity ?? 0,
           price: room.price ?? 0,
           status: room.status || "Unknown",
@@ -56,6 +59,7 @@ export default function RoomReservation() {
       .finally(() => setLoadingSnacks(false));
   }, []);
 
+  // All filter & pagination client-side
   const filteredRooms = useMemo(() => {
     const search = filters.search.toLowerCase();
     const type = filters.type;
@@ -68,17 +72,18 @@ export default function RoomReservation() {
     });
   }, [rooms, filters]);
 
-  const totalPages = Math.ceil(filteredRooms.length / ITEMS_PER_PAGE) || 1;
-  const safeRoomsToDisplay = filteredRooms.filter(
-    (room) => typeof room.name === "string" && room.name.length > 0
-  );
-  const roomsToDisplay = safeRoomsToDisplay.slice(
+  const totalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+
+  const roomsToDisplay = filteredRooms.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const handlePageNumber = (num) => setCurrentPage(num);
   const handleRoomCardClick = (room) => setSelectedRoom(room);
 
   const handleAddReservation = () => {
@@ -101,55 +106,68 @@ export default function RoomReservation() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  let reservationDetailsData = { ...reservationData };
-  if (step === "DETAILS") {
-    const roomDetail = rooms.find(
-      (room) =>
-        String(room.id) === String(reservationData.room) ||
-        room.name === (reservationData.room || reservationData.roomName)
-    ) || {};
-    const roomPrice = roomDetail.price || 0;
-    let duration = 1;
-    if (reservationData.startTime && reservationData.endTime) {
-      const [sh, sm] = (reservationData.startTime || "").split(":").map(Number);
-      const [eh, em] = (reservationData.endTime || "").split(":").map(Number);
-      duration = Math.max(1, eh + em / 60 - sh - sm / 60);
-    }
-    const participants = parseInt(reservationData.participants || "1", 10);
-
-    const snackInfo = snacks.find(opt =>
-      opt.id === reservationData.snackCategory ||
-      opt.value === reservationData.snackCategory ||
-      opt.name === reservationData.snackCategory
-    );
-    const snackUnitPrice = snackInfo ? Number(snackInfo.price) : 0;
-
-    const detailRoomPrice = reservationData.startTime && reservationData.endTime ? duration * roomPrice : 0;
-    const detailSnackPrice = reservationData.addSnack ? snackUnitPrice * participants : 0;
-    const total = detailRoomPrice + detailSnackPrice;
-    reservationDetailsData = {
-      ...reservationDetailsData,
-      roomName: roomDetail.name || "-",
-      roomType: roomDetail.type || "-",
-      roomCapacity: roomDetail.capacity ? `${roomDetail.capacity} people` : "-",
-      roomPrice: roomDetail.price ? `Rp ${roomDetail.price.toLocaleString()}` : "-",
-      detailRoomPrice,
-      detailSnackPrice,
-      total,
-    };
-  }
-
+  // After submit, always make sure ReservationDetails shows complete data!
   async function handleFormSubmit(formData) {
     const payload = mapReservationPayload(formData);
     try {
-      await createReservation(payload);
-      setReservationData({ ...reservationData, ...formData });
+      const result = await createReservation(payload);
+      let detailData = { ...reservationData, ...formData };
+      if (result?.id) {
+        const apiDetail = await fetchReservationById(result.id);
+        if (apiDetail?.data) {
+          detailData = { ...detailData, ...apiDetail.data };
+        }
+      }
+
+      const room = rooms.find(
+        r => r.id === detailData.room || r.id === detailData.room_id
+      ) || {};
+      const roomPrice = Number(room.price) || 0;
+      const participants = Number(
+        detailData.participants ||
+        detailData.total_participant ||
+        room.capacity ||
+        1
+      );
+      const startTime = detailData.startTime || detailData.start_time || "08:00";
+      const endTime = detailData.endTime || detailData.end_time || "12:00";
+      const dateReservation = detailData.date_reservation || detailData.reservationDate || "-";
+      const [sh, sm] = startTime.split(":").map(Number);
+      const [eh, em] = endTime.split(":").map(Number);
+      const duration = ((eh + em / 60) - (sh + sm / 60)) || 1;
+
+      const snackInfo = snacks.find(opt =>
+        opt.id === detailData.snackCategory ||
+        opt.value === detailData.snackCategory ||
+        opt.name === detailData.snackCategory
+      );
+      const snackPrice = snackInfo ? Number(snackInfo.price) : 0;
+
+      detailData.roomName = detailData.roomName || room.name || "-";
+      detailData.roomType = detailData.roomType || room.type || "-";
+      detailData.roomCapacity = detailData.roomCapacity || `${room.capacity} people`;
+      detailData.start_time = startTime;
+      detailData.end_time = endTime;
+      detailData.date_reservation = dateReservation;
+      detailData.end_date = dateReservation;
+      detailData.duration = `${startTime} - ${endTime}`;
+      detailData.total_participant = participants;
+      detailData.detailRoomPrice = duration * roomPrice;
+      detailData.detailSnackPrice = detailData.addSnack ? snackPrice * participants : 0;
+      detailData.total = detailData.detailRoomPrice + detailData.detailSnackPrice;
+
+      setReservationDetailsData(detailData);
       setStep("DETAILS");
       showSuccessToast();
     } catch (error) {
       alert("Failed to add reservation!");
     }
   }
+
+  // Reset page ketika filter berubah supaya tidak nyasar ke page kosong
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, rooms]);
 
   return (
     <div className="p-2 sm:p-6 bg-gray-50 min-h-screen relative">
@@ -215,35 +233,45 @@ export default function RoomReservation() {
             />
           ))}
         </div>
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center mt-6 gap-3">
+        {/* Pagination bar always visible */}
+        <div className="mt-6 flex flex-row justify-between items-center w-full">
+          <div></div>
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`p-2 rounded-md border ${
-                currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
-              }`}
+              className={`p-2 rounded-md border
+              ${currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}
+              `}
             >
               <FiChevronLeft />
             </button>
-            <span className="text-gray-700 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
+            {pageNumbers.map((num) => (
+              <button
+                key={num}
+                onClick={() => handlePageNumber(num)}
+                className={`p-2 rounded-md w-8 h-8
+                  ${currentPage === num
+                    ? "bg-orange-400 text-white"
+                    : "bg-white text-orange-500"}
+                `}
+                disabled={currentPage === num}
+              >
+                {num}
+              </button>
+            ))}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-md border ${
-                currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-orange-50 text-orange-600"
-              }`}
+              className={`p-2 rounded-md border
+              ${currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}
+              `}
             >
               <FiChevronRight />
             </button>
           </div>
-        )}
+          <div></div>
+        </div>
       </div>
       {step === "SCHEDULE" && (
         <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
@@ -279,7 +307,7 @@ export default function RoomReservation() {
         <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
           <ReservationDetails
             isOpen
-            data={reservationDetailsData}
+            data={reservationDetailsData || reservationData}
             onClose={() => setStep("")}
             onSubmit={() => {
               setStep("");

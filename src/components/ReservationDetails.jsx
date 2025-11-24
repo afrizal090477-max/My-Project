@@ -6,38 +6,68 @@ export default function ReservationDetails({ isOpen, data = {}, onClose, onSubmi
   const [room, setRoom] = useState(null);
 
   useEffect(() => {
-    if (isOpen && data.room_id) {
+    if (isOpen && data.room_id && (!data.room_name && !data.name)) {
       fetchRoomById(data.room_id)
         .then((res) => setRoom(res))
         .catch(() => setRoom(null));
     } else {
       setRoom(null);
     }
-  }, [isOpen, data.room_id]);
+  }, [isOpen, data.room_id, data.room_name, data.name]);
 
   if (!isOpen) return null;
 
-  const roomName = room?.room_name || room?.name || "-";
-  const roomType = room?.room_type || "-";
-  const roomCapacity = room?.capacity !== undefined ? room.capacity : "-";
-  const roomPrice =
-    room?.price !== undefined
-      ? `Rp ${Number(room.price).toLocaleString("id-ID")}`
-      : "-";
+  // Room fallback
+  const roomInfo = {
+    name: data.roomName || data.room_name || data.name || room?.room_name || room?.name || "-",
+    type: data.roomType || data.room_type || room?.room_type || "-",
+    capacity: data.roomCapacity || data.capacity || room?.capacity || "-",
+    price:
+      (typeof data.roomPrice === "string" ? data.roomPrice :
+        data.price !== undefined ? `Rp ${Number(data.price).toLocaleString("id-ID")}` :
+        room?.price !== undefined ? `Rp ${Number(room.price).toLocaleString("id-ID")}` : "-"),
+  };
 
-  const reservationDate = data.date_reservation || "-";
-  const endDate = data.end_date || "-";
+  // Date values with fallback
+  const reservationDate = data.date_reservation || data.reservationDate || data.start_date || "-";
+  const endDate =
+    data.end_date ||
+    data.finish_date ||
+    (
+      data.start_time && data.end_time && reservationDate !== "-"
+        ? `${reservationDate} ${data.end_time}`
+        : "-"
+    );
+
+  // Duration: either string or calculated from start_time/end_time as fallback
   const duration =
-    data.start_time && data.end_time
-      ? `${data.start_time} - ${data.end_time}`
-      : "-";
-  const participants = data.total_participant ?? "-";
-  const snackCategory = data.snack ?? "-";
-  const snackPackages = data.snackPackages ?? "-";
-  const note = data.note ?? "-";
-  const detailRoomPrice = !isNaN(data.detailRoomPrice) ? Number(data.detailRoomPrice) : 0;
-  const detailSnackPrice = !isNaN(data.detailSnackPrice) ? Number(data.detailSnackPrice) : 0;
-  const total = !isNaN(data.total) ? Number(data.total) : 0;
+    data.duration ||
+    (
+      data.start_time && data.end_time
+        ? `${data.start_time} - ${data.end_time}`
+        : "-"
+    );
+
+  // Total Participants fallback
+  const participants = data.total_participant || data.participants || data.jumlah_peserta || "-";
+
+  // Snack fields
+  const snackCategory = data.snackCategory || data.snack || data.snack_category || "-";
+  const snackPackages = data.snackPackages || data.snack_package || "-";
+
+  // Note fallback
+  const note = data.note ?? data.catatan ?? "-";
+
+  // Price calculations fallback
+  const detailRoomPrice = !isNaN(data.detailRoomPrice) ? Number(data.detailRoomPrice)
+    : data.room_price ? Number(data.room_price) : 0;
+  const detailSnackPrice = !isNaN(data.detailSnackPrice) ? Number(data.detailSnackPrice)
+    : data.snack_price ? Number(data.snack_price) : 0;
+
+  // Calculate total
+  const total = !isNaN(data.total)
+    ? Number(data.total)
+    : detailRoomPrice + detailSnackPrice;
 
   return (
     <div className="fixed top-0 right-0 w-[456px] h-full z-50 bg-white shadow-2xl flex flex-col px-8 pt-3 pb-6 overflow-y-auto transition-all">
@@ -64,19 +94,19 @@ export default function ReservationDetails({ isOpen, data = {}, onClose, onSubmi
           <div className="text-sm text-gray-600 flex flex-col gap-0.5">
             <div className="flex justify-between">
               <span>Room Name</span>
-              <span className="font-semibold">{roomName}</span>
+              <span className="font-semibold">{roomInfo.name}</span>
             </div>
             <div className="flex justify-between">
               <span>Room Type</span>
-              <span>{roomType}</span>
+              <span>{roomInfo.type}</span>
             </div>
             <div className="flex justify-between">
               <span>Capacity</span>
-              <span>{roomCapacity}</span>
+              <span>{roomInfo.capacity}</span>
             </div>
             <div className="flex justify-between">
               <span>Price/hours</span>
-              <span>{roomPrice}</span>
+              <span>{roomInfo.price}</span>
             </div>
           </div>
         </div>
@@ -133,7 +163,7 @@ export default function ReservationDetails({ isOpen, data = {}, onClose, onSubmi
           <div className="text-[15px] font-medium mb-2 mt-1 text-gray-800">Total</div>
           <div className="text-sm text-gray-800 flex flex-col gap-0.5">
             <div className="flex justify-between">
-              <span>{roomName}</span>
+              <span>{roomInfo.name}</span>
               <span>{detailRoomPrice ? detailRoomPrice.toLocaleString("id-ID") : "-"}</span>
             </div>
             <div className="flex justify-between">

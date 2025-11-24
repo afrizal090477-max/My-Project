@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
+import { forgotPassword } from "../API/authAPI"; // Pastikan ini sudah terdefinisi
 
 export default function ResetPassword() {
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
@@ -12,13 +12,24 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
-    if (!email || !otp) {
-      setMessage({ type: "error", text: "Email dan OTP wajib diisi." });
+    if (!email) {
+      setMessage({ type: "error", text: "Email wajib diisi." });
       return;
     }
     setLoading(true);
-    // Di versi ini, langsung redirect ke new password setelah input OTP & email
-    navigate(`/new-password?email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}`);
+    try {
+      const result = await forgotPassword(email);
+      setMessage({
+        type: "success",
+        text: result.message || "Link reset password dikirim ke email.",
+      });
+      setTimeout(() => navigate("/login"), 1200);
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Proses reset password gagal. Silakan coba lagi.",
+      });
+    }
     setLoading(false);
   };
 
@@ -32,7 +43,6 @@ export default function ResetPassword() {
         position: "relative",
       }}
     >
-      
       <div
         className="relative bg-white rounded-[20px] shadow-2xl border-4 border-[#E7E7E7] flex flex-col items-center"
         style={{
@@ -50,11 +60,11 @@ export default function ResetPassword() {
             Reset Password
           </h2>
           <p className="text-[15px] text-gray-500 w-full text-center mt-1 mb-3">
-            Masukkan email terdaftar & OTP yang dikirim ke email kamu.
+            Masukkan email terdaftar untuk reset password.
           </p>
         </div>
         <form onSubmit={handleSubmit} className="w-full flex flex-col items-center ">
-          <div className="mb-3">
+          <div className="mb-4">
             <label htmlFor="email" className="block mb-2 text-gray-700 text-[15px] font-medium">
               Email
             </label>
@@ -69,27 +79,12 @@ export default function ResetPassword() {
               disabled={loading}
             />
           </div>
-          <div className="mb-4">
-            <label htmlFor="otp" className="block mb-2 text-gray-700 text-[15px] font-medium">
-              OTP (dari email)
-            </label>
-            <input
-              type="text"
-              id="otp"
-              placeholder="Kode OTP email"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              autoComplete="one-time-code"
-              className="w-[380px] h-12 px-4 border border-gray-300 rounded-lg bg-[#fafafa] placeholder:text-gray-400 focus:ring-2 focus:ring-[#FF7316] focus:border-[#FF7316] focus:outline-none"
-              disabled={loading}
-            />
-          </div>
           <button
             type="submit"
             className="w-[380px] h-12 bg-[#FF7316] hover:bg-[#e96d14] text-white font-semibold rounded-lg shadow-md transition text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            {loading ? "Memproses..." : "Submit OTP"}
+            {loading ? "Memproses..." : "Kirim Link Reset"}
           </button>
           {message.text && (
             <div

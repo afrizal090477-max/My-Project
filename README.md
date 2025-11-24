@@ -1,16 +1,85 @@
-# React + Vite
+# E-Meeting – Modern Room Reservation (React.js)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A professional and responsive room reservation and management app built with React.js.  
+Created as a portfolio project in my journey to switch career from senior marketing in Consumer Good, Beverage, and Agriculture to modern Frontend Engineering.
 
-Currently, two official plugins are available:
+[Demo Live on Vercel](https://my-project-ashy-one.vercel.app/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- Responsive dashboard, multi-page navigation (Rooms, Reservations, History, User Settings)
+- Room booking flow with grid, filter, search, and UX-first pagination
+- End-to-end reservation: schedule, snack & package selection, instant summary
+- History/report page – filterable, exportable, with clean paging
+- Authentication & role management, avatar/profile editing
+- Figma-based layout, pixel-perfect and modern SaaS UI
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 💻 Tech Stack
+
+- React.js (Functional + Hooks)
+- TailwindCSS & custom responsive styling
+- Modular API (fetch, Axios ready)
+- Context API for state management
+- React Datepicker, React Icons, Toastify
+- Figma design system realization
+- Deployed: Vercel
+
+---
+
+## 🚀 Getting Started
+
+1. **Clone the Repository**
+git clone https://github.com/afrizal090477-max/My-Project.git
+cd My-Project
+
+2. **Install Dependencies**
+npm install
+
+3. **Start the App Locally**
+npm run dev
+
+4. Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 👤 Author
+
+**Afrizal**  
+Ex-Marketing — Consumer Good, Beverage, and Agriculture  
+Frontend Developer (React.js, UI/UX, SPA, deployment)
+
+- 📧 [afrizal.090477@gmail.com](mailto:afrizal.090477@gmail.com)
+- 🔗 [LinkedIn - Afrizal Yakub](https://www.linkedin.com/in/afrizal-yakub-158083116/)
+- 💼 [Github Portfolio](https://github.com/afrizal090477-max/My-Project)
+- 🌐 [Live Demo on Vercel](https://my-project-ashy-one.vercel.app/)
+
+---
+
+## 🏆 Why Hire Me?
+
+- Real-world, modern code (React best practices, reusable component structure, modular API)
+- Strong UX attention and Figma implementation, looks great on all screens
+- Business acumen: deep experience in user-centric, practical solutions from previous marketing career
+- Growth Mindset: fast learner with proven project delivery, ready for real teamwork and production code
+
+---
+
+## 📸 Screenshots
+
+_Main Dashboard_  
+![Dashboard grid](src/assets/preview-dashboard.png)
+
+_Reservation Flow_  
+![Reservation](src/assets/preview-reservation.png)
+
+---
+
+> This project is a showcase of my transition to frontend engineering.  
+> **Ready for my first role in your product team – let’s build something amazing together!**
+
+
+

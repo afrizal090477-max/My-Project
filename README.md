@@ -51,6 +51,8 @@ npm run dev
 - **API Reference (OpenAPI/Swagger, No VPN needed):**  
   [https://emiting-be.vercel.app/api-docs/](https://emiting-be.vercel.app/api-docs/)
 
+  <p><i>Backend adalah layanan milik tim lain. Endpoint demo (login/daftar, dsb) bisa saja tidak aktif/404 karena di luar otorisasi saya sebagai FE. Semua integrasi, form, dan UX Frontend sudah sesuai Figma dan best practice kerja tim modern.</i></p>
+
 ---
 
 ## 👤 Author
@@ -79,11 +81,13 @@ Frontend Developer (React.js, UI/UX, SPA, deployment)
 
 _Main Dashboard_  
 ![Dashboard grid](src/assets/preview-dashboard.png)
-"Dashboard empty state: Clean handling when no data found; robust UI for all scenarios."
+
+<p><i>Dashboard empty state: Clean handling when no data found; robust UI for all scenarios.</i></p>
 
 _Reservation Flow_  
 ![Reservation](src/assets/preview-reservation.png)
-"Room Reservation grid: Modern UI, responsive, filterable, ready for production flows."
+
+<p><i>Room Reservation grid: Modern UI, responsive, filterable, ready for production flows."</i></p>
 
 ---
 

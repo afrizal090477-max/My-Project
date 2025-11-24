@@ -46,6 +46,13 @@ npm run dev
 
 ---
 
+## 🔗 Backend API Documentation
+
+- **API Reference (OpenAPI/Swagger, No VPN needed):**  
+  [https://emiting-be.vercel.app/api-docs/](https://emiting-be.vercel.app/api-docs/)
+
+---
+
 ## 👤 Author
 
 **Afrizal**  
@@ -72,9 +79,11 @@ Frontend Developer (React.js, UI/UX, SPA, deployment)
 
 _Main Dashboard_  
 ![Dashboard grid](src/assets/preview-dashboard.png)
+"Dashboard empty state: Clean handling when no data found; robust UI for all scenarios."
 
 _Reservation Flow_  
 ![Reservation](src/assets/preview-reservation.png)
+"Room Reservation grid: Modern UI, responsive, filterable, ready for production flows."
 
 ---
 

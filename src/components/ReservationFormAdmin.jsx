@@ -66,14 +66,14 @@ export default function ReservationFormAdmin({
   const handleNext = () => {
     setFormError("");
     if (!selectedRoomId || !name || !phone || !company || !startDate || !startTime || !endTime) {
-      setFormError("[translate:Field wajib harus diisi semua.]");
+      setFormError("Field wajib harus diisi semua.");
       return;
     }
     const foundRoom = rooms.find(
       r => String(r.id) === String(selectedRoomId) || String(r.room_id) === String(selectedRoomId)
     );
     if (!foundRoom?.id && !foundRoom?.room_id) {
-      setFormError("[translate:Room ID tidak valid/tidak ditemukan. Periksa master ruangan!]");
+      setFormError("Room ID tidak valid/tidak ditemukan. Periksa master ruangan!");
       return;
     }
     // Submit data ke parent

@@ -8,13 +8,13 @@ import apiHttp from "./http";
 export const deleteRoom = async (roomId, afterDelete) => {
   try {
     await apiHttp.delete(`/api/v1/rooms/${roomId}`);
-    alert("[translate:Room berhasil dihapus!]");
+    alert("Room berhasil dihapus!");
     if (typeof afterDelete === "function") afterDelete();
   } catch (err) {
     alert(
       err?.response?.data?.message ||
       err?.message ||
-      "[translate:Gagal menghapus room!]"
+      "Gagal menghapus room!"
     );
   }
 };

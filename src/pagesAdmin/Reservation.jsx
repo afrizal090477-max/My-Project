@@ -184,7 +184,7 @@ export default function Reservation() {
                 setToast({
                   visible: true,
                   type: "error",
-                  message: "[translate:Pilih Start Date dan End Date terlebih dahulu!]"
+                  message: "Pilih Start Date dan End Date terlebih dahulu!"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
                 return;
@@ -204,14 +204,14 @@ export default function Reservation() {
                 setToast({
                   visible: true,
                   type: "success",
-                  message: "[translate:Data berhasil difilter!]"
+                  message: "Data berhasil difilter!"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
               } catch {
                 setToast({
                   visible: true,
                   type: "error",
-                  message: "[translate:Filter gagal!]"
+                  message: "Filter gagal!"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
               }
@@ -220,7 +220,7 @@ export default function Reservation() {
             disabled={loading}
             className="h-[48px] w-[150px] border-2 !border-[#FF7316] text-[#FF7316] rounded-lg font-semibold bg-white hover:bg-[#FFF5EC] transition-all duration-200 flex items-center justify-center "
           >
-            {loading ? "[translate:Loading...]" : "Search"}
+            {loading ? "Loading..." : "Search"}
           </button>
           <div className="flex-1" />
           <button
@@ -382,7 +382,7 @@ export default function Reservation() {
               className="px-4 py-2 rounded-l-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ marginRight: 4 }}
             >
-              ← [translate:Prev]
+              ← Prev
             </button>
 
             {/* Page Numbers */}
@@ -411,7 +411,7 @@ export default function Reservation() {
               className="px-4 py-2 rounded-r-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ marginLeft: 4 }}
             >
-              [translate:Next] →
+              Next →
             </button>
           </div>
         )}
@@ -451,7 +451,7 @@ export default function Reservation() {
               onSubmit={async (finalData) => {
                 try {
                   const response = await createAdminReservation(finalData);
-                  setToast({ visible: true, type: "success", message: "[translate:Reservation added]" });
+                  setToast({ visible: true, type: "success", message: "Reservation added" });
                   let dateBooking = finalData.date_reservation || response?.data?.date_reservation;
                   if (dateBooking) {
                     const bookingDate = new Date(dateBooking);
@@ -460,7 +460,7 @@ export default function Reservation() {
                   }
                   await loadData();
                 } catch (e) {
-                  setToast({ visible: true, type: "error", message: "[translate:Failed to add reservation]" });
+                  setToast({ visible: true, type: "error", message: "Failed to add reservation" });
                 }
                 setStep(1);
                 setFormData(null);

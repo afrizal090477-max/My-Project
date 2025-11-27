@@ -4,9 +4,6 @@ import { FiX, FiCalendar } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-/**
- * ReservationFormAdmin.jsx FINAL — REVISI TERBENAR!
- */
 export default function ReservationFormAdmin({
   isOpen,
   onClose,
@@ -16,22 +13,18 @@ export default function ReservationFormAdmin({
   snacks = [],
   loadingSnacks = false,
   errorSnacks = null,
-  selectedRoomName = "",
+  selectedRoomId = "",
+  onRoomChange,
 }) {
-  // State utamanya UUID untuk room
+  // State peserta tetap lokal untuk input
   const [participants, setParticipants] = useState(data?.participants ? String(data.participants) : "1");
-  // Ambil UUID dari prop data/selectedRoomName jika ada
-  const [roomId, setRoomId] = useState(() => {
-    if (data?.room_id) return data.room_id;
-    if (selectedRoomName) {
-      const found = rooms.find(
-        r => r.room_name === selectedRoomName || r.code === selectedRoomName || r.name === selectedRoomName
-      );
-      return found?.id || found?.room_id || "";
-    }
-    return "";
-  });
 
+  // Sinkron peserta jika data berubah (misal edit)
+  useEffect(() => {
+    setParticipants(data?.participants ? String(data.participants) : "1");
+  }, [data?.participants]);
+
+  // State nama, phone, company dsb untuk input - sinkron dari prop data
   const [name, setName] = useState(data?.name || "");
   const [phone, setPhone] = useState(data?.phone || "");
   const [company, setCompany] = useState(data?.company || "");
@@ -47,39 +40,43 @@ export default function ReservationFormAdmin({
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    // Jika user klik room di luar form/reservation autocomplete, syncron langsung roomId dengan UUID rooms master
-    if (selectedRoomName && rooms.length > 0) {
-      const found = rooms.find(
-        r =>
-          r.room_name === selectedRoomName ||
-          r.code === selectedRoomName ||
-          r.name === selectedRoomName
-      );
-      if (found?.id) setRoomId(found.id);
-    }
-  }, [selectedRoomName, rooms]);
+    setName(data?.name || "");
+    setPhone(data?.phone || "");
+    setCompany(data?.company || "");
+    setDateRange([data?.dateStart ? new Date(data.dateStart) : null, null]);
+    setStartTime(data?.startTime || "");
+    setEndTime(data?.endTime || "");
+    setAddSnack(data?.addSnack || false);
+    setSnackCategory(data?.snackCategory || "");
+    setNote(data?.note || "");
+  }, [data]);
 
+  // Ambil startDate dari dateRange
   const [startDate] = dateRange;
   const hourOptions = [...Array(24).keys()].map(i => `${i.toString().padStart(2, "0")}:00`);
 
-  // Submit handler
+  // Handle room change dari select
+  const handleRoomChange = (e) => {
+    if (typeof onRoomChange === "function") {
+      onRoomChange(e.target.value);
+    }
+  };
+
+  // Submit handler Next
   const handleNext = () => {
     setFormError("");
-    if (!roomId || !name || !phone || !company || !startDate || !startTime || !endTime) {
-      setFormError("Field wajib harus diisi semua.");
+    if (!selectedRoomId || !name || !phone || !company || !startDate || !startTime || !endTime) {
+      setFormError("[translate:Field wajib harus diisi semua.]");
       return;
     }
-    // Cek benar-benar UUID dari room master
     const foundRoom = rooms.find(
-      r => String(r.id) === String(roomId) || String(r.room_id) === String(roomId)
+      r => String(r.id) === String(selectedRoomId) || String(r.room_id) === String(selectedRoomId)
     );
     if (!foundRoom?.id && !foundRoom?.room_id) {
-      setFormError("Room ID tidak valid/tidak ditemukan. Periksa master ruangan!");
+      setFormError("[translate:Room ID tidak valid/tidak ditemukan. Periksa master ruangan!]");
       return;
     }
-    // DEBUG waktu development:
-    // console.log("DEBUG UUID:", roomId, "foundRoom:", foundRoom);
-    // Submit field untuk backend:
+    // Submit data ke parent
     const reservationData = {
       room_id: foundRoom.id || foundRoom.room_id,
       pemesan: name,
@@ -99,12 +96,11 @@ export default function ReservationFormAdmin({
   if (!isOpen) return null;
   const inputStyle = "h-[48px] border border-gray-300 rounded-lg px-4 text-[15px]";
   const labelStyle = "text-[15px] font-medium text-gray-700";
-console.log("ROOMS MASTER:", rooms);
 
   return (
     <div className="fixed top-0 right-0 z-50 w-[456px] h-full max-h-screen bg-white shadow-2xl flex flex-col px-8 pt-5 pb-6 overflow-y-auto">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="font-bold text-xl text-gray-800">Reservation Form</h2>
+        <h2 className="font-bold text-xl text-gray-800"> Reservation Form </h2>
         <button onClick={onClose} className="p-1 text-gray-500 hover:text-orange-600">
           <FiX size={25} />
         </button>
@@ -116,8 +112,8 @@ console.log("ROOMS MASTER:", rooms);
         <label className={labelStyle}>Room Name</label>
         <select
           className={inputStyle}
-          value={roomId}
-          onChange={e => setRoomId(e.target.value)}
+          value={selectedRoomId}
+          onChange={handleRoomChange}
         >
           <option value="">Choose Room</option>
           {rooms.map(r => (
@@ -139,7 +135,7 @@ console.log("ROOMS MASTER:", rooms);
             selected={startDate}
             onChange={date => setDateRange([date, null])}
             dateFormat="dd/MM/yyyy"
-            className={inputStyle + " bg-white"}
+            className={inputStyle + " bg-white pr-52"}
             placeholderText="Select date"
           />
           <FiCalendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={22} />
@@ -218,5 +214,6 @@ ReservationFormAdmin.propTypes = {
   snacks: PropTypes.array,
   loadingSnacks: PropTypes.bool,
   errorSnacks: PropTypes.string,
-  selectedRoomName: PropTypes.string,
+  selectedRoomId: PropTypes.string,
+  onRoomChange: PropTypes.func,
 };

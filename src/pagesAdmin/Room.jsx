@@ -18,70 +18,104 @@ const STATIC_CAPACITIES = [
   { value: "12", label: "12 People" },
   { value: "14", label: "14 People" },
   { value: "20", label: "20 People" },
-  { value: "30", label: "30 People" }
+  { value: "30", label: "30 People" },
 ];
 
 export default function Room() {
   const [rooms, setRooms] = useState([]);
-  const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
+  const [filters, setFilters] = useState({
+    search: "",
+    type: "",
+    capacity: "",
+  });
   const [capacities, setCapacities] = useState(STATIC_CAPACITIES);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
+
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+  });
+
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { setCapacities(STATIC_CAPACITIES); }, []);
-
   useEffect(() => {
-    const loadRooms = async () => {
-      setLoading(true);
-      try {
-        const params = {
-          room_type: filters.type,
-          page: currentPage,
-          limit: ITEMS_PER_PAGE,
-        };
-        const data = await fetchRooms(params);
-        let apiRooms = data.data || [];
-        apiRooms = apiRooms.map((room) => ({
-          ...room,
-          id: room.id,
-          name: room.room_name || room.name || "-",
-          type: room.room_type || room.type || "",
-          image: room.image || RoomsImage,
-          capacity: typeof room.capacity === "undefined" ? "-" : room.capacity,
-          price: room.price || 0,
-        }));
+    setCapacities(STATIC_CAPACITIES);
+  }, []);
 
-        if (filters.capacity) {
-          apiRooms = apiRooms.filter(room =>
-            String(room.capacity) === String(filters.capacity)
-          );
-        }
-        if (filters.search) {
-          const src = filters.search.toLowerCase();
-          apiRooms = apiRooms.filter((room) =>
-            room.name.toLowerCase().includes(src)
-          );
-        }
-        setRooms(apiRooms);
-        setTotalPages(Math.ceil((data.total || apiRooms.length) / ITEMS_PER_PAGE) || 1);
-      } catch (error) {
-        console.error("Failed to load rooms", error);
+  // Fungsi loadRooms sekarang menerima page dan membaca pagination dari BE
+  const loadRooms = async (page = 1) => {
+    setLoading(true);
+    try {
+      const params = {
+        room_type: filters.type,
+        page,
+        limit: ITEMS_PER_PAGE,
+      };
+      const data = await fetchRooms(params);
+
+      let apiRooms = data.data || data.data?.data || [];
+      apiRooms = apiRooms.map((room) => ({
+        ...room,
+        id: room.id,
+        name: room.room_name || room.name || "-",
+        type: room.room_type || room.type || "",
+        image: room.image || RoomsImage,
+        capacity:
+          typeof room.capacity === "undefined" ? "-" : room.capacity,
+        price: room.price || 0,
+      }));
+
+      // Filter capacity di FE
+      if (filters.capacity) {
+        apiRooms = apiRooms.filter(
+          (room) => String(room.capacity) === String(filters.capacity)
+        );
       }
-      setLoading(false);
-    };
-    loadRooms();
-  }, [filters, currentPage]);
+
+      // Filter search di FE
+      if (filters.search) {
+        const src = filters.search.toLowerCase();
+        apiRooms = apiRooms.filter((room) =>
+          room.name.toLowerCase().includes(src)
+        );
+      }
+
+      setRooms(apiRooms);
+
+      const totalFromApi =
+        data.total ||
+        data.pagination?.totalItems ||
+        data.pagination?.total ||
+        apiRooms.length;
+
+      const totalPages =
+        Math.ceil(totalFromApi / ITEMS_PER_PAGE) || 1;
+
+      setPagination({
+        currentPage: page,
+        totalPages,
+      });
+    } catch (error) {
+      console.error("Failed to load rooms", error);
+      setRooms([]);
+      setPagination({ currentPage: 1, totalPages: 1 });
+    }
+    setLoading(false);
+  };
+
+  // Load awal & setiap filter berubah → reset ke page 1
+  useEffect(() => {
+    loadRooms(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   function handleAddClick() {
     setSelectedRoom(null);
     setIsModalOpen(true);
   }
 
-  // FIX: Handler edit untuk room, supaya modal edit terbuka
   function handleEditRoom(room) {
     setSelectedRoom(room);
     setIsModalOpen(true);
@@ -98,16 +132,17 @@ export default function Room() {
       if (formData.file) {
         dataToSend.append("image", formData.file);
       }
+
       if (formData.id) {
         await updateRoom(formData.id, dataToSend, true);
-        setRooms((prev) =>
-          prev.map((r) => (r.id === formData.id ? { ...r, ...formData } : r))
-        );
+        // setelah edit, reload page aktif supaya data konsisten dengan BE
+        await loadRooms(pagination.currentPage);
       } else {
-        const newRoom = await addRoom(dataToSend, true);
-        setRooms((prev) => [newRoom, ...prev]);
+        await addRoom(dataToSend, true);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
+        // setelah tambah, idealnya pindah ke page 1 atau reload page aktif
+        await loadRooms(1);
       }
     } catch (error) {
       console.error("Failed to save room", error);
@@ -119,20 +154,13 @@ export default function Room() {
 
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  }
-
-  function handlePrevPage() {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  }
-
-  function handleNextPage() {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <RoomDetailDemoAdmin />
+
+      {/* Filter & Add */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 max-w-[1320px] mx-auto p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-4 items-center flex-1">
           <div className="relative flex-1 min-w-[280px] max-w-[362px]">
@@ -140,14 +168,21 @@ export default function Room() {
               type="text"
               placeholder="Search room..."
               value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
+              onChange={(e) =>
+                handleFilterChange("search", e.target.value)
+              }
               className="w-full h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none"
             />
-            <FiSearch className="absolute left-3 top-3 text-gray-400" size={18} />
+            <FiSearch
+              className="absolute left-3 top-3 text-gray-400"
+              size={18}
+            />
           </div>
           <select
             value={filters.type}
-            onChange={(e) => handleFilterChange("type", e.target.value)}
+            onChange={(e) =>
+              handleFilterChange("type", e.target.value)
+            }
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Room Type</option>
@@ -159,12 +194,16 @@ export default function Room() {
           </select>
           <select
             value={filters.capacity}
-            onChange={e => handleFilterChange("capacity", e.target.value)}
+            onChange={(e) =>
+              handleFilterChange("capacity", e.target.value)
+            }
             className="border border-gray-300 rounded-lg w-[280px] h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           >
             <option value="">Capacity</option>
-            {capacities.map(cap => (
-              <option key={cap.value} value={cap.value}>{cap.label}</option>
+            {capacities.map((cap) => (
+              <option key={cap.value} value={cap.value}>
+                {cap.label}
+              </option>
             ))}
           </select>
         </div>
@@ -176,11 +215,13 @@ export default function Room() {
         </button>
       </div>
 
-      {/* FIX: ganti onEdit jadi onEditRoom */}
+      {/* ManageRoom sekarang pakai pagination dari BE */}
       <ManageRoom
         rooms={rooms}
-        fetchRooms={() => {}}
+        fetchRooms={loadRooms}
         onEditRoom={handleEditRoom}
+        pagination={pagination}
+        loading={loading}
       />
 
       <ModalEditRoom

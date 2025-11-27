@@ -18,7 +18,11 @@ const ITEMS_PER_PAGE = 12;
 export default function RoomReservation() {
   const [rooms, setRooms] = useState([]);
   const [filters, setFilters] = useState({ search: "", type: "", capacity: "" });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+  });
+
   const [step, setStep] = useState("");
   const [reservationData, setReservationData] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
@@ -28,62 +32,112 @@ export default function RoomReservation() {
   const [loadingSnacks, setLoadingSnacks] = useState(false);
   const [errorSnacks, setErrorSnacks] = useState(null);
   const [reservationDetailsData, setReservationDetailsData] = useState(null);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
+  const currentPage = pagination.currentPage;
+  const totalPages = pagination.totalPages;
+
+  // Load rooms dari BE dengan page & limit
+  const loadRooms = async (page = 1) => {
+    setLoadingRooms(true);
+    try {
+      const params = {
+        room_type: filters.type,
+        page,
+        limit: ITEMS_PER_PAGE,
+      };
+      const roomsFromAPI = await fetchRooms(params);
+
+      const rawArray =
+        roomsFromAPI?.data ||
+        roomsFromAPI?.data?.data ||
+        roomsFromAPI ||
+        [];
+
+      const mappedRooms = rawArray.map((room) => ({
+        id: room.id,
+        name: room.room_name || room.name || "-",
+        type: room.room_type || "-",
+        capacity: room.capacity ?? 0,
+        price: room.price ?? 0,
+        status: room.status || "Unknown",
+        image: room.image,
+      }));
+
+      setRooms(mappedRooms);
+
+      const totalFromApi =
+        roomsFromAPI.total ||
+        roomsFromAPI.pagination?.totalItems ||
+        roomsFromAPI.pagination?.total ||
+        mappedRooms.length;
+
+      const totalPagesCalc =
+        Math.ceil(totalFromApi / ITEMS_PER_PAGE) || 1;
+
+      setPagination({
+        currentPage: page,
+        totalPages: totalPagesCalc,
+      });
+
+      setError("");
+    } catch (err) {
+      setRooms([]);
+      setPagination({ currentPage: 1, totalPages: 1 });
+      setError("Room data cannot be loaded");
+    }
+    setLoadingRooms(false);
+  };
+
+  // Load rooms pertama kali & setiap filter type/capacity/search berubah → reset ke page 1
   useEffect(() => {
-    const fetchRoomData = async () => {
-      try {
-        const roomsFromAPI = await fetchRooms();
-        const mappedRooms = (roomsFromAPI?.data || roomsFromAPI || []).map((room) => ({
-          id: room.id,
-          name: room.room_name || room.name || "-",
-          type: room.room_type || "-",
-          capacity: room.capacity ?? 0,
-          price: room.price ?? 0,
-          status: room.status || "Unknown",
-          image: room.image,
-        }));
-        setRooms(mappedRooms);
-      } catch (err) {
-        setRooms([]);
-        setError("Room data cannot be loaded");
-      }
-    };
-    fetchRoomData();
-  }, []);
+    loadRooms(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.type, filters.capacity, filters.search]);
 
+  // Load snacks
   useEffect(() => {
     setLoadingSnacks(true);
     fetchSnacks()
-      .then((data) => setSnacks(Array.isArray(data) ? data : (data?.data || [])))
+      .then((data) =>
+        setSnacks(Array.isArray(data) ? data : data?.data || [])
+      )
       .catch(() => setErrorSnacks("Failed to load snacks"))
       .finally(() => setLoadingSnacks(false));
   }, []);
 
-  // All filter & pagination client-side
+  // Filter tambahan di client (ringan, hanya untuk refine dari hasil page)
   const filteredRooms = useMemo(() => {
     const search = filters.search.toLowerCase();
     const type = filters.type;
-    const minCapacity = filters.capacity ? parseInt(filters.capacity, 10) : null;
+    const minCapacity = filters.capacity
+      ? parseInt(filters.capacity, 10)
+      : null;
     return rooms.filter((room) => {
-      const matchSearch = (room.name || "").toLowerCase().includes(search);
-      const matchType = type ? (room.type && room.type.toLowerCase() === type.toLowerCase()) : true;
-      const matchCapacity = minCapacity !== null ? Number(room.capacity) >= minCapacity : true;
+      const matchSearch = (room.name || "")
+        .toLowerCase()
+        .includes(search);
+      const matchType = type
+        ? room.type &&
+          room.type.toLowerCase() === type.toLowerCase()
+        : true;
+      const matchCapacity =
+        minCapacity !== null
+          ? Number(room.capacity) >= minCapacity
+          : true;
       return matchSearch && matchType && matchCapacity;
     });
   }, [rooms, filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRooms.length / ITEMS_PER_PAGE));
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+  // Karena rooms sudah dipaginate BE, di UI kita tampilkan filteredRooms saja
+  const roomsToDisplay = filteredRooms;
 
-  const roomsToDisplay = filteredRooms.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const handlePrevPage = () =>
+    currentPage > 1 && loadRooms(currentPage - 1);
+  const handleNextPage = () =>
+    currentPage < totalPages && loadRooms(currentPage + 1);
+  const handlePageNumber = (num) => loadRooms(num);
 
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const handlePageNumber = (num) => setCurrentPage(num);
   const handleRoomCardClick = (room) => setSelectedRoom(room);
 
   const handleAddReservation = () => {
@@ -95,8 +149,12 @@ export default function RoomReservation() {
       room: selectedRoom.id,
       roomName: selectedRoom.name,
       roomType: selectedRoom.type,
-      roomCapacity: selectedRoom.capacity ? `${selectedRoom.capacity} people` : "-",
-      roomPrice: selectedRoom.price ? `Rp ${selectedRoom.price.toLocaleString()}` : "-",
+      roomCapacity: selectedRoom.capacity
+        ? `${selectedRoom.capacity} people`
+        : "-",
+      roomPrice: selectedRoom.price
+        ? `Rp ${selectedRoom.price.toLocaleString()}`
+        : "-",
     });
     setStep("SCHEDULE");
   };
@@ -106,7 +164,7 @@ export default function RoomReservation() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  // After submit, always make sure ReservationDetails shows complete data!
+  // After submit, selalu pastikan ReservationDetails punya data lengkap
   async function handleFormSubmit(formData) {
     const payload = mapReservationPayload(formData);
     try {
@@ -119,33 +177,44 @@ export default function RoomReservation() {
         }
       }
 
-      const room = rooms.find(
-        r => r.id === detailData.room || r.id === detailData.room_id
-      ) || {};
+      const room =
+        rooms.find(
+          (r) => r.id === detailData.room || r.id === detailData.room_id
+        ) || {};
       const roomPrice = Number(room.price) || 0;
       const participants = Number(
         detailData.participants ||
-        detailData.total_participant ||
-        room.capacity ||
-        1
+          detailData.total_participant ||
+          room.capacity ||
+          1
       );
-      const startTime = detailData.startTime || detailData.start_time || "08:00";
-      const endTime = detailData.endTime || detailData.end_time || "12:00";
-      const dateReservation = detailData.date_reservation || detailData.reservationDate || "-";
+      const startTime =
+        detailData.startTime || detailData.start_time || "08:00";
+      const endTime =
+        detailData.endTime || detailData.end_time || "12:00";
+      const dateReservation =
+        detailData.date_reservation ||
+        detailData.reservationDate ||
+        "-";
       const [sh, sm] = startTime.split(":").map(Number);
       const [eh, em] = endTime.split(":").map(Number);
-      const duration = ((eh + em / 60) - (sh + sm / 60)) || 1;
+      const duration =
+        (eh + em / 60 - (sh + sm / 60)) || 1;
 
-      const snackInfo = snacks.find(opt =>
-        opt.id === detailData.snackCategory ||
-        opt.value === detailData.snackCategory ||
-        opt.name === detailData.snackCategory
+      const snackInfo = snacks.find(
+        (opt) =>
+          opt.id === detailData.snackCategory ||
+          opt.value === detailData.snackCategory ||
+          opt.name === detailData.snackCategory
       );
       const snackPrice = snackInfo ? Number(snackInfo.price) : 0;
 
-      detailData.roomName = detailData.roomName || room.name || "-";
-      detailData.roomType = detailData.roomType || room.type || "-";
-      detailData.roomCapacity = detailData.roomCapacity || `${room.capacity} people`;
+      detailData.roomName =
+        detailData.roomName || room.name || "-";
+      detailData.roomType =
+        detailData.roomType || room.type || "-";
+      detailData.roomCapacity =
+        detailData.roomCapacity || `${room.capacity} people`;
       detailData.start_time = startTime;
       detailData.end_time = endTime;
       detailData.date_reservation = dateReservation;
@@ -153,8 +222,11 @@ export default function RoomReservation() {
       detailData.duration = `${startTime} - ${endTime}`;
       detailData.total_participant = participants;
       detailData.detailRoomPrice = duration * roomPrice;
-      detailData.detailSnackPrice = detailData.addSnack ? snackPrice * participants : 0;
-      detailData.total = detailData.detailRoomPrice + detailData.detailSnackPrice;
+      detailData.detailSnackPrice = detailData.addSnack
+        ? snackPrice * participants
+        : 0;
+      detailData.total =
+        detailData.detailRoomPrice + detailData.detailSnackPrice;
 
       setReservationDetailsData(detailData);
       setStep("DETAILS");
@@ -164,30 +236,37 @@ export default function RoomReservation() {
     }
   }
 
-  // Reset page ketika filter berubah supaya tidak nyasar ke page kosong
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, rooms]);
-
   return (
     <div className="p-2 sm:p-6 bg-gray-50 min-h-screen relative">
       <div style={{ display: "none" }}>
         <RoomDetailDemoUser />
       </div>
+
+      {/* Filter bar + Add Reservation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-[1320px] mx-auto px-2 sm:px-6 py-4 flex flex-col md:flex-row flex-wrap md:items-center md:justify-between gap-3">
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 md:items-center flex-1">
           <div className="relative flex-1 min-w-[180px] sm:min-w-[240px] max-w-[362px]">
             <input
               type="text"
               placeholder="Search room..."
-              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  search: e.target.value,
+                }))
+              }
               className="w-full h-[44px] sm:h-[48px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
             />
-            <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <FiSearch
+              className="absolute left-3 top-2.5 text-gray-400"
+              size={18}
+            />
           </div>
           <select
             value={filters.type}
-            onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, type: e.target.value }))
+            }
             className="border border-gray-300 rounded-lg w-full sm:w-[257px] md:w-[257px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Room Type</option>
@@ -197,7 +276,12 @@ export default function RoomReservation() {
           </select>
           <select
             value={filters.capacity}
-            onChange={(e) => setFilters((f) => ({ ...f, capacity: e.target.value }))}
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                capacity: e.target.value,
+              }))
+            }
             className="border border-gray-300 rounded-lg w-full sm:w-[257px] md:w-[257px] h-[44px] sm:h-[48px] px-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none text-sm sm:text-base"
           >
             <option value="">Capacity</option>
@@ -218,22 +302,35 @@ export default function RoomReservation() {
           disabled={!selectedRoom}
         >
           <FiPlus size={20} />
-          <span className="whitespace-nowrap">Add New Reservation</span>
+          <span className="whitespace-nowrap">
+            Add New Reservation
+          </span>
         </button>
       </div>
+
+      {/* Room list */}
       <div className="bg-white rounded-xl w-full max-w-[1320px] mx-auto shadow-sm border border-gray-200 px-2 sm:px-6 py-4 sm:py-5">
-        {error && <div className="text-red-500 text-center mb-2">{error}</div>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {roomsToDisplay.map((room) => (
-            <RoomCardUser
-              key={room.id}
-              room={room}
-              onClick={() => handleRoomCardClick(room)}
-              isSelected={selectedRoom?.id === room.id}
-            />
-          ))}
-        </div>
-        {/* Pagination bar always visible */}
+        {error && (
+          <div className="text-red-500 text-center mb-2">{error}</div>
+        )}
+        {loadingRooms ? (
+          <div className="text-center text-gray-400 py-6">
+            Loading rooms...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {roomsToDisplay.map((room) => (
+              <RoomCardUser
+                key={room.id}
+                room={room}
+                onClick={() => handleRoomCardClick(room)}
+                isSelected={selectedRoom?.id === room.id}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination bar */}
         <div className="mt-6 flex flex-row justify-between items-center w-full">
           <div></div>
           <div className="flex items-center gap-2">
@@ -241,30 +338,42 @@ export default function RoomReservation() {
               onClick={handlePrevPage}
               disabled={currentPage === 1}
               className={`p-2 rounded-md border
-              ${currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}
+              ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
+              }
               `}
             >
               <FiChevronLeft />
             </button>
-            {pageNumbers.map((num) => (
-              <button
-                key={num}
-                onClick={() => handlePageNumber(num)}
-                className={`p-2 rounded-md w-8 h-8
-                  ${currentPage === num
-                    ? "bg-orange-400 text-white"
-                    : "bg-white text-orange-500"}
-                `}
-                disabled={currentPage === num}
-              >
-                {num}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (num) => (
+                <button
+                  key={num}
+                  onClick={() => handlePageNumber(num)}
+                  className={`p-2 rounded-md w-8 h-8
+                    ${
+                      currentPage === num
+                        ? "bg-orange-400 text-white"
+                        : "bg-white text-orange-500"
+                    }
+                  `}
+                  disabled={currentPage === num}
+                >
+                  {num}
+                </button>
+              )
+            )}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
               className={`p-2 rounded-md border
-              ${currentPage === totalPages ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-orange-50 text-orange-600"}
+              ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "hover:bg-orange-50 text-orange-600"
+              }
               `}
             >
               <FiChevronRight />
@@ -273,6 +382,8 @@ export default function RoomReservation() {
           <div></div>
         </div>
       </div>
+
+      {/* Modals */}
       {step === "SCHEDULE" && (
         <div className="fixed inset-0 z-50 bg-black/20 flex justify-center items-center">
           <ReservationSchedule

@@ -4,23 +4,20 @@ import ModalConfirmDeleteRoom from "./ModalConfirmDeleteRoom";
 import { useAuth } from "../context/AuthContext";
 import { deleteRoom } from "../API/deleteRoomAPI";
 
-// Konstan jumlah card per halaman
-const ITEMS_PER_PAGE = 12;
-
-export default function ManageRoom({ rooms = [], fetchRooms, onEditRoom }) {
+export default function ManageRoom({
+  rooms = [],
+  fetchRooms,
+  onEditRoom,
+  pagination = { currentPage: 1, totalPages: 1 },
+  loading = false,
+}) {
   const [modal, setModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const { profile } = useAuth();
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Paging
-  const totalPages = Math.ceil((rooms.length || 1) / ITEMS_PER_PAGE);
-  const paginatedRooms = rooms.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const currentPage = pagination.currentPage || 1;
+  const totalPages = pagination.totalPages || 1;
 
-  // Handler delete room
   const handleDeleteRequest = (room) => {
     setSelectedRoom(room);
     setModal(true);
@@ -30,7 +27,7 @@ export default function ManageRoom({ rooms = [], fetchRooms, onEditRoom }) {
     try {
       await deleteRoom(selectedRoom?.id);
       alert("Room berhasil dihapus!");
-      fetchRooms && fetchRooms();
+      fetchRooms && fetchRooms(currentPage);
     } catch {
       alert("Gagal menghapus room!");
     }
@@ -38,9 +35,13 @@ export default function ManageRoom({ rooms = [], fetchRooms, onEditRoom }) {
     setSelectedRoom(null);
   };
 
-  // Handler edit: panggil parent modal edit
   const handleEditRequest = (room) => {
     if (onEditRoom) onEditRoom(room);
+  };
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    fetchRooms && fetchRooms(page);
   };
 
   return (
@@ -53,49 +54,78 @@ export default function ManageRoom({ rooms = [], fetchRooms, onEditRoom }) {
           w-full max-w-[1320px] mx-auto pt-2
         "
       >
-        {paginatedRooms.map((room) =>
-          room && room.id ? (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onEdit={handleEditRequest}
-              onDelete={handleDeleteRequest}
-              canEdit={profile?.role === "admin"}
-              canDelete={profile?.role === "admin"}
-            />
-          ) : null
+        {loading ? (
+          <div className="col-span-4 text-center text-gray-400 py-10">
+            Loading rooms...
+          </div>
+        ) : rooms.length === 0 ? (
+          <div className="col-span-4 text-center text-gray-400 py-10">
+            No rooms available.
+          </div>
+        ) : (
+          rooms.map(
+            (room) =>
+              room &&
+              room.id && (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  onEdit={handleEditRequest}
+                  onDelete={handleDeleteRequest}
+                  canEdit={profile?.role === "admin"}
+                  canDelete={profile?.role === "admin"}
+                />
+              )
+          )
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center my-8 gap-2">
+      {/* Pagination ala Reservation */}
+      <div className="flex justify-center items-center my-8 text-sm gap-2">
         <button
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-          className={`w-9 h-9 rounded-full flex items-center justify-center border text-lg font-bold
-            ${currentPage === 1 ? "text-gray-400 border-gray-200" : "text-orange-500 border-orange-300 hover:bg-orange-50"}`}
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1 || totalPages === 0}
+          className={`px-2 text-[13px] ${
+            currentPage === 1 || totalPages === 0
+              ? "text-gray-300 cursor-default"
+              : "text-gray-600 hover:text-orange-600"
+          }`}
         >
-          &lt;
+          &larr; Prev
         </button>
-        {[...Array(totalPages)].map((_, i) => (
-          <button
-            key={i + 1}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`w-9 h-9 rounded-full mx-1 border flex items-center justify-center text-base transition
-              ${currentPage === i + 1
-                ? "bg-orange-600 text-white border-orange-600 font-bold"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-orange-50"}`}
-          >
-            {i + 1}
-          </button>
-        ))}
+
+        {totalPages === 0 ? (
+          <span className="px-2 py-1 text-gray-400 border border-gray-200 rounded">
+            1
+          </span>
+        ) : (
+          Array.from({ length: totalPages }, (_, i) => i + 1).map(
+            (page) => (
+              <button
+                key={page}
+                onClick={() => goToPage(page)}
+                className={`mx-1 min-w-[28px] h-[28px] rounded text-center border text-[13px] ${
+                  page === currentPage
+                    ? "bg-orange-500 text-white border-orange-500 font-semibold"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-orange-50"
+                }`}
+              >
+                {page}
+              </button>
+            )
+          )
+        )}
+
         <button
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-          className={`w-9 h-9 rounded-full flex items-center justify-center border text-lg font-bold
-            ${currentPage === totalPages ? "text-gray-400 border-gray-200" : "text-orange-500 border-orange-300 hover:bg-orange-50"}`}
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages || totalPages === 0}
+          className={`px-2 text-[13px] ${
+            currentPage === totalPages || totalPages === 0
+              ? "text-gray-300 cursor-default"
+              : "text-gray-600 hover:text-orange-600"
+          }`}
         >
-          &gt;
+          Next &rarr;
         </button>
       </div>
 

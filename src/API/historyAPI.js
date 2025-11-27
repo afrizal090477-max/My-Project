@@ -2,18 +2,45 @@ import apiHttp from "./http";
 
 /**
  * Fetch reservation history with paging, filter, search.
- * Gunakan endpoint resmi: GET /api/v1/reservations
+ * Endpoint: GET /api/v1/reservations
  * @param {Object} params
  * @returns {Object} { histories: Array, totalPages: number }
  */
 export const fetchHistory = async (params = {}) => {
-  // Endpoint sudah sesuai swagger: DAFTAR RIWAYAT RESERVASI
   const response = await apiHttp.get("/api/v1/reservations", { params });
-  // Sesuaikan response sesuai field di backend kamu, umumnya { data: {...} }
-  const data = response.data.data || {};
+
+  // Struktur umum BE:
+  // 1) { data: { rows: [...], totalPages: n } }
+  // 2) { data: [...], pagination: { totalPages: n } }
+  // 3) { rows: [...], totalPages: n }
+  const root = response.data || {};
+
+  // Ambil kandidat data utama
+  const dataCandidate =
+    Array.isArray(root.data) || Array.isArray(root.rows)
+      ? root
+      : root.data || root;
+
+  const histories =
+    dataCandidate.rows ||
+    dataCandidate.histories ||
+    dataCandidate.data ||
+    (Array.isArray(dataCandidate) ? dataCandidate : []);
+
+  const pagination =
+    root.pagination || dataCandidate.pagination || {};
+
+  const totalPages =
+    pagination.totalPages ||
+    pagination.total_pages ||
+    pagination.total ||
+    dataCandidate.totalPages ||
+    dataCandidate.total_pages ||
+    1;
+
   return {
-    histories: data.rows || data.histories || [],
-    totalPages: data.totalPages || data.total_pages || 1,
+    histories,
+    totalPages: totalPages || 1,
   };
 };
 
@@ -23,8 +50,8 @@ export const fetchHistory = async (params = {}) => {
  * @returns {Object}
  */
 export const cancelReservation = async (id) => {
-  // Endpoint update reservation (status) sesuai swagger, misal dengan body tertentu
-  // Jika backendmu ada endpoint /cancel, sesuaikan di sini
-  const response = await apiHttp.put(`/api/v1/reservations/${id}`, { status: "Cancel" });
+  const response = await apiHttp.put(`/api/v1/reservations/${id}`, {
+    status: "Cancel",
+  });
   return response.data;
 };

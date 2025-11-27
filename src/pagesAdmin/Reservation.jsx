@@ -36,7 +36,6 @@ export default function Reservation() {
   const [snacks, setSnacks] = useState([]);
   const [loadingSnacks, setLoadingSnacks] = useState(false);
   const [errorSnacks, setErrorSnacks] = useState(null);
-  const [selectedRoomName, setSelectedRoomName] = useState("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleRoom, setScheduleRoom] = useState("");
   const [page, setPage] = useState(0);
@@ -185,7 +184,7 @@ export default function Reservation() {
                 setToast({
                   visible: true,
                   type: "error",
-                  message: "Pilih Start Date dan End Date terlebih dahulu!"
+                  message: "[translate:Pilih Start Date dan End Date terlebih dahulu!]"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
                 return;
@@ -205,14 +204,14 @@ export default function Reservation() {
                 setToast({
                   visible: true,
                   type: "success",
-                  message: "Data berhasil difilter!"
+                  message: "[translate:Data berhasil difilter!]"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
               } catch {
                 setToast({
                   visible: true,
                   type: "error",
-                  message: "Filter gagal!"
+                  message: "[translate:Filter gagal!]"
                 });
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2000);
               }
@@ -221,7 +220,7 @@ export default function Reservation() {
             disabled={loading}
             className="h-[48px] w-[150px] border-2 !border-[#FF7316] text-[#FF7316] rounded-lg font-semibold bg-white hover:bg-[#FFF5EC] transition-all duration-200 flex items-center justify-center "
           >
-            {loading ? "Loading..." : "Search"}
+            {loading ? "[translate:Loading...]" : "Search"}
           </button>
           <div className="flex-1" />
           <button
@@ -229,7 +228,6 @@ export default function Reservation() {
               setShowForm(true);
               setStep(1);
               setFormData(null);
-              setSelectedRoomName("");
             }}
             className="h-[48px] min-w-[200px] bg-[#FF7316] text-white rounded-lg font-semibold text-lg hover:bg-[#e76712] transition flex items-center justify-center ml-3"
           >
@@ -384,7 +382,7 @@ export default function Reservation() {
               className="px-4 py-2 rounded-l-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ marginRight: 4 }}
             >
-              ← Prev
+              ← [translate:Prev]
             </button>
 
             {/* Page Numbers */}
@@ -413,7 +411,7 @@ export default function Reservation() {
               className="px-4 py-2 rounded-r-lg bg-white border border-[#D0D5DD] text-[#344054] font-semibold text-sm hover:bg-[#FFF5EC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ marginLeft: 4 }}
             >
-              Next →
+              [translate:Next] →
             </button>
           </div>
         )}
@@ -425,21 +423,13 @@ export default function Reservation() {
           {step === 1 && (
             <ReservationFormAdmin
               isOpen={showForm}
-              onClose={() => { setShowForm(false); setStep(1); setFormData(null); setSelectedRoomName(""); }}
+              onClose={() => {
+                setShowForm(false);
+                setStep(1);
+                setFormData(null);
+              }}
               onSubmit={data => {
-                const foundRoom = roomsData.find(room =>
-                  room.room_name === data.room ||
-                  room.name === data.room ||
-                  room.code === data.room ||
-                  room.id === data.room ||
-                  room.room_id === data.room
-                );
-                if (!foundRoom?.id && !foundRoom?.room_id) {
-                  setToast({ visible: true, type: "error", message: "Room ID tidak valid/tidak ditemukan." });
-                  setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
-                  return;
-                }
-                setFormData({ ...data, room_id: foundRoom.id || foundRoom.room_id });
+                setFormData(data);
                 setStep(2);
                 setShowForm(true);
               }}
@@ -448,7 +438,10 @@ export default function Reservation() {
               snacks={snacks}
               loadingSnacks={loadingSnacks}
               errorSnacks={errorSnacks}
-              selectedRoomName={selectedRoomName}
+              selectedRoomId={formData?.room_id || ""}
+              onRoomChange={(newRoomId) => {
+                setFormData(prev => ({ ...prev, room_id: newRoomId }));
+              }}
             />
           )}
           {step === 2 && (
@@ -458,7 +451,7 @@ export default function Reservation() {
               onSubmit={async (finalData) => {
                 try {
                   const response = await createAdminReservation(finalData);
-                  setToast({ visible: true, type: "success", message: "Reservation added" });
+                  setToast({ visible: true, type: "success", message: "[translate:Reservation added]" });
                   let dateBooking = finalData.date_reservation || response?.data?.date_reservation;
                   if (dateBooking) {
                     const bookingDate = new Date(dateBooking);
@@ -467,12 +460,11 @@ export default function Reservation() {
                   }
                   await loadData();
                 } catch (e) {
-                  setToast({ visible: true, type: "error", message: "Failed to add reservation" });
+                  setToast({ visible: true, type: "error", message: "[translate:Failed to add reservation]" });
                 }
                 setStep(1);
                 setFormData(null);
                 setShowForm(false);
-                setSelectedRoomName("");
                 setTimeout(() => setToast({ visible: false, type: "", message: "" }), 2500);
               }}
               rooms={roomsData}
@@ -493,7 +485,6 @@ export default function Reservation() {
             endTime: data.endTime,
             room: scheduleRoom,
           }));
-          setSelectedRoomName(scheduleRoom);
           setStep(1);
           setShowForm(true);
           setScheduleOpen(false);

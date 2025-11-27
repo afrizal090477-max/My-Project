@@ -65,11 +65,10 @@ const Dashboard = () => {
           0,
       });
 
-      // Gabungkan master rooms + hasil agregasi usage/omzet
+      // merge masterRooms + hasil agregasi (sudah ter-sort A–Z dari API)
       const mappedRooms = (() => {
         const usageMap = new Map();
 
-        // isi map dari rooms hasil agregasi (fetchDashboardData)
         (apiData.rooms || []).forEach((r) => {
           const id = r.id || r.room_id;
           if (!id) return;
@@ -79,7 +78,6 @@ const Dashboard = () => {
           });
         });
 
-        // sumber utama card = masterRooms (semua room di menu Room)
         const base = apiData.masterRooms || apiData.rooms || [];
         return base.map((mr) => {
           const id = mr.id || mr.room_id;

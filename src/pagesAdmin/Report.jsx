@@ -5,22 +5,20 @@ import { FiCornerUpRight, FiCalendar, FiDownload } from "react-icons/fi";
 import ModalReportDetail from "../components/ModalReportDetail";
 import { fetchReservations, downloadReport } from "../API/reportAPI";
 
-const CustomInput = forwardRef(
-  ({ value, onClick, placeholder, id }, ref) => (
-    <button
-      id={id}
-      type="button"
-      onClick={onClick}
-      ref={ref}
-      className="flex items-center justify-between w-[257px] h-[48px] border !border-[#a1a2a5] rounded-[10px] px-[14px] bg-white text-left focus:ring-2 focus:ring-orange-400"
-    >
-      <span className={value ? "text-gray-700" : "text-gray-400"}>
-        {value || placeholder}
-      </span>
-      <FiCalendar className="ml-2 text-gray-400" size={16} />
-    </button>
-  )
-);
+const CustomInput = forwardRef(({ value, onClick, placeholder, id }, ref) => (
+  <button
+    id={id}
+    type="button"
+    onClick={onClick}
+    ref={ref}
+    className="flex items-center justify-between w-[257px] h-[48px] border !border-[#a1a2a5] rounded-[10px] px-[14px] bg-white text-left focus:ring-2 focus:ring-orange-400"
+  >
+    <span className={value ? "text-gray-700" : "text-gray-400"}>
+      {value || placeholder}
+    </span>
+    <FiCalendar className="ml-2 text-gray-400" size={16} />
+  </button>
+));
 CustomInput.displayName = "CustomInput";
 
 function DateInput({ id, selectedDate, onChange, placeholder }) {
@@ -86,27 +84,31 @@ export default function Report() {
           limit: rowsPerPage,
           room_type: filters.roomType,
           status: filters.status,
-          startDate: filters.startDate
-            ?.toISOString()
-            .slice(0, 10),
-          endDate: filters.endDate
-            ?.toISOString()
-            .slice(0, 10),
+          startDate: filters.startDate?.toISOString().slice(0, 10),
+          endDate: filters.endDate?.toISOString().slice(0, 10),
         };
         const res = await fetchReservations(queryParams);
-        setReportData(
-          (res.data || []).filter(
-            (v, i, arr) =>
-              arr.findIndex(
-                (x) =>
-                  x.id === v.id &&
-                  x.date_reservation === v.date_reservation &&
-                  x.start_time === v.start_time &&
-                  x.end_time === v.end_time &&
-                  x.pemesan === v.pemesan
-              ) === i
-          )
+        const unique = (res.data || []).filter(
+          (v, i, arr) =>
+            arr.findIndex(
+              (x) =>
+                x.id === v.id &&
+                x.date_reservation === v.date_reservation &&
+                x.start_time === v.start_time &&
+                x.end_time === v.end_time &&
+                x.pemesan === v.pemesan
+            ) === i
         );
+
+        // optional: pastikan urut A–Z by room name
+        unique.sort((a, b) =>
+          (a.rooms?.room_name || "")
+            .toUpperCase()
+            .localeCompare((b.rooms?.room_name || "").toUpperCase(), "id-ID")
+        );
+
+        setReportData(unique);
+
         setPagination({
           currentPage: res.pagination?.currentPage || 1,
           pageSize: res.pagination?.pageSize || rowsPerPage,
@@ -144,12 +146,8 @@ export default function Report() {
       const blob = await downloadReport({
         room_type: filters.roomType,
         status: filters.status,
-        startDate: filters.startDate
-          ?.toISOString()
-          .slice(0, 10),
-        endDate: filters.endDate
-          ?.toISOString()
-          .slice(0, 10),
+        startDate: filters.startDate?.toISOString().slice(0, 10),
+        endDate: filters.endDate?.toISOString().slice(0, 10),
       });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -164,11 +162,9 @@ export default function Report() {
       const content = reportData
         .map(
           (row) =>
-            `${row.date_reservation || "-"} ${
-              row.start_time || ""
-            },${row.date_reservation || "-"} ${
-              row.end_time || ""
-            },${row.rooms?.room_name || "-"},${
+            `${row.date_reservation || "-"} ${row.start_time || ""},${
+              row.date_reservation || "-"
+            } ${row.end_time || ""},${row.rooms?.room_name || "-"},${
               row.pemesan || "-"
             },${row.rooms?.room_type || "-"},${row.status}`
         )
@@ -325,19 +321,13 @@ export default function Report() {
             <tbody>
               {reportData.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="p-6 text-center text-gray-400"
-                  >
+                  <td colSpan={7} className="p-6 text-center text-gray-400">
                     No data available.
                   </td>
                 </tr>
               )}
               {reportData.map((row, idx) => (
-                <tr
-                  key={row.id || idx}
-                  className="border-t hover:bg-[#F4F8FB]"
-                >
+                <tr key={row.id || idx} className="border-t hover:bg-[#F4F8FB]">
                   <td className="p-4 text-center whitespace-nowrap">
                     {row.date_reservation
                       ? `${row.date_reservation}${
@@ -355,9 +345,7 @@ export default function Report() {
                   <td className="p-4 text-center">
                     {row.rooms?.room_name || "-"}
                   </td>
-                  <td className="p-4 text-center">
-                    {row.pemesan || "-"}
-                  </td>
+                  <td className="p-4 text-center">{row.pemesan || "-"}</td>
                   <td className="p-4 text-center">
                     {row.rooms?.room_type || "-"}
                   </td>
@@ -400,9 +388,7 @@ export default function Report() {
           </div>
           <div className="flex gap-1 items-center">
             <button
-              onClick={() =>
-                handlePageChange(pagination.currentPage - 1)
-              }
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage === 1}
               className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
@@ -412,12 +398,8 @@ export default function Report() {
               Page {pagination.currentPage} of {pagination.totalPages}
             </span>
             <button
-              onClick={() =>
-                handlePageChange(pagination.currentPage + 1)
-              }
-              disabled={
-                pagination.currentPage === pagination.totalPages
-              }
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages}
               className="px-3 py-1 rounded border disabled:text-gray-300 disabled:border-gray-200"
             >
               Next

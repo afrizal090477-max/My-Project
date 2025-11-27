@@ -9,10 +9,6 @@ import apiHttp from "./http";
 export const fetchHistory = async (params = {}) => {
   const response = await apiHttp.get("/api/v1/reservations", { params });
 
-  // Struktur umum BE:
-  // 1) { data: { rows: [...], totalPages: n } }
-  // 2) { data: [...], pagination: { totalPages: n } }
-  // 3) { rows: [...], totalPages: n }
   const root = response.data || {};
 
   // Ambil kandidat data utama
@@ -21,7 +17,7 @@ export const fetchHistory = async (params = {}) => {
       ? root
       : root.data || root;
 
-  const histories =
+  let histories =
     dataCandidate.rows ||
     dataCandidate.histories ||
     dataCandidate.data ||
@@ -37,6 +33,16 @@ export const fetchHistory = async (params = {}) => {
     dataCandidate.totalPages ||
     dataCandidate.total_pages ||
     1;
+
+  // Sort A–Z by room name (fallback pemesan kalau mau)
+  histories = [...histories].sort((a, b) =>
+    (a.rooms?.room_name || a.pemesan || "")
+      .toUpperCase()
+      .localeCompare(
+        (b.rooms?.room_name || b.pemesan || "").toUpperCase(),
+        "id-ID"
+      )
+  );
 
   return {
     histories,

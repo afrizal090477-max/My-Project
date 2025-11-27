@@ -33,9 +33,30 @@ export const fetchRooms = async (params = {}) => {
   let reqParams = { ...params };
   reqParams.page = !reqParams.page || reqParams.page < 1 ? 1 : reqParams.page;
   reqParams.limit = reqParams.limit || 10;
+
   const filtered = cleanParams(reqParams, validRoomKeys);
   const res = await apiHttp.get("/api/v1/rooms", { params: filtered });
-  return res.data; // BE diharapkan kirim { data: [...], pagination: {...} }
+
+  // Jika BE belum support sort di query, bisa sort di FE:
+  // contoh: sort A–Z berdasarkan room_name
+  const root = res.data || {};
+  const dataArr = Array.isArray(root.data) ? root.data : root.data?.rows || [];
+
+  if (Array.isArray(dataArr)) {
+    dataArr.sort((a, b) =>
+      (a.room_name || a.name || "")
+        .toUpperCase()
+        .localeCompare(
+          (b.room_name || b.name || "").toUpperCase(),
+          "id-ID"
+        )
+    );
+  }
+
+  return {
+    ...root,
+    data: dataArr,
+  }; // BE diharapkan kirim { data: [...], pagination: {...} }
 };
 
 export const fetchRoomById = async (id) => {
@@ -142,4 +163,53 @@ export const fetchFirstRoomDetail = async () => {
   const arr = Array.isArray(res.data?.data) ? res.data.data : [];
   if (!arr.length) throw new Error("No room found");
   return arr[0];
+};
+
+/**
+ * Helper tambahan: ambil SEMUA room (loop semua page) dan sort A–Z.
+ * Dipakai di Dashboard, dropdown, dll.
+ */
+export const fetchAllRoomsSorted = async (extraParams = {}) => {
+  let currentPage = 1;
+  const pageSize = extraParams.limit || 50;
+  let totalPages = 1;
+  const allRooms = [];
+
+  while (currentPage <= totalPages) {
+    const res = await apiHttp.get("/api/v1/rooms", {
+      params: {
+        page: currentPage,
+        limit: pageSize,
+        ...cleanParams(extraParams, validRoomKeys),
+      },
+    });
+
+    const root = res.data || {};
+    const dataPart = Array.isArray(root.data)
+      ? root.data
+      : Array.isArray(root.rooms)
+      ? root.rooms
+      : Array.isArray(root)
+      ? root
+      : [];
+
+    allRooms.push(...dataPart);
+
+    const pag = root.pagination || root.data?.pagination || {};
+    totalPages = pag.totalPages || pag.total_pages || totalPages;
+    if (!totalPages) totalPages = 1;
+
+    currentPage += 1;
+  }
+
+  allRooms.sort((a, b) =>
+    (a.room_name || a.name || "")
+      .toUpperCase()
+      .localeCompare(
+        (b.room_name || b.name || "").toUpperCase(),
+        "id-ID"
+      )
+  );
+
+  return allRooms;
 };

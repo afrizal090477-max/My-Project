@@ -81,6 +81,10 @@ export default function Room() {
           room.name.toLowerCase().includes(src)
         );
       }
+      // Sort A–Z by room name setelah semua filter lokal
+      apiRooms.sort((a, b) =>
+        a.name.toUpperCase().localeCompare(b.name.toUpperCase(), "id-ID")
+      );
 
       setRooms(apiRooms);
 

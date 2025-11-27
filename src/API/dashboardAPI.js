@@ -9,7 +9,7 @@ const fetchAllReservations = async (startDate = null, endDate = null) => {
   if (endDate) params.endDate = endDate;
 
   let currentPage = 1;
-  const pageSize = 50; // bebas, asal >= pageSize report
+  const pageSize = 50; // sesuaikan dengan page size di report
   let totalPages = 1;
   const allRows = [];
 
@@ -42,11 +42,11 @@ const fetchAllReservations = async (startDate = null, endDate = null) => {
 };
 
 /**
- * Ambil semua master room supaya room yang belum pernah dipakai tetap muncul.
+ * Ambil semua master room (loop semua page) supaya room yang belum pernah dipakai tetap muncul.
  */
 const fetchAllRooms = async () => {
   let currentPage = 1;
-  const pageSize = 50; // pastikan >= pageSize di menu Room (sekarang 10)
+  const pageSize = 50; // >= pageSize di menu Room
   let totalPages = 1;
   const allRooms = [];
 
@@ -73,9 +73,17 @@ const fetchAllRooms = async () => {
     currentPage += 1;
   }
 
+  // sort master room A–Z by name
+  allRooms.sort((a, b) => {
+    const nameA = (a.room_name || a.name || a.room || "").toUpperCase();
+    const nameB = (b.room_name || b.name || b.room || "").toUpperCase();
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
+  });
+
   return allRooms;
 };
-
 
 /**
  * Dashboard summary + per-room stats (name, percentage, omzet).
@@ -124,6 +132,13 @@ export const fetchDashboardData = async (startDate = null, endDate = null) => {
 
     if (!roomId) return;
 
+    // filter hanya reservation yang sudah bayar (kalau mau dipakai untuk omzet)
+    const status = (item.status || item.payment_status || "").toLowerCase();
+    if (status !== "confirmed" && status !== "pay" && status !== "paid") {
+      return;
+    }
+
+    // harga room per jam
     const pricePerHour = Number(
       item.rooms?.price ||
         item.price_hour ||
@@ -131,6 +146,7 @@ export const fetchDashboardData = async (startDate = null, endDate = null) => {
         0
     );
 
+    // durasi jam
     const startTime = item.start_time || "";
     const endTime = item.end_time || "";
 
@@ -149,7 +165,17 @@ export const fetchDashboardData = async (startDate = null, endDate = null) => {
       durationHours = diff > 0 ? diff : 1;
     }
 
-    const omzetReservation = pricePerHour * durationHours;
+    // snack per participant (opsional; sesuaikan field BE)
+    const snackPrice = Number(
+      item.snack_price || item.snackPrice || item.snack?.price || 0
+    );
+    const participants = Number(
+      item.total_participant || item.participant || 0
+    );
+
+    const roomFee = pricePerHour * durationHours;
+    const snackTotal = snackPrice * participants;
+    const omzetReservation = roomFee + snackTotal;
 
     if (!perRoom.has(roomId)) {
       perRoom.set(roomId, {
@@ -187,7 +213,13 @@ export const fetchDashboardData = async (startDate = null, endDate = null) => {
     }
   });
 
-  const roomsArr = Array.from(perRoom.values());
+  let roomsArr = Array.from(perRoom.values());
+
+  // sort hasil agregasi juga A–Z by name
+  roomsArr.sort((a, b) =>
+    (a.name || "").localeCompare(b.name || "", "id-ID")
+  );
+
   const maxReservation = roomsArr.reduce(
     (max, r) => Math.max(max, r.totalReservation),
     0
@@ -208,11 +240,11 @@ export const fetchDashboardData = async (startDate = null, endDate = null) => {
   });
 
   return {
-    totalMoney: summary.totalMoney,
+    totalMoney: summary.totalMoney, // tetap pakai angka resmi dari BE
     totalReservations: summary.totalReservations,
     totalVisitors: summary.totalVisitors,
     totalRooms: summary.totalRooms || rooms.length,
     rooms,
-    masterRooms,
+    masterRooms, // sudah ter-sort A–Z
   };
 };

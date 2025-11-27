@@ -102,7 +102,7 @@ export default function ReservationDetailAdmin({ onBack, data, onSubmit }) {
           onClick={onBack}
           className="mr-2 p-1 text-gray-600 hover:text-orange-500"
         >
-          <FiChevronLeft size={28} />
+          <FiChevronLeft size={36} />
         </button>
         <h2 className="text-xl font-bold">Reservation Details</h2>
       </div>

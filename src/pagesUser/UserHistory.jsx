@@ -108,6 +108,12 @@ export default function UserHistory() {
             row.user_name || row.pemesan || row.user?.name || "-",
         };
       });
+      // Pastikan urut A–Z by room name di FE juga
+      mapped.sort((a, b) =>
+        (a.room || "")
+          .toUpperCase()
+          .localeCompare((b.room || "").toUpperCase(), "id-ID")
+      );
 
       setHistories(mapped);
       setCurrentPage(page);
